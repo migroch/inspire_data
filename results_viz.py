@@ -1,24 +1,11 @@
 import pandas as pd
 import pandas_gbq
 import numpy as np
+from math import pi
 import matplotlib.pyplot as plt
-import seaborn as sns
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
 import streamlit as st
-
-def get_results_from_bq():
-    '''
-    Get inspire results data from bigquery
-    '''
-    query = f"""
-    SELECT *
-    FROM `InspireTesting.results`
-    """
-    results_df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026")
-    return results_df
-
-results_df = get_results_from_bq()
-results_counts_all = pd.DataFrame({'count': results_df.groupby(['Test_Result']).size()}).reset_index()
-results_counts_dis = pd.DataFrame({'count': results_df.groupby(['District','Test_Result']).size()}).reset_index()
 
 def draw_donut():
     districts = np.append(['ALL'], results_df['District'].unique())
@@ -52,7 +39,69 @@ def draw_donut():
 
     st.pyplot(fig)
 
-# def draw_area(district):
+
+def draw_progress():
+    districts = np.append(['ALL'], results_df['District'].unique())
+    district_selected = st.sidebar.selectbox('Select District', districts)
+
+    # figure data
+    if district_selected == 'ALL':
+        fig_data = results_counts_all.sort_values(by='count', ascending=True).reset_index()
+    else:
+        fig_data = results_counts_dis[results_counts_dis['District']==district_selected].sort_values(by='count', ascending=True).reset_index()
+
+    colors = {'NEGATIVE': '#99ff99',
+              'POSITIVE':'#66b3ff',
+              'INCONCLUSIVE': '#ffcc99',
+              'INVALID': '#ff9999'}
+    start_angle = 90
+    total_tests = fig_data['count'].sum()
+
+    fig_data['xs'] = [(i * pi * 2) / 100 for i in fig_data['count']]
+    ys = [-0.2, 1, 2.2, 3.4]
+    left = (start_angle * pi * 2) / 360
+
+    fig, ax = plt.subplots()
+    ax = plt.subplot(projection='polar')
+
+    # plot bars and points
+    for i, row in fig_data.iterrows():
+        ax.barh(ys[i], row['xs'], left=left, height=1, color=colors[row['Test_Result']])
+        ax.text(pi/2, ys[i] - 0.2, str(row['count']), fontsize=10)
+    
+    # legend
+    legend_elements = [Line2D([0], [0], marker='s', color='w', label='Negative', markerfacecolor=colors['NEGATIVE'], markersize=10),
+                       Line2D([0], [0], marker='s', color='w', label='Positive', markerfacecolor=colors['POSITIVE'], markersize=10),
+                       Line2D([0], [0], marker='s', color='w', label='Inconclusive', markerfacecolor=colors['INCONCLUSIVE'], markersize=10),
+                       Line2D([0], [0], marker='s', color='w', label='Invalid', markerfacecolor=colors['INVALID'], markersize=10)]
+    ax.legend(handles=legend_elements, loc='center', frameon=False)
+    
+    # clear ticks, grids, spines
+    plt.ylim(-4,4)
+    plt.xticks([])
+    plt.yticks([])
+    ax.spines.clear()
+
+    fig.suptitle('Total Tests Administered: ' + str(total_tests), fontsize=10)
+    plt.tight_layout()
+    st.pyplot(fig)
+
+def get_results_from_bq():
+    '''
+    Get inspire results data from bigquery
+    '''
+    query = f"""
+    SELECT *
+    FROM `InspireTesting.results`
+    """
+    results_df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026")
+    return results_df
 
 
-draw_donut()
+if __name__ == '__main__':
+    results_df = get_results_from_bq()
+    results_counts_all = pd.DataFrame({'count': results_df.groupby(['Test_Result']).size()}).reset_index()
+    results_counts_dis = pd.DataFrame({'count': results_df.groupby(['District','Test_Result']).size()}).reset_index()
+    
+    draw_progress()
+    # draw_donut()
