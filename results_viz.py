@@ -17,23 +17,36 @@ def draw_donut():
     else:
         fig_data = results_counts_dis[results_counts_dis['District']==district_selected]
 
-    colors = ['#ff9999','#66b3ff','#99ff99','#ffcc99']
+    colors = {'NEGATIVE': '#99ff99',
+              'POSITIVE':'#66b3ff',
+              'INCONCLUSIVE': '#ffcc99',
+              'INVALID': '#ff9999'}
+    fig_colors = []
+    for i, row in fig_data.iterrows():
+        fig_colors = np.append(fig_colors, colors[row['Test_Result']])
+
     explode = (0.05,0.05,0.05,0.05)
     total_tests = fig_data['count'].sum()
 
     fig1, ax1 = plt.subplots()
 
-    plt.pie(fig_data['count'], colors=colors[:len(fig_data)], labels=fig_data['Test_Result'], 
-            autopct='%1.1f%%', startangle=90, pctdistance=0.85, explode=explode[:len(fig_data)])
+    plt.pie(fig_data['count'], colors=fig_colors, autopct='%1.1f%%', startangle=90, pctdistance=0.85, explode=explode[:len(fig_data)])
 
     # draw circle
     center_cir = plt.Circle((0,0), 0.7, fc='white')
     fig = plt.gcf()
     fig.gca().add_artist(center_cir)
-    fig.suptitle('COVID-19 Test Results for ' + district_selected, fontsize=20)
+    fig.suptitle('Total Tests Administered: ' + str(total_tests), fontsize=20)
+
+    # legend
+    legend_elements = [Line2D([0], [0], marker='s', color='w', label='Negative: '+str(fig_data[fig_data['Test_Result']=='NEGATIVE']['count'].values), markerfacecolor=colors['NEGATIVE'], markersize=10),
+                       Line2D([0], [0], marker='s', color='w', label='Positive: '+str(fig_data[fig_data['Test_Result']=='POSITIVE']['count'].values), markerfacecolor=colors['POSITIVE'], markersize=10),
+                       Line2D([0], [0], marker='s', color='w', label='Inconclusive: '+str(fig_data[fig_data['Test_Result']=='INCONCLUSIVE']['count'].values), markerfacecolor=colors['INCONCLUSIVE'], markersize=10),
+                       Line2D([0], [0], marker='s', color='w', label='Invalid: '+str(fig_data[fig_data['Test_Result']=='INVALID']['count'].values), markerfacecolor=colors['INVALID'], markersize=10)]
+    ax1.legend(handles=legend_elements, loc='center', frameon=False)
 
     # equal aspect ratio 
-    label = ax1.annotate('Total Tests Administered: ' + str(total_tests), xy=(0,0), fontsize=10, ha='center')
+    # label = ax1.annotate(, xy=(0,0), fontsize=10, ha='center')
     ax1.axis('equal')
     plt.tight_layout()
 
@@ -57,7 +70,7 @@ def draw_progress():
     start_angle = 90
     total_tests = fig_data['count'].sum()
 
-    fig_data['xs'] = [(i * pi * 2) / 100 for i in fig_data['count']]
+    fig_data['xs'] = [(i * pi * 2) / fig_data['count'].sum() for i in fig_data['count']]
     ys = [-0.2, 1, 2.2, 3.4]
     left = (start_angle * pi * 2) / 360
 
@@ -103,5 +116,5 @@ if __name__ == '__main__':
     results_counts_all = pd.DataFrame({'count': results_df.groupby(['Test_Result']).size()}).reset_index()
     results_counts_dis = pd.DataFrame({'count': results_df.groupby(['District','Test_Result']).size()}).reset_index()
     
-    draw_progress()
-    # draw_donut()
+    # draw_progress()
+    draw_donut()
