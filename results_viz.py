@@ -1,12 +1,11 @@
 import pandas as pd
-import pandas_gbq
 import numpy as np
 from math import pi
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 import streamlit as st
-from bq_query import *
+from bq_query import get_results_from_bq
 
 def draw_donut():
     districts = np.append(['ALL'], results_df['District'].unique())
@@ -40,10 +39,13 @@ def draw_donut():
     fig.suptitle('Total Tests Administered: ' + str(total_tests), fontsize=20)
 
     # legend
-    legend_elements = [Line2D([0], [0], marker='s', color='w', label='Negative: '+str(fig_data[fig_data['Test_Result']=='NEGATIVE']['count'].values), markerfacecolor=colors['NEGATIVE'], markersize=10),
-                       Line2D([0], [0], marker='s', color='w', label='Positive: '+str(fig_data[fig_data['Test_Result']=='POSITIVE']['count'].values), markerfacecolor=colors['POSITIVE'], markersize=10),
-                       Line2D([0], [0], marker='s', color='w', label='Inconclusive: '+str(fig_data[fig_data['Test_Result']=='INCONCLUSIVE']['count'].values), markerfacecolor=colors['INCONCLUSIVE'], markersize=10),
-                       Line2D([0], [0], marker='s', color='w', label='Invalid: '+str(fig_data[fig_data['Test_Result']=='INVALID']['count'].values), markerfacecolor=colors['INVALID'], markersize=10)]
+    def get_count_string(count_values):
+        if len(count_values): return str(count_values[0])
+        return '0'
+    legend_elements = [Line2D([0], [0], marker='s', color='w', label='Negative: '+get_count_string(fig_data[fig_data['Test_Result']=='NEGATIVE']['count'].values), markerfacecolor=colors['NEGATIVE'], markersize=10),
+                       Line2D([0], [0], marker='s', color='w', label='Positive: '+get_count_string(fig_data[fig_data['Test_Result']=='POSITIVE']['count'].values), markerfacecolor=colors['POSITIVE'], markersize=10),
+                       Line2D([0], [0], marker='s', color='w', label='Inconclusive: '+get_count_string(fig_data[fig_data['Test_Result']=='INCONCLUSIVE']['count'].values), markerfacecolor=colors['INCONCLUSIVE'], markersize=10),
+                       Line2D([0], [0], marker='s', color='w', label='Invalid: '+get_count_string(fig_data[fig_data['Test_Result']=='INVALID']['count'].values), markerfacecolor=colors['INVALID'], markersize=10)]
     ax1.legend(handles=legend_elements, loc='center', frameon=False)
 
     # equal aspect ratio 
@@ -99,18 +101,6 @@ def draw_progress():
     fig.suptitle('Total Tests Administered: ' + str(total_tests), fontsize=10)
     plt.tight_layout()
     st.pyplot(fig)
-
-def get_results_from_bq():
-    '''
-    Get inspire results data from bigquery
-    '''
-    query = f"""
-    SELECT *
-    FROM `InspireTesting.results`
-    """
-    results_df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026", credentials=credentials)
-    #results_df = run_query(query)
-    return results_df
 
 
 if __name__ == '__main__':
