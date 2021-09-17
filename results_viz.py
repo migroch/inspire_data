@@ -1,5 +1,6 @@
 import pandas as pd
-import pandas_gbq
+#import pandas_gbq
+from bq_query import run_query
 import numpy as np
 from math import pi
 import matplotlib.pyplot as plt
@@ -107,7 +108,8 @@ def get_results_from_bq():
     SELECT *
     FROM `InspireTesting.results`
     """
-    results_df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026")
+    #results_df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026")
+    results_df = run_query(query)
     return results_df
 
 
