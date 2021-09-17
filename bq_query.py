@@ -1,6 +1,6 @@
 from os.path import exists
 from google.oauth2 import service_account
-from google.cloud import bigquery
+#from google.cloud import bigquery
 import pandas_gbq
 import streamlit as st
 
@@ -12,7 +12,7 @@ if exists('.streamlit/secrets.toml'):
 else:
     credentials = None
     
-@st.cache(ttl=600)
+#@st.cache(ttl=600)
 def get_results_from_bq():
     '''
     Get inspire results data from bigquery
@@ -22,14 +22,15 @@ def get_results_from_bq():
     FROM `InspireTesting.results`
     """
     if credentials:
-        client = bigquery.Client(project='covidtesting-1602910185026', credentials=credentials)
-        # Perform query.
-        # Uses st.cache to only rerun when the query changes or after 10 min.
-        query_job = client.query(query)
-        rows_raw = query_job.result()
-        # Convert to list of dicts. Required for st.cache to hash the return value.
-        rows = [dict(row) for row in rows_raw]
-        return rows
+        #client = bigquery.Client(project='covidtesting-1602910185026', credentials=credentials)
+        ## Perform query.
+        ## Uses st.cache to only rerun when the query changes or after 10 min.
+        #query_job = client.query(query)
+        #rows_raw = query_job.result()
+        ## Convert to list of dicts. Required for st.cache to hash the return value.
+        #rows = [dict(row) for row in rows_raw]
+        #return rows
+        df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026", credentials=credentials)
     else:
         df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026")
-        return results_df
+    return df
