@@ -7,6 +7,16 @@ from matplotlib.lines import Line2D
 import streamlit as st
 from bq_query import get_results_from_bq
 
+def  get_pct_labels(x):
+    if x < 2: return None
+    return f"{x: .0f}%"
+    
+def get_count_string(count, total ):
+    if len(count):
+        pct = 100*count[0]/total
+        return str(count[0])+f' | {pct:.1f}%'
+    return '0'
+
 def draw_donut():
     districts = np.append(['ALL'], results_df['District'].unique())
     district_selected = st.sidebar.selectbox('Select District', districts)
@@ -30,22 +40,22 @@ def draw_donut():
 
     fig1, ax1 = plt.subplots()
 
-    plt.pie(fig_data['count'], colors=fig_colors, autopct='%1.1f%%', startangle=90, pctdistance=0.85, explode=explode[:len(fig_data)])
+    plt.pie(fig_data['count'], colors=fig_colors, autopct=get_pct_labels, center=(0,0),
+            startangle=90, pctdistance=0.85, explode=explode[:len(fig_data)])
 
     # draw circle
     center_cir = plt.Circle((0,0), 0.7, fc='white')
     fig = plt.gcf()
     fig.gca().add_artist(center_cir)
-    fig.suptitle('Total Tests Administered: ' + str(total_tests), fontsize=20)
+    fig.suptitle('Total Tests Administered: ' + str(total_tests), y=1, fontsize=20)
 
     # legend
-    def get_count_string(count_values):
-        if len(count_values): return str(count_values[0])
-        return '0'
-    legend_elements = [Line2D([0], [0], marker='s', color='w', label='Negative: '+get_count_string(fig_data[fig_data['Test_Result']=='NEGATIVE']['count'].values), markerfacecolor=colors['NEGATIVE'], markersize=10),
-                       Line2D([0], [0], marker='s', color='w', label='Positive: '+get_count_string(fig_data[fig_data['Test_Result']=='POSITIVE']['count'].values), markerfacecolor=colors['POSITIVE'], markersize=10),
-                       Line2D([0], [0], marker='s', color='w', label='Inconclusive: '+get_count_string(fig_data[fig_data['Test_Result']=='INCONCLUSIVE']['count'].values), markerfacecolor=colors['INCONCLUSIVE'], markersize=10),
-                       Line2D([0], [0], marker='s', color='w', label='Invalid: '+get_count_string(fig_data[fig_data['Test_Result']=='INVALID']['count'].values), markerfacecolor=colors['INVALID'], markersize=10)]
+    legend_elements = [
+        Line2D([0], [0], marker='s', color='w', label='Negative: '+get_count_string(fig_data[fig_data['Test_Result']=='NEGATIVE']['count'].values, total_tests), markerfacecolor=colors['NEGATIVE'], markersize=10),
+        Line2D([0], [0], marker='s', color='w', label='Positive: '+get_count_string(fig_data[fig_data['Test_Result']=='POSITIVE']['count'].values, total_tests), markerfacecolor=colors['POSITIVE'], markersize=10),
+        Line2D([0], [0], marker='s', color='w', label='Inconclusive: '+get_count_string(fig_data[fig_data['Test_Result']=='INCONCLUSIVE']['count'].values, total_tests), markerfacecolor=colors['INCONCLUSIVE'], markersize=10),
+        Line2D([0], [0], marker='s', color='w', label='Invalid: '+get_count_string(fig_data[fig_data['Test_Result']=='INVALID']['count'].values, total_tests), markerfacecolor=colors['INVALID'], markersize=10)
+    ]
     ax1.legend(handles=legend_elements, loc='center', frameon=False)
 
     # equal aspect ratio 
@@ -54,8 +64,7 @@ def draw_donut():
     plt.tight_layout()
 
     st.pyplot(fig)
-
-
+    
 def draw_progress():
     districts = np.append(['ALL'], results_df['District'].unique())
     district_selected = st.sidebar.selectbox('Select District', districts)
