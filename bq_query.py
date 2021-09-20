@@ -18,7 +18,7 @@ def bq_query(query):
     if credentials:
         ## Perform query.
         ## Uses st.cache to only rerun when the query changes or after 10 min.
-        query_job = client.query(query)
+        query_job = bq_client.query(query)
         rows_raw = query_job.result()
         ## Convert to list of dicts. Required for st.cache to hash the return value.
         rows = [dict(row) for row in rows_raw]
