@@ -158,7 +158,7 @@ def show_metrics(filtered_df):
     col1.metric("Active Cases", str(active_count))
     col2.metric("Total Positive Tests", str(positive_count))
     col3.metric("Total Tests Administered", str(total_count))
-
+    
 if __name__ == '__main__':
     results_df = get_results_from_bq()
     filtered_df = apply_filters(results_df)

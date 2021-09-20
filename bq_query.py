@@ -14,15 +14,15 @@ else:
 
 def bq_query(query):
     if credentials:
-        #client = bigquery.Client(project='covidtesting-1602910185026', credentials=credentials)
+        client = bigquery.Client(project='covidtesting-1602910185026', credentials=credentials)
         ## Perform query.
         ## Uses st.cache to only rerun when the query changes or after 10 min.
-        #query_job = client.query(query)
-        #rows_raw = query_job.result()
+        query_job = client.query(query)
+        rows_raw = query_job.result()
         ## Convert to list of dicts. Required for st.cache to hash the return value.
-        #rows = [dict(row) for row in rows_raw]
-        #return rows
-        df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026", credentials=credentials)
+        rows = [dict(row) for row in rows_raw]
+        return rows
+        #df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026", credentials=credentials)
     else:
         df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026")
     return df   
