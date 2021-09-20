@@ -1,6 +1,6 @@
 from os.path import exists
 from google.oauth2 import service_account
-#from google.cloud import bigquery
+from google.cloud import bigquery
 import pandas_gbq
 import streamlit as st
 
@@ -12,9 +12,10 @@ if exists('.streamlit/secrets.toml'):
 else:
     credentials = None
 
+bq_client = bigquery.Client(project='covidtesting-1602910185026', credentials=credentials)
+    
 def bq_query(query):
     if credentials:
-        client = bigquery.Client(project='covidtesting-1602910185026', credentials=credentials)
         ## Perform query.
         ## Uses st.cache to only rerun when the query changes or after 10 min.
         query_job = client.query(query)
