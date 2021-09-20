@@ -11,16 +11,8 @@ if exists('.streamlit/secrets.toml'):
     )
 else:
     credentials = None
-    
-#@st.cache(ttl=600)
-def get_results_from_bq():
-    '''
-    Get inspire results data from bigquery
-    '''
-    query = f"""
-    SELECT *
-    FROM `InspireTesting.results`
-    """
+
+def bq_query(query):
     if credentials:
         #client = bigquery.Client(project='covidtesting-1602910185026', credentials=credentials)
         ## Perform query.
@@ -33,4 +25,18 @@ def get_results_from_bq():
         df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026", credentials=credentials)
     else:
         df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026")
+    return df   
+    
+@st.cache
+def get_results_from_bq():
+    '''
+    Get inspire results data from bigquery
+    '''
+    query = f"""
+    SELECT *
+    FROM `InspireTesting.results`
+    """
+    df = bq_query(query)
+    df['Week'] = df.Test_Date.dt.week - df.Test_Date.dt.week.min()  + 1
+    df['Test_Date'] = df.Test_Date.dt.date    
     return df

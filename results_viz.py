@@ -1,11 +1,13 @@
 import pandas as pd
 import numpy as np
+import datetime
 from math import pi
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 import streamlit as st
 from bq_query import get_results_from_bq
+import pdb
 
 def  get_pct_labels(x):
     if x < 2: return None
@@ -17,20 +19,13 @@ def get_count_string(count, total ):
         return str(count[0])+f' | {pct:.1f}%'
     return '0'
 
-def draw_donut():
-    districts = np.append(['ALL'], results_df['District'].unique())
-    district_selected = st.sidebar.selectbox('Select District', districts)
+def draw_donut(filtered_df):
+    fig_data = pd.DataFrame({'count': filtered_df.groupby(['Test_Result']).size()}).reset_index()
     
-    # figure data
-    if district_selected == 'ALL':
-        fig_data = results_counts_all
-    else:
-        fig_data = results_counts_dis[results_counts_dis['District']==district_selected]
-
     colors = {'NEGATIVE': '#99ff99',
-              'POSITIVE':'#66b3ff',
+              'POSITIVE':'#F63366',
               'INCONCLUSIVE': '#ffcc99',
-              'INVALID': '#ff9999'}
+              'INVALID': '#E7E9EB'}
     fig_colors = []
     for i, row in fig_data.iterrows():
         fig_colors = np.append(fig_colors, colors[row['Test_Result']])
@@ -47,7 +42,7 @@ def draw_donut():
     center_cir = plt.Circle((0,0), 0.7, fc='white')
     fig = plt.gcf()
     fig.gca().add_artist(center_cir)
-    fig.suptitle('Total Tests Administered: ' + str(total_tests), y=1, fontsize=20)
+    #fig.suptitle('Total Tests Administered: ' + str(total_tests), y=1, fontsize=20)
 
     # legend
     legend_elements = [
@@ -111,11 +106,61 @@ def draw_progress():
     plt.tight_layout()
     st.pyplot(fig)
 
+def apply_filters(results_df):
+    '''
+    Apply filters and return the data frame to use for figures
+    '''
+    ## Apply date filters
+    week_range = st.slider('Select Weeks', min_value=int(results_df.Week.min()),
+                           max_value=int(results_df.Week.max()),
+                           value = (int(results_df.Week.min()), int(results_df.Week.max())),
+                           format = "Week %i",
+                           help = f"Select the week number since the start of the program (first results on: {results_df.Test_Date.min()})"
+                           )
+    results_df = results_df.query('Week >= @week_range[0] and Week <= @week_range[1]')
+    
+    date_range = st.slider('Select Dates', min_value=results_df.Test_Date.min(),
+                           max_value=results_df.Test_Date.max(),
+                           value = (results_df.Test_Date.min(), results_df.Test_Date.max()),
+                           format = "M/D/YY",
+                           help = "Select the dates within the selected weeks"
+                           )   
+    results_df = results_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
+
+    ## Apply district and school filters
+    districts = np.append(['ALL'], results_df['District'].unique())
+    district_selected = st.sidebar.selectbox('Select District', districts)
+    if district_selected != 'ALL':
+        results_df = results_df.query('District == @district_selected')
+        
+    sites = np.append(['ALL'], results_df['Organization'].unique())
+    site_selected = st.sidebar.selectbox('Select Site', sites)
+    if site_selected != 'ALL':
+        results_df = results_df.query('Organization == @site_selected')
+
+    ## Apply group filters
+    results_df = results_df.query('Group in ["STAFF", "STUDENT"]')
+    groups = np.append(['ALL'], results_df['Group'].unique())
+    group_selected =  st.sidebar.selectbox('Select Group', groups)
+    if group_selected != 'ALL':
+        results_df = results_df.query('Group == @group_selected')
+        
+    return results_df
+
+def show_metrics(filtered_df):
+    total_count = filtered_df.UID.count()
+    positive_df = filtered_df.query('Test_Result=="POSITIVE"')
+    positive_count = positive_df.Test_Result.count()
+    ten_days_date = (datetime.datetime.today() - datetime.timedelta(days=10)).date()
+    active_df = positive_df.query('Test_Date > @ten_days_date')
+    active_count = len(active_df.UID.unique())
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Active Cases", str(active_count))
+    col2.metric("Total Positive Tests", str(positive_count))
+    col3.metric("Total Tests Administered", str(total_count))
 
 if __name__ == '__main__':
     results_df = get_results_from_bq()
-    results_counts_all = pd.DataFrame({'count': results_df.groupby(['Test_Result']).size()}).reset_index()
-    results_counts_dis = pd.DataFrame({'count': results_df.groupby(['District','Test_Result']).size()}).reset_index()
-    
-    # draw_progress()
-    draw_donut()
+    filtered_df = apply_filters(results_df)
+    show_metrics(filtered_df)
+    draw_donut(filtered_df)
