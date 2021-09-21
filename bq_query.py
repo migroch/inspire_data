@@ -14,7 +14,7 @@ else:
     credentials = None
     credentials_flag = None
 
-bq_client = bigquery.Client(project='covidtesting-1602910185026', credentials=credentials)
+#bq_client = bigquery.Client(project='covidtesting-1602910185026', credentials=credentials)
     
 def bq_query(query):
     if credentials_flag:
