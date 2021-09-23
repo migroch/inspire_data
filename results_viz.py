@@ -8,7 +8,7 @@ from matplotlib.lines import Line2D
 import streamlit as st
 from bq_query import get_results_from_bq
 import pdb
-from streamlit_d3_demo import d3_line
+#from streamlit_d3_line import d3_line
 import random
 from typing import List
 from typing import Tuple
@@ -183,4 +183,4 @@ if __name__ == '__main__':
     filtered_df = apply_filters(results_df)
     show_metrics(filtered_df)
     draw_donut(filtered_df)
-    # draw_d3Line(filtered_df)
+    #draw_d3Line(filtered_df)
