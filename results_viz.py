@@ -148,14 +148,17 @@ def apply_filters(results_df):
     district_selected = st.sidebar.selectbox('Select District', districts)
     if district_selected != 'ALL':
         results_df = results_df.query('District == @district_selected')
-        
+
     sites = np.append(['ALL'], results_df['Organization'].unique())
     site_selected = st.sidebar.selectbox('Select Site', sites)
     if site_selected != 'ALL':
         results_df = results_df.query('Organization == @site_selected')
 
     ## Apply group filters
-    results_df = results_df.query('Group in ["STAFF", "STUDENT"]')
+    results_df['Group'] = results_df[['Group','Organization']].apply(
+        lambda x: x['Organization'].split('-')[1] if pd.isnull(x['Group']) else x['Group'],
+        axis=1
+    )
     groups = np.append(['ALL'], results_df['Group'].unique())
     group_selected =  st.sidebar.selectbox('Select Group', groups)
     if group_selected != 'ALL':
