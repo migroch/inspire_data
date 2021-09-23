@@ -35,6 +35,11 @@ results_df = read_inspire_files('data/results/all_*.csv')
 results_df = results_df.rename(columns={col: col.replace(' ','_') for col in results_df.columns})
 results_df['Phone'] = results_df['Phone'].astype('Int64')
 results_df['Test_Date'] = pd.to_datetime(results_df.Test_Date.apply(lambda x: x+'/2021'))
+results_df['Group'] = results_df[['Group','Organization']].apply(
+        lambda x: x['Organization'].split('-')[1] if pd.isnull(x['Group']) else x['Group'],
+        axis=1
+    )
+results_df['Group'][~results_df['Group'].isin(['STUDENT', 'STAFF'])] = 'STUDENT'
 
 #results_df = results_df[~results_df.duplicated(subset='')]
 results_df['key1'] = (results_df['Last_Name'].apply(lambda s: s.lower().split('-')[0].split(' ')[0]) +
