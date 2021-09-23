@@ -171,7 +171,7 @@ def show_metrics(filtered_df):
     positive_df = filtered_df.query('Test_Result=="POSITIVE"')
     positive_count = positive_df.Test_Result.count()
     ten_days_date = (datetime.datetime.today() - datetime.timedelta(days=10)).date()
-    active_df = positive_df.query('Test_Date > @ten_days_date')
+    active_df = positive_df.query('Test_Date >= @ten_days_date')
     active_count = len(active_df.UID.unique())
     col1, col2, col3 = st.columns(3)
     col1.metric("Active Cases", str(active_count))
