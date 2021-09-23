@@ -1,13 +1,17 @@
 import pandas as pd
 import numpy as np
 import datetime
-from math import pi
+from math import log, pi
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 import streamlit as st
 from bq_query import get_results_from_bq
 import pdb
+from streamlit_d3_demo import d3_line
+import random
+from typing import List
+from typing import Tuple
 
 def  get_pct_labels(x):
     if x < 2: return None
@@ -60,6 +64,17 @@ def draw_donut(filtered_df):
 
     st.pyplot(fig)
     
+def draw_d3Line(filtered_df):
+    fig_data = pd.DataFrame({'pos_count': filtered_df[filtered_df['Test_Result']=='POSITIVE'].groupby(['Test_Date']).size()}).reset_index()
+    fig_data['ordinal_date'] = fig_data['Test_Date'].apply(lambda x: x.toordinal() - 738032)
+    fig_data['rolling_count'] = fig_data['pos_count'].cumsum()
+    fig_data = list(zip(fig_data['ordinal_date'], fig_data['rolling_count']))
+
+    circle_radius = st.sidebar.slider("Circle radius", 1, 25, 5)
+    circle_color = st.sidebar.color_picker("Circle color", "#ED647C")
+
+    d3_line(fig_data, circle_radius, circle_color, key="d3")
+
 def draw_progress():
     districts = np.append(['ALL'], results_df['District'].unique())
     district_selected = st.sidebar.selectbox('Select District', districts)
@@ -105,6 +120,7 @@ def draw_progress():
     fig.suptitle('Total Tests Administered: ' + str(total_tests), fontsize=10)
     plt.tight_layout()
     st.pyplot(fig)
+
 
 def apply_filters(results_df):
     '''
@@ -164,3 +180,4 @@ if __name__ == '__main__':
     filtered_df = apply_filters(results_df)
     show_metrics(filtered_df)
     draw_donut(filtered_df)
+    # draw_d3Line(filtered_df)
