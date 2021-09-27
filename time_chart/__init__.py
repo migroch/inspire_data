@@ -17,9 +17,9 @@ else:
 
 
 def time_chart(
-    data: List[Tuple[date, int]],
-    circle_radius: int = 15,
-    circle_color: str = "#6495ed",
+    data: List[Tuple[str, float, int, int, int, int]],
+    circle_radius: int = 5,
+    circle_color: str = "#197A7B",
     height: int = 400,
     width: int = 600,
     margin: Dict = None,

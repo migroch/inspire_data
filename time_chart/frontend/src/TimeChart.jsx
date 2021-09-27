@@ -22,10 +22,11 @@ const buildScales = (args) => {
 }
 
 const TimeChart = (props) => {
-    props.args.data =  props.args.data.map(d => [new Date(d[0]), d[1]])
+    props.args.data =  props.args.data.map(d => [new Date(d[0]), d[1], d[2], d[3], d[4], d[5]])
     const svgRef = useRef(null)
     const transitionMillisec = 1200
     const {svgWidth, svgHeight, circleRadius, circleColor, margin, data} = props.args
+    console.log(data)
     
     // On mount, create group containers for circles, path and both axis
     useEffect(() => {

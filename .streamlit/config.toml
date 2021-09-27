@@ -1,5 +1,12 @@
 [theme]
-primaryColor="#F63366"
+base="light"
+#primaryColor="#F63366"
+#primaryColor="#005d80"
+#primaryColor = "#00a6a3"
+#primaryColor = "#0d6efd"
+#primaryColor = "#0dcaf0"
+#primaryColor ="#699900"
+primaryColor ="#197A7B"
 backgroundColor="#FFFFFF"
 secondaryBackgroundColor="#F0F2F6"
 textColor="#262730"
