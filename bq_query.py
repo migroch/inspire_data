@@ -1,8 +1,10 @@
 from os.path import exists
 from google.oauth2 import service_account
 from google.cloud import bigquery
+import pandas as pd
 import pandas_gbq
 import streamlit as st
+
 
 # Create API client.
 if exists('.streamlit/secrets.toml'):
@@ -14,23 +16,22 @@ else:
     credentials = None
     credentials_flag = None
 
-#bq_client = bigquery.Client(project='covidtesting-1602910185026', credentials=credentials)
+try:
+    bq_client = bigquery.Client(project='covidtesting-1602910185026', credentials=credentials)
+except:
+    print('WARNING: No credential file found, using pandas_gbq as BigQuery client')
     
 def bq_query(query):
     if credentials_flag:
-        ## Perform query.
-        ## Uses st.cache to only rerun when the query changes or after 10 min.
-        #query_job = bq_client.query(query)
-        #rows_raw = query_job.result()
-        ## Convert to list of dicts. Required for st.cache to hash the return value.
-        #rows = [dict(row) for row in rows_raw]
-        #return rows
-        df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026", credentials=credentials)
+        query_job = bq_client.query(query)
+        rows_raw = query_job.result()
+        rows = [dict(row) for row in rows_raw]
+        df = pd.DataFrame(rows) 
     else:
         df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026")
     return df   
     
-#@st.cache
+@st.cache
 def get_results_from_bq():
     '''
     Get inspire results data from bigquery
