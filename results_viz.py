@@ -191,7 +191,7 @@ if __name__ == '__main__':
     if 'district' in selections_dict.keys():
         district = selections_dict['district']
     if district == 'ALL': district = 'Santa Cruz County'
-    n_sites = filtered_df.Organization.nunique()
+    n_sites = filtered_df.Organization.str.split('-', expand=True)[0].nunique()
     #title_col1, title_col2 = st.columns(2)
     st.markdown(f'<h1 style="color: #699900;">{district}</h1>' , unsafe_allow_html=True)
     st.markdown(f'<p style="color: grey;">{n_sites} Testing Locations</p>' , unsafe_allow_html=True)
