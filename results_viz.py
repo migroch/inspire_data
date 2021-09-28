@@ -8,7 +8,7 @@ from time_chart import time_chart
 #import draw_donut from donut_charts
 #import pdb
     
-def apply_filters(results_df, site_filter=False):
+def apply_filters(results_df, district_filter=False, site_filter=False):
     '''
     Apply filters and return the data frame to use for figures
     '''
@@ -17,8 +17,10 @@ def apply_filters(results_df, site_filter=False):
     ## Apply district and school filters
     districts = np.append(['ALL'], filtered_df['District'].unique())
     district_selected = st.sidebar.selectbox('Select District', districts)
-    if district_selected != 'ALL':
-        filtered_df = filtered_df.query('District == @district_selected')
+    
+    if district_filter:
+        if district_selected != 'ALL':
+            filtered_df = filtered_df.query('District == @district_selected')
 
     if site_filter:    
         sites = np.append(['ALL'], filtered_df['Organization'].unique())
