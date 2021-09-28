@@ -1,3 +1,8 @@
 .streamlit-expander{
   border: none !important;
 }
+
+.row_heading{
+  display: none !important;
+}
+

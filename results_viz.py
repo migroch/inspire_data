@@ -159,10 +159,10 @@ def show_weekly_metrics(filtered_df):
         #display_df = weeklymetrics_df.set_index(display_index).drop(columns='Week')
         display_df = weeklymetrics_df.sort_values('Week', ascending=False)
         display_df = display_df.drop(columns='Week')
-        st.dataframe(display_df.style.hide_index().apply(
+        display_df_styler = display_df.style.hide_index().apply(
             lambda x: [f"background-color:{'#0dcaf0' if x.name==display_df.index[0] else 'white'};" for row in x]
             , axis=1 ).hide_index()
-            )
+        st.dataframe(display_df_styler)
         st.caption('Highlighted row is for current week in progress')
         
 def draw_time_chart(filtered_df):
