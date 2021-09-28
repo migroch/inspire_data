@@ -51,10 +51,12 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
                                )   
         filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
         
-    if site_filter:
+    if site_filter and distict_filter:
         selections_dict = {'week_range':week_range, 'date_range':date_range, 'district': district_selected, 'site':site_selected}
+    elif district_filter:
+        selections_dict = {'week_range':week_range, 'date_range':date_range, 'district': district_selected}    
     else:
-        selections_dict = {'week_range':week_range, 'date_range':date_range, 'district': district_selected}
+        selections_dict = {'week_range':week_range, 'date_range':date_range}
     return filtered_df, selections_dict
 
 def get_weeklymetrics_df(filtered_df):
@@ -158,7 +160,9 @@ if __name__ == '__main__':
     local_css('styles/main.css')
     results_df = get_results_from_bq()
     filtered_df, selections_dict = apply_filters(results_df)
-    district = selections_dict['district']
+    district =  'Santa Cruz County'
+    if 'district' in selections_dict.keys():
+        district = selections_dict['district']
     if district == 'ALL': district = 'Santa Cruz County'
     #title_col1, title_col2 = st.columns(2)
     #title_col1.title('Tests Results for:')
