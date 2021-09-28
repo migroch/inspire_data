@@ -153,6 +153,8 @@ def draw_time_chart(filtered_df):
     time_chart(fig_data,  key="time_chart")    
     
 if __name__ == '__main__':
+    import_bootstrap()
+    local_css('styles/main.css')
     results_df = get_results_from_bq()
     filtered_df, selections_dict = apply_filters(results_df)
     district = selections_dict['district']

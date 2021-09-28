@@ -19,5 +19,4 @@ def import_bootstrap():
     <script src="styles/bootstrap.bundle.min.js"></script>
     ''', unsafe_allow_html=True)
 
-import_bootstrap()
-local_css('styles/main.css')
+
