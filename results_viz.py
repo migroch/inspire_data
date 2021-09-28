@@ -1,3 +1,4 @@
+import time
 import datetime
 import pandas as pd
 import numpy as np
@@ -7,7 +8,8 @@ from bq_query import get_results_from_bq
 from time_chart import time_chart
 #import draw_donut from donut_charts
 #import pdb
-    
+st.set_page_config(layout="wide")
+
 def apply_filters(results_df, district_filter=False, site_filter=False):
     '''
     Apply filters and return the data frame to use for figures
@@ -60,12 +62,13 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
     return filtered_df, selections_dict
 
 def get_weeklymetrics_df(filtered_df):
-    weeklymetrics_df_columns =  ['Week', 'Dates', 'Active Cases', 'Positives', 'Tests Completed' ]
+    weeklymetrics_df_columns =  ['Week', 'Dates', 'Active Cases', 'Positives', 'People Tested', 'Tests Completed' ]
     weeklymetrics_df = pd.DataFrame(columns=weeklymetrics_df_columns)   
     weeks = filtered_df.Week.sort_values().unique()
     for week in weeks:
         week_df = filtered_df.query('Week == @week')
         total_week_count = week_df.UID.count()
+        unique_week_count = week_df.UID.nunique()
         positive_df = week_df.query('Test_Result=="POSITIVE"')
         positive_count = positive_df.Test_Result.count()
         week_date_min = week_df.Test_Date.min()
@@ -75,7 +78,7 @@ def get_weeklymetrics_df(filtered_df):
         active_df = filtered_df.query('Test_Result=="POSITIVE" and Test_Date>=@active_date_min and Test_Date<=@active_date_max')
         active_count = len(active_df.UID.unique())
         dates = week_date_min.strftime('%m/%d/%y')+'-'+week_date_max.strftime('%m/%d/%y')
-        row = [week, dates, active_count, positive_count, total_week_count]
+        row = [week, dates, active_count, positive_count, unique_week_count, total_week_count]
         weeklymetrics_df = pd.concat([weeklymetrics_df, pd.DataFrame([row], columns=weeklymetrics_df_columns, index=[week])])
 
     return weeklymetrics_df
@@ -85,25 +88,28 @@ def show_metrics(filtered_df):
     Show the active, positive and total tests metrics
     '''
     total_count = filtered_df.UID.count()
+    unique_count = filtered_df.UID.nunique()
     positive_df = filtered_df.query('Test_Result=="POSITIVE"')
     positive_count = positive_df.Test_Result.count()
     ten_days_date = (datetime.datetime.today() - datetime.timedelta(days=10)).date()
     active_df = positive_df.query('Test_Date >= @ten_days_date')
     active_count = len(active_df.UID.unique())
-    sum_col1, sum_col2, sum_col3 = st.columns(3)
+    sum_col1, sum_col2, sum_col3, sum_col4 = st.columns(4)
     sum_col1.subheader("Current Active Cases:")
-    sum_col1.markdown(f"<p  class='text-danger fs-1'>{active_count}</p>", unsafe_allow_html=True)
+    a_text = sum_col1.empty()
     sum_col2.subheader("Total Positive Tests:")
-    sum_col2.markdown(f"<p   class='text-warning fs-1'>{positive_count}</p>", unsafe_allow_html=True)
-    sum_col3.subheader('Total Test Administered:')
-    sum_col3.markdown(f"<p   class='text-success fs-1'>{total_count}</p>", unsafe_allow_html=True)
-
+    p_text = sum_col2.empty()
+    sum_col3.subheader('Total People Tested:')
+    u_text = sum_col3.empty()
+    sum_col4.subheader('Total Test Administered:')
+    t_text = sum_col4.empty()
+    
     weeklymetrics_df = get_weeklymetrics_df(filtered_df)
     lastweek_dates = weeklymetrics_df.sort_values('Week').iloc[-2].Dates
     prevweek_dates = weeklymetrics_df.sort_values('Week').iloc[-3].Dates
     st.subheader(f"Last Week's Data")
     st.text(f"{lastweek_dates}")
-    active_col, positives_col, ntests_col = st.columns(3)    
+    active_col, positives_col, unique_col, ntests_col = st.columns(4)    
     #week_col.metric(label="Week", value=str(weeklymetrics_df.iloc[-1].Week))
     #dates_col.metric(label="Dates", value=weeklymetrics_df.iloc[-1].Dates)
     delta = weeklymetrics_df.iloc[-2]['Active Cases']-weeklymetrics_df.iloc[-3]['Active Cases']
@@ -112,6 +118,9 @@ def show_metrics(filtered_df):
     delta = weeklymetrics_df.iloc[-2].Positives-weeklymetrics_df.iloc[-3].Positives
     delta = delta if delta !=0 else None 
     positives_col.metric(label="Positive Tests", value=weeklymetrics_df.iloc[-2].Positives,  delta=delta )
+    delta = weeklymetrics_df.iloc[-2]['People Tested']-weeklymetrics_df.iloc[-3]['People Tested']
+    delta = delta if delta !=0 else None 
+    unique_col.metric(label="People Tested", value=weeklymetrics_df.iloc[-2]['People Tested'],  delta=delta)
     delta = weeklymetrics_df.iloc[-2]['Tests Completed']-weeklymetrics_df.iloc[-3]['Tests Completed']
     delta = delta if delta !=0 else None 
     ntests_col.metric(label="Tests Completed", value=weeklymetrics_df.iloc[-2]['Tests Completed'],  delta=delta)
@@ -122,7 +131,24 @@ def show_metrics(filtered_df):
         display_df = weeklymetrics_df.set_index(display_index).drop(columns='Week')
         display_df = display_df.sort_values('Week', ascending=False)
         st.dataframe(display_df)
+    return active_count, positive_count, unique_count, total_count, a_text, p_text, u_text, t_text
 
+def animate_metrics(active_count, positive_count,  unique_count, total_count, a_text, p_text, u_text, t_text):
+    a_count = 0
+    p_count = 0
+    u_count = 0
+    t_count = 0
+    for i in range(100):
+        a_count = int((i+1)*(active_count/100))
+        p_count = int((i+1)*(positive_count/100))
+        u_count = int((i+1)*(unique_count/100))
+        t_count = int((i+1)*(total_count/100))
+        a_text.markdown(f"<p  class='text-danger fs-1'>{a_count}</p>", unsafe_allow_html=True)
+        p_text.markdown(f"<p   class='text-warning fs-1'>{p_count}</p>", unsafe_allow_html=True)
+        u_text.markdown(f"<p   class='text-primary fs-1'>{u_count}</p>", unsafe_allow_html=True)
+        t_text.markdown(f"<p   class='text-success fs-1'>{t_count}</p>", unsafe_allow_html=True)
+        time.sleep(0.05)  
+        
 def draw_time_chart(filtered_df):
     '''
     Create a d3 component with a results vs time chart of test results
@@ -164,10 +190,12 @@ if __name__ == '__main__':
     if 'district' in selections_dict.keys():
         district = selections_dict['district']
     if district == 'ALL': district = 'Santa Cruz County'
+    n_sites = filtered_df.Organization.nunique()
     #title_col1, title_col2 = st.columns(2)
-    #title_col1.title('Tests Results for:')
-    st.markdown(f'<h1 style="color: grey;">{district}</h1>' , unsafe_allow_html=True)
-    show_metrics(filtered_df)
-    with st.expander("Show Time Trends"):
-        draw_time_chart(filtered_df)
+    st.markdown(f'<h1 style="color: #699900;">{district}</h1>' , unsafe_allow_html=True)
+    st.markdown(f'<p style="color: grey;">{n_sites} Testing Locations</p>' , unsafe_allow_html=True)
+    active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_metrics(filtered_df)
+    animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
+    #with st.expander("Show Time Trends"):
+    #    draw_time_chart(filtered_df)
     #draw_donut(filtered_df)
