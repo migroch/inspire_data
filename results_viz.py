@@ -14,11 +14,10 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
     '''
     filtered_df = results_df
     
-    ## Apply district and school filters
-    districts = np.append(['ALL'], filtered_df['District'].unique())
-    district_selected = st.sidebar.selectbox('Select District', districts)
-    
+    ## Apply district and school filters 
     if district_filter:
+        districts = np.append(['ALL'], filtered_df['District'].unique())
+        district_selected = st.sidebar.selectbox('Select District', districts)
         if district_selected != 'ALL':
             filtered_df = filtered_df.query('District == @district_selected')
 
