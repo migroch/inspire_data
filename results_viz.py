@@ -7,7 +7,7 @@ from import_styles import *
 from bq_query import get_results_from_bq
 from time_chart import time_chart
 #import draw_donut from donut_charts
-#import pdb
+import pdb
 st.set_page_config(layout="wide")
 
 def apply_filters(results_df, district_filter=False, site_filter=False):
@@ -117,8 +117,8 @@ def get_weeklymetrics_df(filtered_df):
         unique_week_count = week_df.UID.nunique()
         positive_df = week_df.query('Test_Result=="POSITIVE"')
         positive_count = positive_df.Test_Result.count()
-        week_date_min = week_df.Test_Date.min()
-        week_date_max = week_df.Test_Date.max()
+        week_date_min = week_df.Week_First_Day.min().date()
+        week_date_max = week_df.Week_Last_Day.max().date()
         active_date_min = week_date_min  - datetime.timedelta(days=10)
         active_date_max = week_date_max
         active_df = filtered_df.query('Test_Result=="POSITIVE" and Test_Date>=@active_date_min and Test_Date<=@active_date_max')
@@ -211,10 +211,12 @@ if __name__ == '__main__':
 
     # Show latest metrics
     active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_latest_metrics(filtered_df)
-    animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
-
+    
     # Show weekly metrics
     show_weekly_metrics(filtered_df)
+
+    # Animate latest metrics
+    animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
 
     # Show time chart
     #with st.expander("Show Time Trends"):

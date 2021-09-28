@@ -1,4 +1,5 @@
 from os.path import exists
+import datetime
 from google.oauth2 import service_account
 from google.cloud import bigquery
 import pandas as pd
@@ -41,6 +42,12 @@ def get_results_from_bq():
     FROM `InspireTesting.results`
     """
     df = bq_query(query)
+    df['Week_First_Day'] = df.Test_Date.apply(
+        lambda x: datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1]-1)+'-0', "%Y-%W-%w")
+    )
+    df['Week_Last_Day'] = df.Test_Date.apply(
+        lambda x: datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1])+'-6', "%Y-%W-%w")
+    )
     df['Week'] = df.Test_Date.dt.week - df.Test_Date.dt.week.min()  + 1
     df['Test_Date'] = df.Test_Date.dt.date    
     return df
