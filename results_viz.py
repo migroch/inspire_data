@@ -103,7 +103,7 @@ def show_metrics(filtered_df):
     u_text = sum_col3.empty()
     sum_col4.subheader('Total Tests Administered:')
     t_text = sum_col4.empty()
-    st.caption(f"Most recent test date: {filtered_df.Test_Date.max().strftime('%m/%d/%y')}")
+    st.caption(f"Last updated on {filtered_df.Test_Date.max().strftime('%m/%d/%y')}")
     
     weeklymetrics_df = get_weeklymetrics_df(filtered_df)
     lastweek_dates = weeklymetrics_df.sort_values('Week').iloc[-2].Dates
