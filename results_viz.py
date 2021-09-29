@@ -166,10 +166,10 @@ def show_weekly_metrics(filtered_df):
         display_df = weeklymetrics_df.sort_values('Week', ascending=False)
         display_df = display_df.drop(columns='Week')
         display_df_styler = display_df.style.hide_index().apply(
-            lambda x: [f"background-color:{'#0dcaf0' if x.name==display_df.index[0] else 'white'};" for row in x]
+            lambda x: [f"background-color:{'#9AE100' if x.name==display_df.index[0] else 'white'};" for row in x]
             , axis=1 ).hide_index()
         st.dataframe(display_df_styler)
-        st.caption('Highlighted row is for current week in progress')
+        st.caption("Highlighted row shows current week's data (week in progress).")
         
 def draw_time_chart(filtered_df):
     '''
@@ -226,10 +226,10 @@ if __name__ == '__main__':
     # Show weekly metrics
     show_weekly_metrics(filtered_df)
 
-    # Animate latest metrics
-    animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
-
     # Show time chart
     #with st.expander("Show Time Trends"):
-    #    draw_time_chart(filtered_df)
+    #draw_time_chart(filtered_df)
+
+    # Animate latest metrics
+    animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
 
