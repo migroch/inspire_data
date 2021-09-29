@@ -31,12 +31,12 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
 
     ## Apply group filters
     groups = np.append(['ALL'], filtered_df['Group'].unique())
-    group_selected =  st.sidebar.selectbox('Select Group', groups)
+    group_selected =  st.selectbox('Select Group', groups)
     if group_selected != 'ALL':
         filtered_df = filtered_df.query('Group == @group_selected')
 
     ## Apply date filters
-    with st.sidebar.expander("Date Filter"):
+    with st.expander("Date Filter"):
        # week_range = st.slider('Select Weeks', min_value=int(filtered_df.Week.min()),
        #                       max_value=int(filtered_df.Week.max()),
        #                        value = (int(filtered_df.Week.min()), int(filtered_df.Week.max())),
