@@ -7,8 +7,14 @@ from import_styles import *
 from bq_query import get_results_from_bq
 from time_chart import time_chart
 #import draw_donut from donut_charts
-import pdb
-st.set_page_config(layout="wide")
+#import pdb
+st.set_page_config(
+    layout="wide",
+    page_title="Santa Cruz County Covid Testing Dashboard",
+    #page_icon="🧊",
+    initial_sidebar_state="collapsed",
+)
+
 
 def apply_filters(results_df, district_filter=False, site_filter=False):
     '''
