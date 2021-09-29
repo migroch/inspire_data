@@ -7,7 +7,7 @@ from import_styles import *
 from bq_query import get_results_from_bq
 from time_chart import time_chart
 #import draw_donut from donut_charts
-#import pdb
+import pdb
 st.set_page_config(layout="wide")
 
 def apply_filters(results_df, district_filter=False, site_filter=False):
@@ -36,14 +36,14 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
         filtered_df = filtered_df.query('Group == @group_selected')
 
     ## Apply date filters
-    with st.sidebar.expander("Week and Date Filters"):
-        week_range = st.slider('Select Weeks', min_value=int(filtered_df.Week.min()),
-                               max_value=int(filtered_df.Week.max()),
-                               value = (int(filtered_df.Week.min()), int(filtered_df.Week.max())),
-                               format = "Week %i",
-                               help = f"Select the week number since the start of the program (first results on: {filtered_df.Test_Date.min()})"
-                               )
-        filtered_df = filtered_df.query('Week >= @week_range[0] and Week <= @week_range[1]')
+    with st.sidebar.expander("Date Filter"):
+       # week_range = st.slider('Select Weeks', min_value=int(filtered_df.Week.min()),
+       #                       max_value=int(filtered_df.Week.max()),
+       #                        value = (int(filtered_df.Week.min()), int(filtered_df.Week.max())),
+       #                        format = "Week %i",
+       #                        help = f"Select the week number since the start of the program (first results on: {filtered_df.Test_Date.min()})"
+       #                        )
+       # filtered_df = filtered_df.query('Week >= @week_range[0] and Week <= @week_range[1]')
         
         date_range = st.slider('Select Dates', min_value=filtered_df.Test_Date.min(),
                                max_value=filtered_df.Test_Date.max(),
@@ -54,38 +54,17 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
         filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
         
     if site_filter and distict_filter:
-        selections_dict = {'week_range':week_range, 'date_range':date_range, 'district': district_selected, 'site':site_selected}
+        selections_dict = { 'date_range':date_range, 'district': district_selected, 'site':site_selected}
     elif district_filter:
-        selections_dict = {'week_range':week_range, 'date_range':date_range, 'district': district_selected}    
+        selections_dict = { 'date_range':date_range, 'district': district_selected}    
     else:
-        selections_dict = {'week_range':week_range, 'date_range':date_range}
+        selections_dict = { 'date_range':date_range}
     return filtered_df, selections_dict
 
-def get_weeklymetrics_df(filtered_df):
-    weeklymetrics_df_columns =  ['Week', 'Dates', 'Active Cases', 'Positives', 'People Tested', 'Tests Completed' ]
-    weeklymetrics_df = pd.DataFrame(columns=weeklymetrics_df_columns)   
-    weeks = filtered_df.Week.sort_values().unique()
-    for week in weeks:
-        week_df = filtered_df.query('Week == @week')
-        total_week_count = week_df.UID.count()
-        unique_week_count = week_df.UID.nunique()
-        positive_df = week_df.query('Test_Result=="POSITIVE"')
-        positive_count = positive_df.Test_Result.count()
-        week_date_min = week_df.Test_Date.min()
-        week_date_max = week_df.Test_Date.max()
-        active_date_min = week_date_min  - datetime.timedelta(days=10)
-        active_date_max = week_date_max
-        active_df = filtered_df.query('Test_Result=="POSITIVE" and Test_Date>=@active_date_min and Test_Date<=@active_date_max')
-        active_count = len(active_df.UID.unique())
-        dates = week_date_min.strftime('%m/%d/%y')+'-'+week_date_max.strftime('%m/%d/%y')
-        row = [week, dates, active_count, positive_count, unique_week_count, total_week_count]
-        weeklymetrics_df = pd.concat([weeklymetrics_df, pd.DataFrame([row], columns=weeklymetrics_df_columns, index=[week])])
 
-    return weeklymetrics_df
-
-def show_metrics(filtered_df):
+def show_latest_metrics(filtered_df):
     '''
-    Show the active, positive and total tests metrics
+    Show the latest active, positive and total tests metrics
     '''
     total_count = filtered_df.UID.count()
     unique_count = filtered_df.UID.nunique()
@@ -104,12 +83,60 @@ def show_metrics(filtered_df):
     sum_col4.subheader('Total Tests Administered:')
     t_text = sum_col4.empty()
     st.caption(f"Last updated on {filtered_df.Test_Date.max().strftime('%m/%d/%y')}")
-    
+    return active_count, positive_count, unique_count, total_count, a_text, p_text, u_text, t_text
+
+def animate_metrics(active_count, positive_count,  unique_count, total_count, a_text, p_text, u_text, t_text):
+    '''
+    Animate the latest metrics text
+    '''
+    a_count = 0
+    p_count = 0
+    u_count = 0
+    t_count = 0
+    for i in range(100):
+        a_count = int((i+1)*(active_count/100))
+        p_count = int((i+1)*(positive_count/100))
+        u_count = int((i+1)*(unique_count/100))
+        t_count = int((i+1)*(total_count/100))
+        a_text.markdown(f"<p  class='text-danger fs-1'>{a_count}</p>", unsafe_allow_html=True)
+        p_text.markdown(f"<p   class='text-warning fs-1'>{p_count}</p>", unsafe_allow_html=True)
+        u_text.markdown(f"<p   class='text-primary fs-1'>{u_count}</p>", unsafe_allow_html=True)
+        t_text.markdown(f"<p   class='text-success fs-1'>{t_count}</p>", unsafe_allow_html=True)
+        time.sleep(0.05)  
+
+def get_weeklymetrics_df(filtered_df):
+    '''
+    Generate weeklymetrics_df
+    '''
+    weeklymetrics_df_columns =  ['Week', 'Dates', 'Active Cases', 'Positives', 'People Tested', 'Tests Completed' ]
+    weeklymetrics_df = pd.DataFrame(columns=weeklymetrics_df_columns)   
+    weeks = filtered_df.Week.sort_values().unique()
+    for week in weeks:
+        week_df = filtered_df.query('Week == @week')
+        total_week_count = week_df.UID.count()
+        unique_week_count = week_df.UID.nunique()
+        positive_df = week_df.query('Test_Result=="POSITIVE"')
+        positive_count = positive_df.Test_Result.count()
+        week_date_min = week_df.Week_First_Day.min().date()
+        week_date_max = week_df.Week_Last_Day.max().date()
+        if datetime.date.today() < week_date_max: week_date_max = datetime.date.today()
+        active_date_min = week_date_min  - datetime.timedelta(days=10)
+        active_date_max = week_date_max
+        active_df = filtered_df.query('Test_Result=="POSITIVE" and Test_Date>=@active_date_min and Test_Date<=@active_date_max')
+        active_count = len(active_df.UID.unique())
+        dates = week_date_min.strftime('%m/%d/%y')+' - '+week_date_max.strftime('%m/%d/%y')
+        row = [week, dates, active_count, positive_count, unique_week_count, total_week_count]
+        weeklymetrics_df = pd.concat([weeklymetrics_df, pd.DataFrame([row], columns=weeklymetrics_df_columns, index=[week])])
+    return weeklymetrics_df
+
+def show_weekly_metrics(filtered_df):
+    '''
+    Show last week's metrics and weekly table
+    '''
     weeklymetrics_df = get_weeklymetrics_df(filtered_df)
     lastweek_dates = weeklymetrics_df.sort_values('Week').iloc[-2].Dates
     prevweek_dates = weeklymetrics_df.sort_values('Week').iloc[-3].Dates
-    st.subheader(f"Last Week's Data")
-    st.text(f"{lastweek_dates}")
+    st.markdown(f"<h3>Last Week's Data     <small class='text-muted'>{lastweek_dates}</small></h3>",  unsafe_allow_html=True)
     active_col, positives_col, unique_col, ntests_col = st.columns(4)    
     #week_col.metric(label="Week", value=str(weeklymetrics_df.iloc[-1].Week))
     #dates_col.metric(label="Dates", value=weeklymetrics_df.iloc[-1].Dates)
@@ -128,27 +155,15 @@ def show_metrics(filtered_df):
     st.caption(f"Delta values represent changes from previous week ({prevweek_dates})")
     with st.expander("Show Weekly Data"):
         st.subheader("Weekly Data")
-        display_index = 'Week '+ weeklymetrics_df.Week.astype('str')
-        display_df = weeklymetrics_df.set_index(display_index).drop(columns='Week')
-        display_df = display_df.sort_values('Week', ascending=False)
-        st.dataframe(display_df)
-    return active_count, positive_count, unique_count, total_count, a_text, p_text, u_text, t_text
-
-def animate_metrics(active_count, positive_count,  unique_count, total_count, a_text, p_text, u_text, t_text):
-    a_count = 0
-    p_count = 0
-    u_count = 0
-    t_count = 0
-    for i in range(100):
-        a_count = int((i+1)*(active_count/100))
-        p_count = int((i+1)*(positive_count/100))
-        u_count = int((i+1)*(unique_count/100))
-        t_count = int((i+1)*(total_count/100))
-        a_text.markdown(f"<p  class='text-danger fs-1'>{a_count}</p>", unsafe_allow_html=True)
-        p_text.markdown(f"<p   class='text-warning fs-1'>{p_count}</p>", unsafe_allow_html=True)
-        u_text.markdown(f"<p   class='text-primary fs-1'>{u_count}</p>", unsafe_allow_html=True)
-        t_text.markdown(f"<p   class='text-success fs-1'>{t_count}</p>", unsafe_allow_html=True)
-        time.sleep(0.05)  
+        #display_index = 'Week '+ weeklymetrics_df.Week.astype('str')
+        #display_df = weeklymetrics_df.set_index(display_index).drop(columns='Week')
+        display_df = weeklymetrics_df.sort_values('Week', ascending=False)
+        display_df = display_df.drop(columns='Week')
+        display_df_styler = display_df.style.hide_index().apply(
+            lambda x: [f"background-color:{'#0dcaf0' if x.name==display_df.index[0] else 'white'};" for row in x]
+            , axis=1 ).hide_index()
+        st.dataframe(display_df_styler)
+        st.caption('Highlighted row is for current week in progress')
         
 def draw_time_chart(filtered_df):
     '''
@@ -176,27 +191,39 @@ def draw_time_chart(filtered_df):
         zip(fig_data.Test_Date, fig_data.pos_rate, fig_data.pos_count,
             fig_data.active_count, fig_data.test_count, fig_data.Week)
     )
-
     #circle_radius = st.sidebar.slider("Circle radius", 1, 25, 5)
     #circle_color = st.sidebar.color_picker("Circle color", "#ED647C")
-
     time_chart(fig_data,  key="time_chart")    
     
 if __name__ == '__main__':
+    # Import Styles
     import_bootstrap()
     local_css('styles/main.css')
+
+    # Get results data from BQ
     results_df = get_results_from_bq()
+
+    # Filter results based on widgets
     filtered_df, selections_dict = apply_filters(results_df)
     district =  'Santa Cruz County'
     if 'district' in selections_dict.keys():
         district = selections_dict['district']
     if district == 'ALL': district = 'Santa Cruz County'
     n_sites = filtered_df.Organization.str.split('-', expand=True)[0].nunique()
-    #title_col1, title_col2 = st.columns(2)
-    st.markdown(f'<h1 style="color: #699900;">{district}</h1>' , unsafe_allow_html=True)
-    st.markdown(f'<p style="color: grey;">{n_sites} Testing Locations</p>' , unsafe_allow_html=True)
-    active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_metrics(filtered_df)
+
+    # Write title
+    st.markdown(f'<h1 style="color: #699900;">{district}     <small class="text-muted">{n_sites} School Sites Participating</small></h1>' , unsafe_allow_html=True)
+
+    # Show latest metrics
+    active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_latest_metrics(filtered_df)
+    
+    # Show weekly metrics
+    show_weekly_metrics(filtered_df)
+
+    # Animate latest metrics
     animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
+
+    # Show time chart
     #with st.expander("Show Time Trends"):
     #    draw_time_chart(filtered_df)
-    #draw_donut(filtered_df)
+
