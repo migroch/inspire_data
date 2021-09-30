@@ -12,9 +12,8 @@ st.set_page_config(
     layout="wide",
     page_title="Santa Cruz County Covid Testing Dashboard",
     #page_icon="🧊",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state = "collapsed",
 )
-
 
 def apply_filters(results_df, district_filter=False, site_filter=False):
     '''
@@ -36,13 +35,12 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
             filtered_df = filtered_df.query('Organization == @site_selected')
 
     ## Apply group filters
-    groups = np.append(['ALL'], filtered_df['Group'].unique())
-    group_selected =  st.sidebar.selectbox('Select Group', groups)
-    if group_selected != 'ALL':
-        filtered_df = filtered_df.query('Group == @group_selected')
+    #groups = np.append(['ALL'], filtered_df['Group'].unique())
+    #if group_selected != 'ALL':
+    #    filtered_df = filtered_df.query('Group == @group_selected')
 
     ## Apply date filters
-    with st.sidebar.expander("Date Filter"):
+    #with st.sidebar.expander("Date Filter"):
        # week_range = st.slider('Select Weeks', min_value=int(filtered_df.Week.min()),
        #                       max_value=int(filtered_df.Week.max()),
        #                        value = (int(filtered_df.Week.min()), int(filtered_df.Week.max())),
@@ -51,15 +49,15 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
        #                        )
        # filtered_df = filtered_df.query('Week >= @week_range[0] and Week <= @week_range[1]')
         
-        date_range = st.slider('Select Dates', min_value=filtered_df.Test_Date.min(),
-                               max_value=filtered_df.Test_Date.max(),
-                               value = (filtered_df.Test_Date.min(), filtered_df.Test_Date.max()),
-                               format = "M/D/YY",
-                               help = "Select the dates within the selected weeks"
-                               )   
-        filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
+    date_range = st.sidebar.slider('Select Dates', min_value=filtered_df.Test_Date.min(),
+                           max_value=filtered_df.Test_Date.max(),
+                           value = (filtered_df.Test_Date.min(), filtered_df.Test_Date.max()),
+                           format = "M/D/YY",
+                           help = "Select the dates within the selected weeks"
+                           )   
+    filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
         
-    if site_filter and distict_filter:
+    if site_filter and district_filter:
         selections_dict = { 'date_range':date_range, 'district': district_selected, 'site':site_selected}
     elif district_filter:
         selections_dict = { 'date_range':date_range, 'district': district_selected}    
@@ -67,6 +65,15 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
         selections_dict = { 'date_range':date_range}
     return filtered_df, selections_dict
 
+def filter_groups(filtered_df):
+    groups = results_df['Group'].unique()
+    chk_cols = st.columns(8)
+    groups_selected =[]
+    for i,group in enumerate(groups):
+        selection =  chk_cols[i].checkbox(group, value=True,  on_change=None, args=None, kwargs=None)
+        if selection: groups_selected.append(group)
+    filtered_df = filtered_df.query('Group in @groups_selected')
+    return filtered_df    
 
 def show_latest_metrics(filtered_df):
     '''
@@ -80,13 +87,13 @@ def show_latest_metrics(filtered_df):
     active_df = positive_df.query('Test_Date >= @ten_days_date')
     active_count = len(active_df.UID.unique())
     sum_col1, sum_col2, sum_col3, sum_col4 = st.columns(4)
-    sum_col1.subheader("Current Active Cases:")
+    sum_col1.markdown("<h5>Current&nbspActive Cases:&nbsp&nbsp&nbsp</h5>", unsafe_allow_html=True)
     a_text = sum_col1.empty()
-    sum_col2.subheader("Total Positive Tests:")
+    sum_col2.markdown("<h5>Total&nbspPositive Tests:&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</h5>", unsafe_allow_html=True)
     p_text = sum_col2.empty()
-    sum_col3.subheader('Total People Tested:')
+    sum_col3.markdown("<h5>Total&nbspPeople Tested:&nbsp&nbsp&nbsp&nbsp&nbsp</h5>", unsafe_allow_html=True)
     u_text = sum_col3.empty()
-    sum_col4.subheader('Total Tests Administered:')
+    sum_col4.markdown("<h5>Total&nbspTests Completed:</h5>", unsafe_allow_html=True)
     t_text = sum_col4.empty()
     st.caption(f"Last updated on {filtered_df.Test_Date.max().strftime('%m/%d/%y')}")
     return active_count, positive_count, unique_count, total_count, a_text, p_text, u_text, t_text
@@ -159,7 +166,7 @@ def show_weekly_metrics(filtered_df):
     delta = delta if delta !=0 else None 
     ntests_col.metric(label="Tests Completed", value=weeklymetrics_df.iloc[-2]['Tests Completed'],  delta=delta)
     st.caption(f"Delta values represent changes from previous week ({prevweek_dates})")
-    with st.expander("Show Weekly Data"):
+    with st.expander("Show Weekly Data", expanded=True):
         st.subheader("Weekly Data")
         #display_index = 'Week '+ weeklymetrics_df.Week.astype('str')
         #display_df = weeklymetrics_df.set_index(display_index).drop(columns='Week')
@@ -205,10 +212,10 @@ if __name__ == '__main__':
     # Import Styles
     import_bootstrap()
     local_css('styles/main.css')
-
+    
     # Get results data from BQ
     results_df = get_results_from_bq()
-
+        
     # Filter results based on widgets
     filtered_df, selections_dict = apply_filters(results_df)
     district =  'Santa Cruz County'
@@ -220,6 +227,9 @@ if __name__ == '__main__':
     # Write title
     st.markdown(f'<h1 style="color: #699900;">{district}     <small class="text-muted">{n_sites} School Sites Participating</small></h1>' , unsafe_allow_html=True)
 
+    #Filter Groups
+    filtered_df = filter_groups(filtered_df)
+    
     # Show latest metrics
     active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_latest_metrics(filtered_df)
     
