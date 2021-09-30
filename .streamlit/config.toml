@@ -24,4 +24,4 @@ enableCORS = true
 enableXsrfProtection = true
 
 [client]
-showErrorDetails = true
+showErrorDetails = false
