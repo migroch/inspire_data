@@ -40,7 +40,7 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
     #    filtered_df = filtered_df.query('Group == @group_selected')
 
     ## Apply date filters
-    with st.sidebar.expander("Date Filter"):
+    #with st.sidebar.expander("Date Filter"):
        # week_range = st.slider('Select Weeks', min_value=int(filtered_df.Week.min()),
        #                       max_value=int(filtered_df.Week.max()),
        #                        value = (int(filtered_df.Week.min()), int(filtered_df.Week.max())),
@@ -49,13 +49,13 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
        #                        )
        # filtered_df = filtered_df.query('Week >= @week_range[0] and Week <= @week_range[1]')
         
-        date_range = st.slider('Select Dates', min_value=filtered_df.Test_Date.min(),
-                               max_value=filtered_df.Test_Date.max(),
-                               value = (filtered_df.Test_Date.min(), filtered_df.Test_Date.max()),
-                               format = "M/D/YY",
-                               help = "Select the dates within the selected weeks"
-                               )   
-        filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
+    date_range = st.slider('Select Dates', min_value=filtered_df.Test_Date.min(),
+                           max_value=filtered_df.Test_Date.max(),
+                           value = (filtered_df.Test_Date.min(), filtered_df.Test_Date.max()),
+                           format = "M/D/YY",
+                           help = "Select the dates within the selected weeks"
+                           )   
+    filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
         
     if site_filter and district_filter:
         selections_dict = { 'date_range':date_range, 'district': district_selected, 'site':site_selected}
