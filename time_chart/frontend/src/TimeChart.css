@@ -6,6 +6,18 @@
     fill:orange;
 }
 
+.area {
+    stroke: "black";
+    stroke-width: 1;
+    fill: "#ababab";
+    opacity: 0.3;
+}
+
+.line {
+    stroke: "#ffc107";
+    stroke-width: 1;
+}
+
 .tooltip {
     position: absolute;
     width: auto;
