@@ -149,14 +149,13 @@ def show_weekly_metrics(filtered_df):
     Show last week's metrics and weekly table
     '''
     weeklymetrics_df = get_weeklymetrics_df(filtered_df)
+    lastweek_dates = None
+    prevweek_dates = None
     if len(weeklymetrics_df.Week) > 1:
         lastweek_dates = weeklymetrics_df.sort_values('Week').iloc[-2].Dates
-    else:
-        lastweek_dates = None
     if len(weeklymetrics_df.Week) > 2:   
         prevweek_dates = weeklymetrics_df.sort_values('Week').iloc[-3].Dates
-    else:
-        prevweek_dates = None
+        
     if lastweek_dates:    
         st.markdown(f"<h3>Last Week's Data     <small class='text-muted'>{lastweek_dates}</small></h3>",  unsafe_allow_html=True)
         active_col, positives_col, unique_col, ntests_col = st.columns(4)    
@@ -168,7 +167,7 @@ def show_weekly_metrics(filtered_df):
                 delta = delta if delta !=0 else None
             except IndexError:
                 delta = None
-                return delta
+            return delta
         active_col.metric(label="Active Cases", value=weeklymetrics_df.iloc[-2]['Active Cases'],  delta=calculate_delta('Active Cases'))
         positives_col.metric(label="Positive Tests", value=weeklymetrics_df.iloc[-2].Positives,  delta=calculate_delta('Positives') )
         unique_col.metric(label="People Tested", value=weeklymetrics_df.iloc[-2]['People Tested'],  delta=calculate_delta('People Tested'))
