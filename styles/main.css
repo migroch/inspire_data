@@ -1,8 +1,10 @@
 /* styles/main.css
 /* Global styles for results_viz.py*/
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-.block-container {padding:20 !important;}
+#MainMenu {visibility: hidden !important;}
+footer {visibility: hidden !important;}
+.viewerBadge_link__1S137{visibility: hidden !important;}
+viewerBadge_container__1QSob{visibility: hidden !important;}
+.block-container {padding:20px !important;}
 
 .streamlit-expander{
   border: none !important;
