@@ -32,7 +32,7 @@ def bq_query(query):
         df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026")
     return df   
     
-@st.cache(ttl=300)
+@st.cache(show_spinner=False, ttl=300)
 def get_results_from_bq():
     '''
     Get inspire results data from bigquery
@@ -49,5 +49,6 @@ def get_results_from_bq():
         lambda x: datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1])+'-6', "%Y-%W-%w")
     )
     df['Week'] = df.Test_Date.dt.week - df.Test_Date.dt.week.min()  + 1
-    df['Test_Date'] = df.Test_Date.dt.date    
+    df['Test_Date'] = df.Test_Date.dt.date
+    df['Group'] = df['Group'].replace({'STAFF':'Staff', 'STUDENT':'Students'})
     return df

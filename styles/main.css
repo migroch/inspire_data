@@ -1,8 +1,20 @@
+/* styles/main.css
+/* Global styles for results_viz.py*/
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+.block-container {padding:20 !important;}
+
 .streamlit-expander{
   border: none !important;
 }
 
 .row_heading{
   display: none !important;
+}
+
+.css-12w0qpk {
+  border-left: 1px solid rgba(38, 39, 48, 0.6);
+  padding-left: 15px;
+  padding-right: none;
 }
 
