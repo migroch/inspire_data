@@ -45,14 +45,14 @@ const TimeChart = (props) => {
         svgElement.append("text").classed('active-label', true)
     }, [])
 
-    // Hook to create / update y-axis
+    // Hook to create / update axis and grid
     useEffect(() => {
         const svgElement = d3.select(svgRef.current)
         const [xScale, pos_yScale, active_yScale] = buildScales(props.args)
 
         const xAxis = (g) => g.attr("transform", `translate(0, ${svgHeight - margin.bottom})`)
             .transition().duration(transitionMillisec)
-            .call(d3.axisBottom(xScale))
+            .call(d3.axisBottom(xScale).ticks().tickSize(-1 * (svgHeight - margin.top - margin.bottom)).tickSizeOuter(0))
         const active_yAxis = (g) => g.attr("transform", `translate(${margin.left}, 0)`)
             .transition().duration(transitionMillisec)
             .call(d3.axisLeft(active_yScale))
@@ -73,124 +73,124 @@ const TimeChart = (props) => {
     })
 
     // Hook to create / update pos-circles
-    useEffect(() => {
-        const svgElement = d3.select(svgRef.current)
-        const [xScale, pos_yScale, active_yScale] = buildScales(props.args)
+    // useEffect(() => {
+    //     const svgElement = d3.select(svgRef.current)
+    //     const [xScale, pos_yScale, active_yScale] = buildScales(props.args)
 
-        svgElement.select(".pos-circles").selectAll("circle")
-            .data(data, (d) => d)
-            .join(
-                enter => (
-                    enter.append("circle")
-                        // Bind each circle to [x,y] coordinate
-                        .classed(styles.circle, true)
-                        .attr("cx", (d) => xScale(d[0]))
-                        .attr("cy", (d) => pos_yScale(d[1]))
-                        .attr("fill", circleColor)
-                        .attr("r", 0)
-                        // Transition from invisible to visible circle
-                        .call(el => el.transition().duration(transitionMillisec).attr("r", circleRadius))
-                        // Add d3 mouseover to display and move tooltip around
-                        .on("mouseover", (d, i, ns) => {
-                            const [x, y] = d3.mouse(ns[i])
-                            d3.select(".tooltip")
-                                .attr("hidden", null)
-                                .style("left", `${x}px`)
-                                .style("top", `${y}px`)
-                                .text(`Data : ${d}`)
-                        })
-                        .on("mouseout", _ => {
-                            d3.select(".tooltip").attr("hidden", true)
-                        })
-                ),
-                update => update.call(el =>
-                    // If circle has not changed coordinates, maybe data scale changed
-                    // so transition from original position to new position
-                    el.transition().duration(transitionMillisec)
-                        .attr("cy", (d) => pos_yScale(d[1]))
-                        // NB : keep radius value, it seems in Streamlit lifecycle there are 2 renders when mounting ?
-                        // so circles enter and during transition to full radius rerender
-                        // so if r < circleRadius while update then animation breaks and circle stay small for first render
-                        .attr("r", circleRadius)
-                        .attr("fill", circleColor)
-                ),
-                exit => (
-                    // Close tooltip and remove mouse events
-                    exit.dispatch("mouseout")
-                        .on("mouseover", null)
-                        .on("mouseout", null)
-                        // Transition from visible to invisible circle then remove entirely
-                        .call(el =>
-                            el.transition().duration(transitionMillisec / 2)
-                                .attr("r", 0)
-                                .attr("fill", "tomato")
-                                .style("opacity", 0)
-                                .remove()
-                        )
-                ),
-            )
-    })
+    //     svgElement.select(".pos-circles").selectAll("circle")
+    //         .data(data, (d) => d)
+    //         .join(
+    //             enter => (
+    //                 enter.append("circle")
+    //                     // Bind each circle to [x,y] coordinate
+    //                     .classed(styles.circle, true)
+    //                     .attr("cx", (d) => xScale(d[0]))
+    //                     .attr("cy", (d) => pos_yScale(d[1]))
+    //                     .attr("fill", circleColor)
+    //                     .attr("r", 0)
+    //                     // Transition from invisible to visible circle
+    //                     .call(el => el.transition().duration(transitionMillisec).attr("r", circleRadius))
+    //                     // Add d3 mouseover to display and move tooltip around
+    //                     .on("mouseover", (d, i, ns) => {
+    //                         const [x, y] = d3.mouse(ns[i])
+    //                         d3.select(".tooltip")
+    //                             .attr("hidden", null)
+    //                             .style("left", `${x}px`)
+    //                             .style("top", `${y}px`)
+    //                             .text(`Data : ${d}`)
+    //                     })
+    //                     .on("mouseout", _ => {
+    //                         d3.select(".tooltip").attr("hidden", true)
+    //                     })
+    //             ),
+    //             update => update.call(el =>
+    //                 // If circle has not changed coordinates, maybe data scale changed
+    //                 // so transition from original position to new position
+    //                 el.transition().duration(transitionMillisec)
+    //                     .attr("cy", (d) => pos_yScale(d[1]))
+    //                     // NB : keep radius value, it seems in Streamlit lifecycle there are 2 renders when mounting ?
+    //                     // so circles enter and during transition to full radius rerender
+    //                     // so if r < circleRadius while update then animation breaks and circle stay small for first render
+    //                     .attr("r", circleRadius)
+    //                     .attr("fill", circleColor)
+    //             ),
+    //             exit => (
+    //                 // Close tooltip and remove mouse events
+    //                 exit.dispatch("mouseout")
+    //                     .on("mouseover", null)
+    //                     .on("mouseout", null)
+    //                     // Transition from visible to invisible circle then remove entirely
+    //                     .call(el =>
+    //                         el.transition().duration(transitionMillisec / 2)
+    //                             .attr("r", 0)
+    //                             .attr("fill", "tomato")
+    //                             .style("opacity", 0)
+    //                             .remove()
+    //                     )
+    //             ),
+    //         )
+    // })
 
     // Hook to create / update active-circles
-    useEffect(() => {
-        const svgElement = d3.select(svgRef.current)
-        const [xScale, pos_yScale, active_yScale] = buildScales(props.args)
+    // useEffect(() => {
+    //     const svgElement = d3.select(svgRef.current)
+    //     const [xScale, pos_yScale, active_yScale] = buildScales(props.args)
 
-        svgElement.select(".active-circles").selectAll("circle")
-            .data(data, (d) => d)
-            .join(
-                enter => (
-                    enter.append("circle")
-                        // Bind each circle to [x,y] coordinate
-                        .classed(styles.circle, true)
-                        .attr("cx", (d) => xScale(d[0]))
-                        .attr("cy", (d) => active_yScale(d[3]))
-                        .attr("fill", "#ED647C")
-                        .attr("r", 0)
-                        // Transition from invisible to visible circle
-                        .call(el => el.transition().duration(transitionMillisec).attr("r", 3))
-                        // Add d3 mouseover to display and move tooltip around
-                        .on("mouseover", (d, i, ns) => {
-                            const [x, y] = d3.mouse(ns[i])
-                            d3.select(".tooltip")
-                                .attr("hidden", null)
-                                .style("left", `${x}px`)
-                                .style("top", `${y}px`)
-                                .text(`Data : ${d}`)
-                        })
-                        .on("mouseout", _ => {
-                            d3.select(".tooltip").attr("hidden", true)
-                        })
-                ),
-                update => update.call(el =>
-                    // If circle has not changed coordinates, maybe data scale changed
-                    // so transition from original position to new position
-                    el.transition().duration(transitionMillisec)
-                        .attr("cy", (d) => active_yScale(d[3]))
-                        // NB : keep radius value, it seems in Streamlit lifecycle there are 2 renders when mounting ?
-                        // so circles enter and during transition to full radius rerender
-                        // so if r < circleRadius while update then animation breaks and circle stay small for first render
-                        .attr("r", 3)
-                        .attr("fill", "#ED647C")
-                ),
-                exit => (
-                    // Close tooltip and remove mouse events
-                    exit.dispatch("mouseout")
-                        .on("mouseover", null)
-                        .on("mouseout", null)
-                        // Transition from visible to invisible circle then remove entirely
-                        .call(el =>
-                            el.transition().duration(transitionMillisec / 2)
-                                .attr("r", 0)
-                                .attr("fill", "tomato")
-                                .style("opacity", 0)
-                                .remove()
-                        )
-                ),
-            )
-    })
+    //     svgElement.select(".active-circles").selectAll("circle")
+    //         .data(data, (d) => d)
+    //         .join(
+    //             enter => (
+    //                 enter.append("circle")
+    //                     // Bind each circle to [x,y] coordinate
+    //                     .classed(styles.circle, true)
+    //                     .attr("cx", (d) => xScale(d[0]))
+    //                     .attr("cy", (d) => active_yScale(d[3]))
+    //                     .attr("fill", "#ED647C")
+    //                     .attr("r", 0)
+    //                     // Transition from invisible to visible circle
+    //                     .call(el => el.transition().duration(transitionMillisec).attr("r", 3))
+    //                     // Add d3 mouseover to display and move tooltip around
+    //                     .on("mouseover", (d, i, ns) => {
+    //                         const [x, y] = d3.mouse(ns[i])
+    //                         d3.select(".tooltip")
+    //                             .attr("hidden", null)
+    //                             .style("left", `${x}px`)
+    //                             .style("top", `${y}px`)
+    //                             .text(`Data : ${d}`)
+    //                     })
+    //                     .on("mouseout", _ => {
+    //                         d3.select(".tooltip").attr("hidden", true)
+    //                     })
+    //             ),
+    //             update => update.call(el =>
+    //                 // If circle has not changed coordinates, maybe data scale changed
+    //                 // so transition from original position to new position
+    //                 el.transition().duration(transitionMillisec)
+    //                     .attr("cy", (d) => active_yScale(d[3]))
+    //                     // NB : keep radius value, it seems in Streamlit lifecycle there are 2 renders when mounting ?
+    //                     // so circles enter and during transition to full radius rerender
+    //                     // so if r < circleRadius while update then animation breaks and circle stay small for first render
+    //                     .attr("r", 3)
+    //                     .attr("fill", "#ED647C")
+    //             ),
+    //             exit => (
+    //                 // Close tooltip and remove mouse events
+    //                 exit.dispatch("mouseout")
+    //                     .on("mouseover", null)
+    //                     .on("mouseout", null)
+    //                     // Transition from visible to invisible circle then remove entirely
+    //                     .call(el =>
+    //                         el.transition().duration(transitionMillisec / 2)
+    //                             .attr("r", 0)
+    //                             .attr("fill", "tomato")
+    //                             .style("opacity", 0)
+    //                             .remove()
+    //                     )
+    //             ),
+    //         )
+    // })
 
-    // create / update active-line
+    // create / update active-area
     useEffect(() => {
         const svgElement = d3.select(svgRef.current)
         const [xScale, pos_yScale, active_yScale] = buildScales(props.args)
@@ -204,13 +204,15 @@ const TimeChart = (props) => {
             .data([data]) // Array with 1 element keyed by index, so enters once then only updates
             .join(
                 enter => enter.append("path")
+                    .classed(styles.area, true)
                     .attr("d", (d) => active_area(d))
                     .attr("stroke", "black")
-                    .attr("fill", "gray")
-                    .attr("opacity", 0.5)
-                    .call(el => el.transition().duration(transitionMillisec).attr("opacity", 0.5)),
+                    .attr("stroke-width", 1)
+                    .attr("fill", "#ababab")
+                    .attr("opacity", 0.3)
+                    .call(el => el.transition().duration(transitionMillisec).attr("opacity", 0.3)),
                 update => update
-                    .attr("opacity", 0.2)
+                    .attr("opacity", 0.3)
                     .call(el =>
                         el.transition().duration(transitionMillisec)
                             .attr("d", (d) => active_area(d))
@@ -232,8 +234,10 @@ const TimeChart = (props) => {
             .data([data]) // Array with 1 element keyed by index, so enters once then only updates
             .join(
                 enter => enter.append("path")
+                    .classed(styles.line, true)
                     .attr("d", (d) => pos_line(d))
-                    .attr("stroke", "black")
+                    .attr("stroke", "#ffc107")
+                    .attr("stroke-width", 1)
                     .attr("fill", "none")
                     .attr("opacity", 0)
                     .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
