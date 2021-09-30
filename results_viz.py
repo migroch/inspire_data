@@ -49,7 +49,7 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
        #                        )
        # filtered_df = filtered_df.query('Week >= @week_range[0] and Week <= @week_range[1]')
         
-    date_range = st.slider('Select Dates', min_value=filtered_df.Test_Date.min(),
+    date_range = st.sidebar.slider('Select Dates', min_value=filtered_df.Test_Date.min(),
                            max_value=filtered_df.Test_Date.max(),
                            value = (filtered_df.Test_Date.min(), filtered_df.Test_Date.max()),
                            format = "M/D/YY",
