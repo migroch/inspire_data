@@ -39,6 +39,8 @@ const TimeChart = (props) => {
         svgElement.append("g").classed('active-circles', true)
         svgElement.append("g").classed('active-area', true)
         svgElement.append("g").classed('pos-line', true)
+        svgElement.append("g").classed('legend', true)
+        svgElement.append("text").classed('legend-labels', true)
         svgElement.append("g").classed('x-axis', true)
         svgElement.append("g").classed('y-axis-pos', true)
         svgElement.append("g").classed('y-axis-active', true)
@@ -53,7 +55,7 @@ const TimeChart = (props) => {
 
         const xAxis = (g) => g.attr("transform", `translate(0, ${svgHeight - margin.bottom})`)
             .transition().duration(transitionMillisec)
-            .attr("font-size", "5px")
+            .attr("font-size", "7px")
             .call(d3.axisBottom(xScale)
                 .ticks()
                 .tickFormat(d3.timeFormat("%b %d"))
@@ -89,6 +91,34 @@ const TimeChart = (props) => {
         svgElement.select(".active-axis-label").call(active_label);
         svgElement.select(".y-axis-pos").call(pos_yAxis);
         svgElement.select(".pos-axis-label").call(pos_label);
+    })
+
+    // Hook to create / update legend
+    useEffect(() => {
+        const svgElement = d3.select(svgRef.current)
+        const keys = ["Active Cases", "COVID-19 Positive Rates"]
+        const color = d3.scaleOrdinal()
+            .domain(keys)
+            .range(["#ababab", "#ffc107"])
+
+        svgElement.select(".legend").selectAll("circle")
+            .data(keys)
+            .enter()
+            .append("circle")
+            .attr("cx", margin.right + 23)
+            .attr("cy", function(d,i) { return (margin.top + 5) + i * 18; })
+            .attr("r", 5)
+            .style("fill", function(d) { return color(d); })
+        svgElement.selectAll(".legend-labels")
+            .data(keys)
+            .enter()
+            .append("text")
+            .attr("x", margin.right + 30)
+            .attr("y", function(d,i) { return (margin.top + 7) + i * 18; })
+            .text(function(d) { return d; })
+            .attr("font-size", "7px")
+            .attr("text-anchor", "left")
+            .style("alignment-baseline", "middle")
     })
 
     // Hook to create / update pos-circles
