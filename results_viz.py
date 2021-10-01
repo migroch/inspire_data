@@ -20,6 +20,8 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
     Apply filters and return the data frame to use for figures
     '''
     filtered_df = results_df
+
+    filter_columns = st.columns([1,1,2,1])
     
     ## Apply district and school filters 
     if district_filter:
@@ -38,6 +40,7 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
     #groups = np.append(['ALL'], filtered_df['Group'].unique())
     #if group_selected != 'ALL':
     #    filtered_df = filtered_df.query('Group == @group_selected')
+    filtered_df = filter_groups(filtered_df, filter_columns)
 
     ## Apply date filters
     #with st.sidebar.expander("Date Filter"):
@@ -49,11 +52,11 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
        #                        )
        # filtered_df = filtered_df.query('Week >= @week_range[0] and Week <= @week_range[1]')
         
-    date_range = st.sidebar.slider('Select Dates', min_value=filtered_df.Test_Date.min(),
+    date_range = filter_columns[-2].slider('Select dates', min_value=filtered_df.Test_Date.min(),
                            max_value=filtered_df.Test_Date.max(),
                            value = (filtered_df.Test_Date.min(), filtered_df.Test_Date.max()),
                            format = "M/D/YY",
-                           help = "Select the dates within the selected weeks"
+                           #help = 'Filter the date range with the slider'
                            )   
     filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
         
@@ -65,12 +68,11 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
         selections_dict = { 'date_range':date_range}
     return filtered_df, selections_dict
 
-def filter_groups(filtered_df):
+def filter_groups(filtered_df, filters_columns):
     groups = results_df['Group'].unique()
-    chk_cols = st.columns(8)
     groups_selected =[]
     for i,group in enumerate(groups):
-        selection =  chk_cols[i].checkbox(group, value=True,  on_change=None, args=None, kwargs=None)
+        selection =  filters_columns[i].checkbox(group, value=True,  on_change=None, args=None, kwargs=None)
         if selection: groups_selected.append(group)
     filtered_df = filtered_df.query('Group in @groups_selected')
     return filtered_df    
@@ -147,36 +149,41 @@ def show_weekly_metrics(filtered_df):
     Show last week's metrics and weekly table
     '''
     weeklymetrics_df = get_weeklymetrics_df(filtered_df)
-    lastweek_dates = weeklymetrics_df.sort_values('Week').iloc[-2].Dates
-    prevweek_dates = weeklymetrics_df.sort_values('Week').iloc[-3].Dates
-    st.markdown(f"<h3>Last Week's Data     <small class='text-muted'>{lastweek_dates}</small></h3>",  unsafe_allow_html=True)
-    active_col, positives_col, unique_col, ntests_col = st.columns(4)    
-    #week_col.metric(label="Week", value=str(weeklymetrics_df.iloc[-1].Week))
-    #dates_col.metric(label="Dates", value=weeklymetrics_df.iloc[-1].Dates)
-    delta = weeklymetrics_df.iloc[-2]['Active Cases']-weeklymetrics_df.iloc[-3]['Active Cases']
-    delta = delta if delta !=0 else None 
-    active_col.metric(label="Active Cases", value=weeklymetrics_df.iloc[-2]['Active Cases'],  delta=delta)
-    delta = weeklymetrics_df.iloc[-2].Positives-weeklymetrics_df.iloc[-3].Positives
-    delta = delta if delta !=0 else None 
-    positives_col.metric(label="Positive Tests", value=weeklymetrics_df.iloc[-2].Positives,  delta=delta )
-    delta = weeklymetrics_df.iloc[-2]['People Tested']-weeklymetrics_df.iloc[-3]['People Tested']
-    delta = delta if delta !=0 else None 
-    unique_col.metric(label="People Tested", value=weeklymetrics_df.iloc[-2]['People Tested'],  delta=delta)
-    delta = weeklymetrics_df.iloc[-2]['Tests Completed']-weeklymetrics_df.iloc[-3]['Tests Completed']
-    delta = delta if delta !=0 else None 
-    ntests_col.metric(label="Tests Completed", value=weeklymetrics_df.iloc[-2]['Tests Completed'],  delta=delta)
-    st.caption(f"Delta values represent changes from previous week ({prevweek_dates})")
-    with st.expander("Show Weekly Data", expanded=True):
-        st.subheader("Weekly Data")
-        #display_index = 'Week '+ weeklymetrics_df.Week.astype('str')
-        #display_df = weeklymetrics_df.set_index(display_index).drop(columns='Week')
-        display_df = weeklymetrics_df.sort_values('Week', ascending=False)
-        display_df = display_df.drop(columns='Week')
-        display_df_styler = display_df.style.hide_index().apply(
-            lambda x: [f"background-color:{'#9AE100' if x.name==display_df.index[0] else 'white'};" for row in x]
-            , axis=1 ).hide_index()
-        st.dataframe(display_df_styler)
-        st.caption("Highlighted row shows current week's data (week in progress).")
+    lastweek_dates = None
+    prevweek_dates = None
+    if len(weeklymetrics_df.Week) > 1:
+        lastweek_dates = weeklymetrics_df.sort_values('Week').iloc[-2].Dates
+    if len(weeklymetrics_df.Week) > 2:   
+        prevweek_dates = weeklymetrics_df.sort_values('Week').iloc[-3].Dates
+        
+    if lastweek_dates:    
+        st.markdown(f"<h3>Last Week's Data     <small class='text-muted'>{lastweek_dates}</small></h3>",  unsafe_allow_html=True)
+        active_col, positives_col, unique_col, ntests_col = st.columns(4)    
+        #week_col.metric(label="Week", value=str(weeklymetrics_df.iloc[-1].Week))
+        #dates_col.metric(label="Dates", value=weeklymetrics_df.iloc[-1].Dates)
+        def calculate_delta(field):
+            try:
+                delta = weeklymetrics_df.iloc[-2][field]-weeklymetrics_df.iloc[-3][field]
+                delta = delta if delta !=0 else None
+            except IndexError:
+                delta = None
+            return delta
+        active_col.metric(label="Active Cases", value=weeklymetrics_df.iloc[-2]['Active Cases'],  delta=calculate_delta('Active Cases'))
+        positives_col.metric(label="Positive Tests", value=weeklymetrics_df.iloc[-2].Positives,  delta=calculate_delta('Positives') )
+        unique_col.metric(label="People Tested", value=weeklymetrics_df.iloc[-2]['People Tested'],  delta=calculate_delta('People Tested'))
+        ntests_col.metric(label="Tests Completed", value=weeklymetrics_df.iloc[-2]['Tests Completed'],  delta=calculate_delta('Tests Completed'))
+        st.caption(f"Delta values represent changes from previous week ({prevweek_dates})")
+        with st.expander("Show Weekly Data", expanded=True):
+            st.subheader("Weekly Data")
+            #display_index = 'Week '+ weeklymetrics_df.Week.astype('str')
+            #display_df = weeklymetrics_df.set_index(display_index).drop(columns='Week')
+            display_df = weeklymetrics_df.sort_values('Week', ascending=False)
+            display_df = display_df.drop(columns='Week')
+            display_df_styler = display_df.style.hide_index().apply(
+                lambda x: [f"background-color:{'#9AE100' if x.name==display_df.index[0] else 'white'};" for row in x]
+                , axis=1 ).hide_index()
+            st.dataframe(display_df_styler)
+            st.caption("Highlighted row shows current week's data (week in progress).")
         
 def draw_time_chart(filtered_df):
     '''
@@ -215,31 +222,33 @@ if __name__ == '__main__':
     
     # Get results data from BQ
     results_df = get_results_from_bq()
+
+    title = st.empty()
         
     # Filter results based on widgets
     filtered_df, selections_dict = apply_filters(results_df)
-    district =  'Santa Cruz County'
-    if 'district' in selections_dict.keys():
-        district = selections_dict['district']
-    if district == 'ALL': district = 'Santa Cruz County'
-    n_sites = filtered_df.Organization.str.split('-', expand=True)[0].nunique()
-
-    # Write title
-    st.markdown(f'<h1 style="color: #699900;">{district}     <small class="text-muted">{n_sites} School Sites Participating</small></h1>' , unsafe_allow_html=True)
-
-    #Filter Groups
-    filtered_df = filter_groups(filtered_df)
     
-    # Show latest metrics
-    active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_latest_metrics(filtered_df)
+    if not filtered_df.size:
+        st.markdown('<h1 style="color: #699900;">No data...     <small class="text-muted">check your filter selections</small></h1>', unsafe_allow_html=True)
+    else:    
+        # Write title    
+        district =  'Santa Cruz County'
+        if 'district' in selections_dict.keys():
+            district = selections_dict['district']
+        if district == 'ALL': district = 'Santa Cruz County'
+        n_sites = filtered_df.Organization.str.split('-', expand=True)[0].nunique()
+        title.markdown(f'<h1 style="color: #699900;">{district}     <small class="text-muted">{n_sites} School Sites Participating</small></h1>' , unsafe_allow_html=True)
     
-    # Show weekly metrics
-    show_weekly_metrics(filtered_df)
+        # Show latest metrics
+        active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_latest_metrics(filtered_df)
+    
+        # Show weekly metrics
+        show_weekly_metrics(filtered_df)
 
-    # Show time chart
-    with st.expander("Show Time Trends"):
-        draw_time_chart(filtered_df)
+        # Show time chart
+        #with st.expander("Show Time Trends"):
+        #draw_time_chart(filtered_df)
 
-    # Animate latest metrics
-    animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
+        # Animate latest metrics
+        animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
 
