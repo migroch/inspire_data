@@ -14,7 +14,7 @@ const buildScales = (args) => {
 
     const xScale = d3.scaleTime()
         .domain(d3.extent(data, (d) => d[0]))
-        .range([margin.left, svgWidth - margin.right])
+        .range([margin.left, svgWidth - margin.right - 5])
     const yScale = d3.scaleLinear()
         .domain([0, d3.max(data, (d) => d[1])])
         .range([svgHeight - margin.bottom, margin.top])
@@ -42,7 +42,8 @@ const TimeChart = (props) => {
         svgElement.append("g").classed('x-axis', true)
         svgElement.append("g").classed('y-axis-pos', true)
         svgElement.append("g").classed('y-axis-active', true)
-        svgElement.append("text").classed('active-label', true)
+        svgElement.append("text").classed('active-axis-label', true)
+        svgElement.append("text").classed('pos-axis-label', true)
     }, [])
 
     // Hook to create / update axis and grid
@@ -52,24 +53,42 @@ const TimeChart = (props) => {
 
         const xAxis = (g) => g.attr("transform", `translate(0, ${svgHeight - margin.bottom})`)
             .transition().duration(transitionMillisec)
-            .call(d3.axisBottom(xScale).ticks().tickSize(-1 * (svgHeight - margin.top - margin.bottom)).tickSizeOuter(0))
+            .attr("font-size", "5px")
+            .call(d3.axisBottom(xScale)
+                .ticks()
+                .tickFormat(d3.timeFormat("%b %d"))
+                .tickSize(-1 * (svgHeight - margin.top - margin.bottom))
+                .tickSizeOuter(0))
+            .call(g => g.selectAll(".tick line")
+                .attr("stroke-opacity", 0.5)
+                .attr("stroke-dasharray", "2,2")
+                .attr("stroke-width", 0.3))
         const active_yAxis = (g) => g.attr("transform", `translate(${margin.left}, 0)`)
             .transition().duration(transitionMillisec)
+            .attr("font-size", "7px")
             .call(d3.axisLeft(active_yScale))
-        const active_label = (label) => label.attr("transform", "rotate(-90)")
-            .attr("x", 0 - margin.left)
-            .attr("y", 0 - (svgHeight / 2))
-            .attr("dy", "1em")
+        const active_label = (g) => g.text("Active Cases")
+            .attr("transform", "rotate(-90)")
+            .attr("x", 0 - ((svgWidth - margin.left) / 3.03))
+            .attr("y", 15)
             .style("text-anchor", "middle")
-            .text("Active Cases")
-        const pos_yAxis = (g) => g.attr("transform", `translate(${svgWidth - margin.right}, 0)`)
+            .attr("font-size", "10px")
+        const pos_yAxis = (g) => g.attr("transform", `translate(${svgWidth - margin.right - 5}, 0)`)
             .transition().duration(transitionMillisec)
+            .attr("font-size", "7px")
             .call(d3.axisRight(pos_yScale))
+        const pos_label = (g) => g.text("COVID-19 Positive Rates")
+            .attr("transform", "rotate(-270)")
+            .attr("x", (svgHeight - margin.bottom) / 2.1)
+            .attr("y", 0 - (svgWidth) + 10)
+            .style("text-anchor", "middle")
+            .attr("font-size", "10px")
 
         svgElement.select(".x-axis").call(xAxis);
         svgElement.select(".y-axis-active").call(active_yAxis);
-        svgElement.select(".active-label").call(active_label);
+        svgElement.select(".active-axis-label").call(active_label);
         svgElement.select(".y-axis-pos").call(pos_yAxis);
+        svgElement.select(".pos-axis-label").call(pos_label);
     })
 
     // Hook to create / update pos-circles
@@ -209,14 +228,14 @@ const TimeChart = (props) => {
                     .attr("stroke", "black")
                     .attr("stroke-width", 1)
                     .attr("fill", "#ababab")
-                    .attr("opacity", 0.3)
-                    .call(el => el.transition().duration(transitionMillisec).attr("opacity", 0.3)),
+                    .attr("opacity", 0)
+                    .call(el => el.transition().duration(transitionMillisec).attr("opacity", 0.7)),
                 update => update
-                    .attr("opacity", 0.3)
+                    .attr("opacity", 0)
                     .call(el =>
                         el.transition().duration(transitionMillisec)
                             .attr("d", (d) => active_area(d))
-                            .attr("opacity", 1)
+                            .attr("opacity", 0.7)
                     ),
             )
     })

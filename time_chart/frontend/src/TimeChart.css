@@ -6,14 +6,14 @@
     fill:orange;
 }
 
-.area {
+.active-area {
     stroke: "black";
     stroke-width: 1;
     fill: "#ababab";
     opacity: 0.3;
 }
 
-.line {
+.pos-line {
     stroke: "#ffc107";
     stroke-width: 1;
 }
