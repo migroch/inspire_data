@@ -31,6 +31,7 @@ const TimeChart = (props) => {
     const transitionMillisec = 1200
     const {svgWidth, svgHeight, circleRadius, circleColor, margin, data} = props.args
     console.log(data)
+    console.log("Hello, world!")
     
     // On mount, create group containers for circles, path and both axis
     useEffect(() => {
