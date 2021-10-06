@@ -32,7 +32,7 @@ def bq_query(query):
         df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026")
     return df   
     
-@st.cache(show_spinner=False, ttl=300)
+@st.cache(show_spinner=False, ttl=600)
 def get_results_from_bq():
     '''
     Get inspire results data from bigquery

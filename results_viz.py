@@ -51,14 +51,19 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
        #                        help = f"Select the week number since the start of the program (first results on: {filtered_df.Test_Date.min()})"
        #                        )
        # filtered_df = filtered_df.query('Week >= @week_range[0] and Week <= @week_range[1]')
-        
-    date_range = filter_columns[-2].slider('Select dates', min_value=filtered_df.Test_Date.min(),
-                           max_value=filtered_df.Test_Date.max(),
-                           value = (filtered_df.Test_Date.min(), filtered_df.Test_Date.max()),
-                           format = "M/D/YY",
-                           #help = 'Filter the date range with the slider'
-                           )   
-    filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
+
+    date_min = filtered_df.Test_Date.min() 
+    date_max = filtered_df.Test_Date.max()
+    if filtered_df.size:
+        date_range = filter_columns[-2].slider('Select dates', min_value=date_min,
+                                               max_value=date_max,
+                                               value = (date_min, date_max),
+                                               format = "M/D/YY",
+                                               #help = 'Filter the date range with the slider'
+                                               )   
+        filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
+    else:
+         date_range=None   
         
     if site_filter and district_filter:
         selections_dict = { 'date_range':date_range, 'district': district_selected, 'site':site_selected}
@@ -97,7 +102,7 @@ def show_latest_metrics(filtered_df):
     u_text = sum_col3.empty()
     sum_col4.markdown("<h5>Total&nbspTests Completed:</h5>", unsafe_allow_html=True)
     t_text = sum_col4.empty()
-    st.caption(f"Last updated on {filtered_df.Test_Date.max().strftime('%m/%d/%y')}")
+    st.caption(f"Updated daily at 10am (latest test results are from tests completed on: {filtered_df.Test_Date.max().strftime('%m/%d/%y')})")
     return active_count, positive_count, unique_count, total_count, a_text, p_text, u_text, t_text
 
 def animate_metrics(active_count, positive_count,  unique_count, total_count, a_text, p_text, u_text, t_text):
@@ -126,21 +131,35 @@ def get_weeklymetrics_df(filtered_df):
     weeklymetrics_df_columns =  ['Week', 'Dates', 'Active Cases', 'Positives', 'People Tested', 'Tests Completed' ]
     weeklymetrics_df = pd.DataFrame(columns=weeklymetrics_df_columns)   
     weeks = filtered_df.Week.sort_values().unique()
+    if filtered_df.Week_Last_Day.max() < datetime.date.today(): weeks = np.append(weeks, weeks.max()+1)   
     for week in weeks:
         week_df = filtered_df.query('Week == @week')
-        total_week_count = week_df.UID.count()
-        unique_week_count = week_df.UID.nunique()
-        positive_df = week_df.query('Test_Result=="POSITIVE"')
-        positive_count = positive_df.Test_Result.count()
-        week_date_min = week_df.Week_First_Day.min().date()
-        week_date_max = week_df.Week_Last_Day.max().date()
-        if datetime.date.today() < week_date_max: week_date_max = datetime.date.today()
-        active_date_min = week_date_min  - datetime.timedelta(days=10)
-        active_date_max = week_date_max
-        active_df = filtered_df.query('Test_Result=="POSITIVE" and Test_Date>=@active_date_min and Test_Date<=@active_date_max')
-        active_count = len(active_df.UID.unique())
-        dates = week_date_min.strftime('%m/%d/%y')+' - '+week_date_max.strftime('%m/%d/%y')
-        row = [week, dates, active_count, positive_count, unique_week_count, total_week_count]
+        if week_df.size:
+            total_week_count = week_df.UID.count()
+            unique_week_count = week_df.UID.nunique()
+            positive_df = week_df.query('Test_Result=="POSITIVE"')
+            positive_count = positive_df.Test_Result.count()
+            week_date_min = week_df.Week_First_Day.min().date()
+            week_date_max = week_df.Week_Last_Day.max().date()
+            if datetime.date.today() < week_date_max: week_date_max = datetime.date.today()
+            active_date_min = week_date_min  - datetime.timedelta(days=10)
+            active_date_max = week_date_max
+            active_df = filtered_df.query('Test_Result=="POSITIVE" and Test_Date>=@active_date_min and Test_Date<=@active_date_max')
+            active_count = len(active_df.UID.unique())
+            dates = week_date_min.strftime('%m/%d/%y')+' - '+week_date_max.strftime('%m/%d/%y')
+            row = [week, dates, active_count, positive_count, unique_week_count, total_week_count]
+        else:
+            total_week_count = 0
+            unique_week_count = 0
+            positive_count = 0
+            week_date_min =  filtered_df.Week_Last_Day.max()+datetime.timedelta(days=1)
+            week_date_max =  datetime.datetime.strptime(str(datetime.date.today().isocalendar()[0])+'-'+str(datetime.date.today().isocalendar()[1])+'-6', "%Y-%W-%w").date()
+            active_date_min = week_date_min  - datetime.timedelta(days=10)
+            active_date_max = week_date_max
+            active_df = filtered_df.query('Test_Result=="POSITIVE" and Test_Date>=@active_date_min and Test_Date<=@active_date_max')
+            active_count = len(active_df.UID.unique())
+            dates = week_date_min.strftime('%m/%d/%y')+' - '+week_date_max.strftime('%m/%d/%y')
+            row = [week, dates, active_count, positive_count, unique_week_count, total_week_count]
         weeklymetrics_df = pd.concat([weeklymetrics_df, pd.DataFrame([row], columns=weeklymetrics_df_columns, index=[week])])
     return weeklymetrics_df
 
@@ -240,10 +259,10 @@ if __name__ == '__main__':
         st.markdown('<h1 style="color: #699900;">No data...     <small class="text-muted">check your filter selections</small></h1>', unsafe_allow_html=True)
     else:    
         # Write title    
-        district =  'Santa Cruz County'
+        district =  'Santa Cruz County Schools'
         if 'district' in selections_dict.keys():
             district = selections_dict['district']
-        if district == 'ALL': district = 'Santa Cruz County'
+        if district == 'ALL': district = 'Santa Cruz County Schools'
         n_sites = filtered_df.Organization.str.split('-', expand=True)[0].nunique()
         title.markdown(f'<h1 style="color: #699900;">{district}     <small class="text-muted">{n_sites} School Sites Participating</small></h1>' , unsafe_allow_html=True)
     
@@ -254,8 +273,8 @@ if __name__ == '__main__':
         show_weekly_metrics(filtered_df)
 
         # Show time chart
-        with st.expander("Show Time Trends"):
-            draw_time_chart(filtered_df)
+        # with st.expander("Show Time Trends"):
+        #   draw_time_chart(filtered_df)
 
         # Animate latest metrics
         animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
