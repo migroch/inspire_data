@@ -9,7 +9,7 @@ def read_inspire_files(pattern):
     for f in files:
         print(f'Reading file {f}')
         df = pd.read_csv(f)
-        if 'SANTA-CRUZ' not in f: df['District'] = f.split('_')[1].replace('.csv','')
+        if 'santacruz' not in f: df['District'] = f.split('_')[1].replace('.csv','')
         dfs = dfs.append(df)
     return dfs.reset_index(drop=True)
 
@@ -40,10 +40,10 @@ registrations_df['key2'] = (registrations_df['Last_Name'].apply(lambda s: s.lowe
 pandas_gbq.to_gbq(registrations_df,  "InspireTesting.rgistrations",  if_exists='replace', project_id="covidtesting-1602910185026") 
 
 ### Write results to BigQuery ###
-results_df = read_inspire_files('data/results/SANTA-CRUZ*.csv')
+results_df = read_inspire_files('data/results/santacruz*.txt')
 results_df = results_df.rename(columns={col: col.replace(' ','_') for col in results_df.columns})
 results_df['Phone'] = results_df['Phone'].astype('Int64')
-results_df['Test_Date'] = pd.to_datetime(results_df.Test_Date.apply(lambda x: x+'/2021'))
+results_df['Test_Date'] = pd.to_datetime(results_df.Test_Date)
 results_df['Group'] = results_df[['Group','Organization']].apply(
         lambda x: x['Organization'].split('-')[1] if pd.isnull(x['Group']) else x['Group'],
         axis=1
