@@ -197,7 +197,15 @@ def draw_time_chart(filtered_df):
     fig_data['pos_count'] = fig_data.pos_count.fillna(0)
     fig_data['pos_rate'] = 100.0*fig_data['pos_count']/fig_data['test_count']
     fig_data = fig_data.rename(columns={'index':'Test_Date'})
-    timedelta_10days = datetime.timedelta(days=10) 
+    
+    # Compute 10-day active cases & 14-day positive rate averages
+    timedelta_14days = datetime.timedelta(days=14)
+    timedelta_10days = datetime.timedelta(days=10)
+    fig_data['avg_pos_rate'] = fig_data['Test_Date'].apply(
+        lambda x: fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
+                           (fig_data['Test_Date'] <= x)
+                           ]['pos_rate'].mean()
+    ) 
     fig_data['active_count'] = fig_data['Test_Date'].apply(
         lambda x: filtered_df[(filtered_df['Test_Date'] >= (x - timedelta_10days)) &
                               (filtered_df['Test_Date'] <= x) &
@@ -208,7 +216,7 @@ def draw_time_chart(filtered_df):
     fig_data['Week'] = fig_data['Week']-fig_data['Week'].min()+1
     fig_data['Test_Date'] = pd.to_datetime(fig_data.Test_Date).dt.strftime('%Y-%m-%d')
     fig_data = list(
-        zip(fig_data.Test_Date, fig_data.pos_rate, fig_data.pos_count,
+        zip(fig_data.Test_Date, fig_data.avg_pos_rate, fig_data.pos_count,
             fig_data.active_count, fig_data.test_count, fig_data.Week)
     )
     #circle_radius = st.sidebar.slider("Circle radius", 1, 25, 5)
@@ -246,8 +254,8 @@ if __name__ == '__main__':
         show_weekly_metrics(filtered_df)
 
         # Show time chart
-        # with st.expander("Show Time Trends"):
-        #     draw_time_chart(filtered_df)
+        with st.expander("Show Time Trends"):
+            draw_time_chart(filtered_df)
 
         # Animate latest metrics
         animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
