@@ -153,7 +153,7 @@ def get_weeklymetrics_df(filtered_df):
             unique_week_count = 0
             positive_count = 0
             week_date_min =  filtered_df.Week_Last_Day.max()+datetime.timedelta(days=1)
-            week_date_max =  datetime.date.today()
+            week_date_max =  datetime.datetime.strptime(str(datetime.date.today().isocalendar()[0])+'-'+str(datetime.date.today().isocalendar()[1])+'-6', "%Y-%W-%w").date()
             active_date_min = week_date_min  - datetime.timedelta(days=10)
             active_date_max = week_date_max
             active_df = filtered_df.query('Test_Result=="POSITIVE" and Test_Date>=@active_date_min and Test_Date<=@active_date_max')
