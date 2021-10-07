@@ -274,8 +274,8 @@ if __name__ == '__main__':
         show_weekly_metrics(filtered_df)
 
         # Show time chart
-        # with st.expander("Show Time Trends"):
-        #   draw_time_chart(filtered_df)
+        with st.expander("Show Time Trends"):
+          draw_time_chart(filtered_df)
 
         # Animate latest metrics
         animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
