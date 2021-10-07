@@ -4,6 +4,7 @@ import * as d3 from "d3";
 
 import styles from './TimeChart.css'
 import { act } from "react-dom/test-utils";
+import { type } from "os";
 
 
 /**
@@ -35,15 +36,14 @@ const TimeChart = (props) => {
     // On mount, create group containers for circles, path and both axis
     useEffect(() => {
         const svgElement = d3.select(svgRef.current)
-        svgElement.append("g").classed('pos-circles', true)
-        svgElement.append("g").classed('active-circles', true)
         svgElement.append("g").classed('active-area', true)
+        svgElement.append("g").classed('active-circles', true)
         svgElement.append("g").classed('pos-line', true)
+        svgElement.append("g").classed('pos-circles', true)
         svgElement.append("g").classed('legend', true)
         svgElement.append("g").classed('x-axis', true)
         svgElement.append("g").classed('y-axis-pos', true)
         svgElement.append("g").classed('y-axis-active', true)
-        svgElement.append("text").classed('legend-labels', true)
         svgElement.append("text").classed('active-axis-label', true)
         svgElement.append("text").classed('pos-axis-label', true)
     }, [])
@@ -96,7 +96,7 @@ const TimeChart = (props) => {
     // Hook to create / update legend
     useEffect(() => {
         const svgElement = d3.select(svgRef.current)
-        const keys = ["Active Cases", "COVID-19 Positive Rates"]
+        const keys = ["Active Cases", "14-Day Positivity Rate"]
         const color = d3.scaleOrdinal()
             .domain(keys)
             .range(["#ababab", "#ffc107"])
@@ -109,7 +109,7 @@ const TimeChart = (props) => {
             .attr("cy", function(d,i) { return (margin.top + 5) + i * 18; })
             .attr("r", 5)
             .style("fill", function(d) { return color(d); })
-        svgElement.selectAll(".legend-labels")
+        svgElement.select(".legend").selectAll("text")
             .data(keys)
             .enter()
             .append("text")
@@ -121,12 +121,19 @@ const TimeChart = (props) => {
             .style("alignment-baseline", "middle")
     })
 
-    // Hook to create / update pos-circles
+    // Hook for initial tooltip
+    useEffect(() => {
+        var tooltip = d3.select(".tooltip").classed("hide", true)
+    })
+
+    // Hook to create / update active-circles
     useEffect(() => {
         const svgElement = d3.select(svgRef.current)
         const [xScale, pos_yScale, active_yScale] = buildScales(props.args)
+        const formatDate = d3.timeFormat("%B %d")
+        let tooltip = d3.select(".tooltip")
 
-        svgElement.select(".pos-circles").selectAll("circle")
+        svgElement.select(".active-circles").selectAll("circle")
             .data(data, (d) => d)
             .join(
                 enter => (
@@ -134,19 +141,19 @@ const TimeChart = (props) => {
                         // Bind each circle to [x,y] coordinate
                         .classed(styles.circle, true)
                         .attr("cx", (d) => xScale(d[0]))
-                        .attr("cy", (d) => pos_yScale(d[1]))
-                        .attr("fill", circleColor)
+                        .attr("cy", (d) => active_yScale(d[3]))
+                        .attr("fill", "#ED647C")
                         .attr("r", 0)
                         // Transition from invisible to visible circle
                         .call(el => el.transition().duration(transitionMillisec).attr("r", circleRadius))
                         // Add d3 mouseover to display and move tooltip around
-                        .on("mouseover", (d, i, ns) => {
-                            const [x, y] = d3.mouse(ns[i])
+                        .on("mouseover", (d) => {
                             d3.select(".tooltip")
                                 .attr("hidden", null)
-                                .style("left", `${x}px`)
-                                .style("top", `${y}px`)
-                                .text(`Date : ${d[0]}\n14-Day Average Positive Rate : ${d[1]}`)
+                                .style("left", `${d3.event.pageX}px`)
+                                .style("top", `${d3.event.pageY}px`)
+                                .style("opacity", 0.8)
+                                .html("Date: " + formatDate(d[0]) + "<br/>Active Cases: " + d[3])
                         })
                         .on("mouseout", _ => {
                             d3.select(".tooltip").attr("hidden", true)
@@ -156,12 +163,12 @@ const TimeChart = (props) => {
                     // If circle has not changed coordinates, maybe data scale changed
                     // so transition from original position to new position
                     el.transition().duration(transitionMillisec)
-                        .attr("cy", (d) => pos_yScale(d[1]))
+                        .attr("cy", (d) => active_yScale(d[3]))
                         // NB : keep radius value, it seems in Streamlit lifecycle there are 2 renders when mounting ?
                         // so circles enter and during transition to full radius rerender
                         // so if r < circleRadius while update then animation breaks and circle stay small for first render
                         .attr("r", circleRadius)
-                        .attr("fill", circleColor)
+                        .attr("fill", "#ED647C")
                 ),
                 exit => (
                     // Close tooltip and remove mouse events
@@ -180,12 +187,14 @@ const TimeChart = (props) => {
             )
     })
 
-    // Hook to create / update active-circles
+    // Hook to create / update pos-circles
     useEffect(() => {
         const svgElement = d3.select(svgRef.current)
         const [xScale, pos_yScale, active_yScale] = buildScales(props.args)
+        const formatDate = d3.timeFormat("%B %d")
+        let tooltip = d3.select(".tooltip")
 
-        svgElement.select(".active-circles").selectAll("circle")
+        svgElement.select(".pos-circles").selectAll("circle")
             .data(data, (d) => d)
             .join(
                 enter => (
@@ -193,34 +202,33 @@ const TimeChart = (props) => {
                         // Bind each circle to [x,y] coordinate
                         .classed(styles.circle, true)
                         .attr("cx", (d) => xScale(d[0]))
-                        .attr("cy", (d) => active_yScale(d[3]))
-                        .attr("fill", "#ED647C")
+                        .attr("cy", (d) => pos_yScale(d[1]))
+                        .attr("fill", circleColor)
                         .attr("r", 0)
                         // Transition from invisible to visible circle
                         .call(el => el.transition().duration(transitionMillisec).attr("r", circleRadius))
                         // Add d3 mouseover to display and move tooltip around
-                        .on("mouseover", (d, i, ns) => {
-                            const [x, y] = d3.mouse(ns[i])
-                            d3.select(".tooltip")
-                                .attr("hidden", null)
-                                .style("left", `${x}px`)
-                                .style("top", `${y}px`)
-                                .text(`Date : ${d[0]}\nActive Cases : ${d[3]}`)
+                        .on("mouseover", (d) => {
+                            tooltip.style("left", `${d3.event.pageX}px`).style("top", `${d3.event.pageY}px`);
+                            tooltip.html("Date: " + formatDate(d[0]) + "<br/>14-Day Average Positive Rate: " + d[1].toFixed(2) + "%");
+                            tooltip.classed("hide", false)
+                            tooltip.classed("show", true)
                         })
-                        .on("mouseout", _ => {
-                            d3.select(".tooltip").attr("hidden", true)
+                        .on("mouseout", () => {
+                            tooltip.classed("show", false)
+                            tooltip.classed("hide", true)
                         })
                 ),
                 update => update.call(el =>
                     // If circle has not changed coordinates, maybe data scale changed
                     // so transition from original position to new position
                     el.transition().duration(transitionMillisec)
-                        .attr("cy", (d) => active_yScale(d[3]))
+                        .attr("cy", (d) => pos_yScale(d[1]))
                         // NB : keep radius value, it seems in Streamlit lifecycle there are 2 renders when mounting ?
                         // so circles enter and during transition to full radius rerender
                         // so if r < circleRadius while update then animation breaks and circle stay small for first render
                         .attr("r", circleRadius)
-                        .attr("fill", "#ED647C")
+                        .attr("fill", circleColor)
                 ),
                 exit => (
                     // Close tooltip and remove mouse events
@@ -307,7 +315,7 @@ const TimeChart = (props) => {
 
     return (
         <div>
-            <div className={`${styles.tooltip} tooltip`} hidden={true}/>
+            <div className={`${styles.tooltip} tooltip`} />
             <svg
                 viewBox={`0 0 ${svgWidth} ${svgHeight}`}
                 ref={svgRef}

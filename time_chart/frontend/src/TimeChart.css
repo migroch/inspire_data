@@ -21,13 +21,25 @@
 .tooltip {
     position: absolute;
     text-align: left;
-    width: 390px;
-    height: 45px;
+    width: auto;
+    height: auto;
     padding: 10px;
-    font: 12px sans-serif;
+    font: 16px sans-serif;
     background-color: lightsteelblue;
     border-radius: 0px;
     border-radius: 8px;
     /* box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4); */
-    pointer-events: none;
+    /* pointer-events: none; */
+}
+
+.show {
+    visibility: visible;
+    opacity: 0.8;
+    transition: visibility 1s, opacity 1s;
+}
+
+.hide {
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 1s, opacity 1s;
 }

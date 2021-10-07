@@ -221,9 +221,10 @@ def draw_time_chart(filtered_df):
     timedelta_14days = datetime.timedelta(days=14)
     timedelta_10days = datetime.timedelta(days=10)
     fig_data['avg_pos_rate'] = fig_data['Test_Date'].apply(
-        lambda x: fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
-                           (fig_data['Test_Date'] <= x)
-                           ]['pos_rate'].mean()
+        lambda x: 100 * fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
+                           (fig_data['Test_Date'] <= x)]['pos_count'].sum() /
+                  fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
+                           (fig_data['Test_Date'] <= x)]['test_count'].sum()
     ) 
     fig_data['active_count'] = fig_data['Test_Date'].apply(
         lambda x: filtered_df[(filtered_df['Test_Date'] >= (x - timedelta_10days)) &
