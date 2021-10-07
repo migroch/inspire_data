@@ -20,11 +20,14 @@
 
 .tooltip {
     position: absolute;
-    width: auto;
-    height: auto;
+    text-align: left;
+    width: 390px;
+    height: 45px;
     padding: 10px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    font: 12px sans-serif;
+    background-color: lightsteelblue;
+    border-radius: 0px;
+    border-radius: 8px;
+    /* box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4); */
     pointer-events: none;
 }
