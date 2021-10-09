@@ -116,12 +116,12 @@ def animate_metrics(active_count, positive_count,  unique_count, total_count, a_
     for i in range(100):
         a_count = int((i+1)*(active_count/100))
         p_count = int((i+1)*(positive_count/100))
-        u_count = int((i+1)*(unique_count/100))
-        t_count = int((i+1)*(total_count/100))
-        a_text.markdown(f"<p  class='text-danger fs-1'>{a_count}</p>", unsafe_allow_html=True)
-        p_text.markdown(f"<p   class='text-warning fs-1'>{p_count}</p>", unsafe_allow_html=True)
-        u_text.markdown(f"<p   class='text-primary fs-1'>{u_count}</p>", unsafe_allow_html=True)
-        t_text.markdown(f"<p   class='text-success fs-1'>{t_count}</p>", unsafe_allow_html=True)
+        u_count = int((i+1)*(unique_count/100))/1000
+        t_count = int((i+1)*(total_count/100))/1000
+        a_text.markdown(f"<p  class='fs-1' style='color:#ff006e'>{a_count}</p>", unsafe_allow_html=True)
+        p_text.markdown(f"<p   class='fs-1' style='color:#f77f00'>{p_count}</p>", unsafe_allow_html=True)
+        u_text.markdown("<p   class='text-primary fs-1' >{:.1f}K</p>".format(u_count), unsafe_allow_html=True)
+        t_text.markdown("<p   class='fs-1' style='color:#09ab3b'>{:.1f}K</p>".format(t_count), unsafe_allow_html=True)
         time.sleep(0.05)  
 
 def get_weeklymetrics_df(filtered_df):
@@ -192,14 +192,14 @@ def show_weekly_metrics(filtered_df):
         unique_col.metric(label="People Tested", value=weeklymetrics_df.iloc[-2]['People Tested'],  delta=calculate_delta('People Tested'))
         ntests_col.metric(label="Tests Completed", value=weeklymetrics_df.iloc[-2]['Tests Completed'],  delta=calculate_delta('Tests Completed'))
         st.caption(f"Delta values represent changes from previous week ({prevweek_dates})")
-        with st.expander("Show Weekly Data", expanded=True):
-            st.subheader("Weekly Data")
+        with st.expander("Show Weekly Table", expanded=False):
+            st.subheader("Weekly Table")
             #display_index = 'Week '+ weeklymetrics_df.Week.astype('str')
             #display_df = weeklymetrics_df.set_index(display_index).drop(columns='Week')
             display_df = weeklymetrics_df.sort_values('Week', ascending=False)
             display_df = display_df.drop(columns='Week')
             display_df_styler = display_df.style.hide_index().apply(
-                lambda x: [f"background-color:{'#9AE100' if x.name==display_df.index[0] else 'white'};" for row in x]
+                lambda x: [f"background-color:{'#09ab3b' if x.name==display_df.index[0] else 'white'};" for row in x]
                 , axis=1 ).hide_index()
             st.dataframe(display_df_styler)
             st.caption("Highlighted row shows current week's data (week in progress).")
@@ -208,7 +208,7 @@ def draw_time_chart(filtered_df):
     '''
     Create a d3 component with a results vs time chart of test results
     '''
-    st.subheader('Time Trends')
+    st.subheader('Time Trend')
     fig_data = pd.DataFrame({ 
         'test_count': filtered_df.groupby(['Test_Date']).size(), 
         'pos_count': filtered_df[filtered_df['Test_Result']=='POSITIVE'].groupby(['Test_Date']).size() 
@@ -221,10 +221,10 @@ def draw_time_chart(filtered_df):
     timedelta_14days = datetime.timedelta(days=14)
     timedelta_10days = datetime.timedelta(days=10)
     fig_data['avg_pos_rate'] = fig_data['Test_Date'].apply(
-        lambda x: 100 * fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
-                           (fig_data['Test_Date'] <= x)]['pos_count'].sum() /
-                  fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
-                           (fig_data['Test_Date'] <= x)]['test_count'].sum()
+        lambda x:  fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
+                            (fig_data['Test_Date'] <= x)]['pos_count'].sum() /
+        fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
+                 (fig_data['Test_Date'] <= x)]['test_count'].sum()
     ) 
     fig_data['active_count'] = fig_data['Test_Date'].apply(
         lambda x: filtered_df[(filtered_df['Test_Date'] >= (x - timedelta_10days)) &
@@ -266,16 +266,16 @@ if __name__ == '__main__':
         if district == 'ALL': district = 'Santa Cruz County Schools'
         n_sites = filtered_df.Organization.str.split('-', expand=True)[0].nunique()
         title.markdown(f'<h1 style="color: #699900;">{district}     <small class="text-muted">{n_sites} School Sites Participating</small></h1>' , unsafe_allow_html=True)
-    
+        
         # Show latest metrics
         active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_latest_metrics(filtered_df)
-    
+
         # Show weekly metrics
         show_weekly_metrics(filtered_df)
-
+        
         # Show time chart
-        with st.expander("Show Time Trends"):
-          draw_time_chart(filtered_df)
+        #with st.expander("Show Time Trends", expanded=True):
+        draw_time_chart(filtered_df)
 
         # Animate latest metrics
         animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)

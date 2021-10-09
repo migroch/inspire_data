@@ -1,41 +1,50 @@
+/* TimeChart.css */
+/* Styles for the TimeChart componet */
+
+p{
+  margin:2px;
+}
+
+.timechart-container{
+  display: flex;
+  justify-content: center;
+}
+
+.timechart-svg{
+  width:100%;
+}
+
 .circle {
     transition: fill 0.1s ease;
 }
 
 .circle:hover {
-    fill:orange;
+  cursor:pointer;
+  stroke:black;
+  strike-width:1;
 }
 
-.active-area {
-    stroke: "black";
-    stroke-width: 1;
-    fill: "#ababab";
-    opacity: 0.3;
-}
-
-.pos-line {
-    stroke: "#ffc107";
-    stroke-width: 1;
-}
 
 .tooltip {
     position: absolute;
     text-align: left;
     width: auto;
     height: auto;
-    padding: 10px;
+    padding: 5px;
     font: 16px sans-serif;
-    color: white;
-    background-color: #197A7B;
-    border-radius: 0px;
-    border-radius: 8px;
+    color: black;
+    background-color: rgb(255,255,255,0.9);    
+    border-width: 3px;
+    border-style: outset;
+    border-radius: 10px;
+    border-color:#197a7b
     /* box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4); */
     /* pointer-events: none; */
 }
 
 .show {
     visibility: visible;
-    opacity: 0.8;
+    opacity: 1;
     transition: visibility 1s, opacity 1s;
 }
 

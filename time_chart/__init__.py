@@ -18,33 +18,18 @@ else:
 
 def time_chart(
     data: List[Tuple[str, float, int, int, int, int]],
-    circle_radius: int = 2,
-    circle_color: str = "#197A7B",
-    height: int = 400,
-    width: int = 600,
-    margin: Dict = None,
+    width: int = None,
     key=None,
 ):
     """Display a line chart with overlapping circles on a list of (x, y) points, using the D3 library.
 
     :param data: A list of (x, y) points
-    :param circle_radius:  Radius of overlapping circles, in pixels
-    :param circle_color:  Color of overlapping circles, as a CSS color or hexadecimal value.
-    :param height:  Height of canvas, in pixels
     :param width:  Width of canvas, in pixels
-    :param margin:  Margins surronding the plot inside the canvas, expects "top", "bottom", "left" and "right" keys
     :param key:  An optional string to use as the unique key for the widget.
-    """
-    if margin is None:
-        margin = {"top": 20, "bottom": 30, "left": 40, "right": 30}
-
+    """       
     component_value = _component_func(
         data=data,
-        svgHeight=height,
         svgWidth=width,
-        circleRadius=circle_radius,
-        circleColor=circle_color,
-        margin=margin,
         key=key,
         default=None,
     )
