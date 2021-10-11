@@ -26,13 +26,11 @@ const TimeChart = (props) => {
 
   let posColor = "#f77f00"
   let activeColor = "#ff006e"
-  
-  props.args.data =  props.args.data.map(d => [new Date(d[0]), d[1], d[2], d[3], d[4], d[5]]);
+
+  props.args.data =  props.args.data.map(d => [new Date( typeof d[0] == "string" ? d[0].split('T')[0]+'T12:00:00' : d[0]), d[1], d[2], d[3], d[4], d[5]]);
   const data = props.args.data
-  //console.log(data)
   
   const margin = {"top": 50, "bottom": 50, "left": 2*parseFloat(axis_font_size)-5, "right": 3*parseFloat(axis_font_size)};
-  console.log(margin)
  
   const svgRef = useRef(null);
   const transitionMillisec = 1200;
