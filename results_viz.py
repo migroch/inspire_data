@@ -203,12 +203,8 @@ def show_weekly_metrics(filtered_df):
                 , axis=1 ).hide_index()
             st.dataframe(display_df_styler)
             st.caption("Highlighted row shows current week's data (week in progress).")
-        
-def draw_time_chart(filtered_df):
-    '''
-    Create a d3 component with a results vs time chart of test results
-    '''
-    st.subheader('Time Trend')
+
+def prep_fig_data(filtered_df):
     fig_data = pd.DataFrame({ 
         'test_count': filtered_df.groupby(['Test_Date']).size(), 
         'pos_count': filtered_df[filtered_df['Test_Result']=='POSITIVE'].groupby(['Test_Date']).size() 
@@ -239,8 +235,14 @@ def draw_time_chart(filtered_df):
         zip(fig_data.Test_Date, fig_data.avg_pos_rate, fig_data.pos_count,
             fig_data.active_count, fig_data.test_count, fig_data.Week)
     )
-    #circle_radius = st.sidebar.slider("Circle radius", 1, 25, 5)
-    #circle_color = st.sidebar.color_picker("Circle color", "#ED647C")
+
+    return fig_data
+
+def draw_time_chart(fig_data):
+    '''
+    Create a d3 component with a results vs time chart of test results
+    '''
+    st.subheader('Time Trend')
     time_chart(fig_data,  key="time_chart")    
     
 if __name__ == '__main__':
@@ -275,7 +277,7 @@ if __name__ == '__main__':
         
         # Show time chart
         #with st.expander("Show Time Trends", expanded=True):
-        draw_time_chart(filtered_df)
+        # draw_time_chart(filtered_df)
 
         # Animate latest metrics
         animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
