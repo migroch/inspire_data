@@ -1,11 +1,13 @@
 import time
 import datetime
+from typing import Tuple
 import pandas as pd
 import numpy as np
 import streamlit as st
 from import_styles import *
 from bq_query import get_results_from_bq
 from time_chart import time_chart
+from gauge_chart import gauge_chart
 #import draw_donut from donut_charts
 #import pdb
 st.set_page_config(
@@ -231,10 +233,6 @@ def prep_fig_data(filtered_df):
     fig_data['Week'] = pd.to_datetime(fig_data.Test_Date).dt.week
     fig_data['Week'] = fig_data['Week']-fig_data['Week'].min()+1
     fig_data['Test_Date'] = pd.to_datetime(fig_data.Test_Date).dt.strftime('%Y-%m-%d')
-    fig_data = list(
-        zip(fig_data.Test_Date, fig_data.avg_pos_rate, fig_data.pos_count,
-            fig_data.active_count, fig_data.test_count, fig_data.Week)
-    )
 
     return fig_data
 
@@ -243,7 +241,21 @@ def draw_time_chart(fig_data):
     Create a d3 component with a results vs time chart of test results
     '''
     st.subheader('Time Trend')
-    time_chart(fig_data,  key="time_chart")    
+    fig_data = list(
+        zip(fig_data.Test_Date, fig_data.avg_pos_rate, fig_data.pos_count,
+            fig_data.active_count, fig_data.test_count, fig_data.Week)
+    )
+    time_chart(fig_data,  key="time_chart")
+
+def draw_gauge_chart(fig_data):
+    '''
+    Create a d3 component with a gauge of 14-day average positive result rate 
+    '''
+    st.subheader('14-Day Average Positive Result Rate')
+    curr_avg = fig_data.avg_pos_rate.iat[-1]
+    max_avg = fig_data.avg_pos_rate.max()
+    fig_data = tuple([0, max_avg, curr_avg])
+    gauge_chart(fig_data, key="gauge_chart")
     
 if __name__ == '__main__':
     # Import Styles
@@ -275,9 +287,11 @@ if __name__ == '__main__':
         # Show weekly metrics
         show_weekly_metrics(filtered_df)
         
-        # Show time chart
+        # Prep figure data and call d3 components
+        fig_data = prep_fig_data(filtered_df)
         #with st.expander("Show Time Trends", expanded=True):
-        # draw_time_chart(filtered_df)
+        # draw_time_chart(fig_data)
+        draw_gauge_chart(fig_data)
 
         # Animate latest metrics
         animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
