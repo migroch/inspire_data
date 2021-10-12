@@ -16,7 +16,7 @@ else:
 
 
 def gauge_chart(
-    data: List[Tuple[float, float, float]],
+    data: Tuple[float, float, float],
     width: int = None,
     rotation: float = 0,
     thickness: float = 0.3,
