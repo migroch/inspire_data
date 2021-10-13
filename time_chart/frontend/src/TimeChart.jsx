@@ -1,10 +1,8 @@
 import React, {useEffect, useState, useRef} from "react";
-import {ComponentProps, Streamlit, withStreamlitConnection,} from "./streamlit";
+import { Streamlit, withStreamlitConnection,} from "streamlit-component-lib";
 import * as d3 from "d3";
 
 import styles from './TimeChart.css';
-import { act } from "react-dom/test-utils";
-import { type } from "os";
 
 // Create TimeChart component
 const TimeChart = (props) => {
@@ -13,10 +11,6 @@ const TimeChart = (props) => {
   const [svgWidth, setWidth ] = useState(window.innerWidth);
   const [svgHeight, setHeight ] = useState(aspectRatio*svgWidth);
   
-  const handleResize = () =>{
-    setWidth(window.innerWidth);
-    setHeight( aspectRatio*svgWidth );
-  }
   Streamlit.setFrameHeight(svgHeight);
 
   //let label_font_size = "15px";
@@ -48,10 +42,15 @@ const TimeChart = (props) => {
 
   // Set svgHeight and update it on window resize
   useEffect(() => {
+    const handleResize = () =>{
+      setWidth(window.innerWidth);
+      setHeight( aspectRatio*svgWidth );
+    }
+    
     Streamlit.setFrameHeight(svgHeight);
     d3.select(svgRef.current).style("height", svgHeight);
     window.addEventListener('resize', handleResize)
-  }, [svgWidth, svgHeight])
+  }, [aspectRatio, svgWidth, svgHeight])
 
   
   // On mount, create group containers for circles, path and both axis
@@ -179,6 +178,7 @@ const TimeChart = (props) => {
 		      .attr("cx", (d,i) => (1-i)*margin.left + i*(svgWidth - margin.right))
 		      .attr("cy",  margin.top/2 )
 		      .attr("r", parseFloat(legend_font_size)/2)
+		      .attr("opacity", 1)
 		  ))
 		
       svgElement.select(".legend").selectAll("text")

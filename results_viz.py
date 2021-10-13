@@ -192,7 +192,7 @@ def show_weekly_metrics(filtered_df):
         unique_col.metric(label="People Tested", value=weeklymetrics_df.iloc[-2]['People Tested'],  delta=calculate_delta('People Tested'))
         ntests_col.metric(label="Tests Completed", value=weeklymetrics_df.iloc[-2]['Tests Completed'],  delta=calculate_delta('Tests Completed'))
         st.caption(f"Delta values represent changes from previous week ({prevweek_dates})")
-        with st.expander("Show Weekly Table", expanded=True):
+        with st.expander("Show Weekly Table", expanded=False):
             st.subheader("Weekly Table")
             #display_index = 'Week '+ weeklymetrics_df.Week.astype('str')
             #display_df = weeklymetrics_df.set_index(display_index).drop(columns='Week')
@@ -275,7 +275,7 @@ if __name__ == '__main__':
         
         # Show time chart
         #with st.expander("Show Time Trends", expanded=True):
-        #draw_time_chart(filtered_df)
+        draw_time_chart(filtered_df)
 
         # Animate latest metrics
         animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
