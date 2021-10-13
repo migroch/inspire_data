@@ -9,6 +9,7 @@ const TimeChart = (props) => {
 
   let aspectRatio = 0.38
   const [svgWidth, setWidth ] = useState(window.innerWidth);
+  if (svgWidth < 600) aspectRatio = 0.61
   const [svgHeight, setHeight ] = useState(aspectRatio*svgWidth);
   
   Streamlit.setFrameHeight(svgHeight);
@@ -43,14 +44,16 @@ const TimeChart = (props) => {
   // Set svgHeight and update it on window resize
   useEffect(() => {
     const handleResize = () =>{
+      let aspectRatio = 0.38
       setWidth(window.innerWidth);
+      if (svgWidth < 600) aspectRatio = 0.61;
       setHeight( aspectRatio*svgWidth );
     }
     
     Streamlit.setFrameHeight(svgHeight);
     d3.select(svgRef.current).style("height", svgHeight);
     window.addEventListener('resize', handleResize)
-  }, [aspectRatio, svgWidth, svgHeight])
+  }, [svgWidth, svgHeight])
 
   
   // On mount, create group containers for circles, path and both axis
