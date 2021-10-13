@@ -8,7 +8,8 @@ import styles from './TimeChart.css';
 const TimeChart = (props) => {
 
   let aspectRatio = 0.38
-  const [svgWidth, setWidth ] = useState(window.innerWidth);
+  let dimensions = get_client_dimensions();
+  const [svgWidth, setWidth ] = useState(dimensions.width);
   if (svgWidth < 600) aspectRatio = 0.61
   const [svgHeight, setHeight ] = useState(aspectRatio*svgWidth);
   
@@ -45,7 +46,8 @@ const TimeChart = (props) => {
   useEffect(() => {
     const handleResize = () =>{
       let aspectRatio = 0.38
-      setWidth(window.innerWidth);
+      let dimensions = get_client_dimensions();
+      setWidth(dimensions.width);
       if (svgWidth < 600) aspectRatio = 0.61;
       setHeight( aspectRatio*svgWidth );
     }
@@ -451,7 +453,26 @@ const buildScales = (data, svgWidth, svgHeight, margin) => {
 
 // Format helpers
 const formatDate = d3.timeFormat("%m/%d/%y");
-const formatPercent = d3.format(".2%")
+const formatPercent = d3.format(".2%");
+
+ // Get client's window dimensions
+function get_client_dimensions() {
+  let clientsWidth = 0, clientsHeight = 0;
+  if( typeof( window.innerWidth ) == 'number' ) {
+    //Non-IE
+    clientsWidth = window.innerWidth;
+    clientsHeight = window.innerHeight;
+  } else if( document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight ) ) {
+    //IE 6+ in 'standards compliant mode'
+    clientsWidth = document.documentElement.clientWidth;
+    clientsHeight = document.documentElement.clientHeight;
+  } else if( document.body && ( document.body.clientWidth || document.body.clientHeight ) ) {
+    //IE 4 compatible
+    clientsWidth = document.body.clientWidth;
+    clientsHeight = document.body.clientHeight;
+  }
+  return {'width':clientsWidth, 'height': clientsHeight };
+}
 
 // Export component  
 export default withStreamlitConnection(TimeChart)
