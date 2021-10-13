@@ -280,3 +280,4 @@ if __name__ == '__main__':
         # Animate latest metrics
         animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
 
+        
