@@ -9,11 +9,11 @@ def read_inspire_files(pattern):
     for f in files:
         print(f'Reading file {f}')
         df = pd.read_csv(f)
-        df['District'] = f.split('_')[1].replace('.csv','')
+        if 'santacruz' not in f: df['District'] = f.split('_')[1].replace('.csv','')
         dfs = dfs.append(df)
     return dfs.reset_index(drop=True)
 
-inspire_df = read_inspire_files('data/registrations/all_*.csv')
+inspire_df = read_inspire_files('data/registrations/santacruz*.csv')
 inspire_df['Phone'] = inspire_df['Phone'].astype('Int64')
 #inspire_df = inspire_df[~inspire_df.duplicated(subset='')]
 

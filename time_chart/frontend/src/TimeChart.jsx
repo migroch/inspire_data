@@ -437,7 +437,7 @@ const buildScales = (data, svgWidth, svgHeight, margin) => {
 		   .domain(d3.extent(data, (d) => d[0]))
 		   .range([margin.left, svgWidth - margin.right]);
   const pos_yScale = d3.scaleLinear()
-		       .domain([d3.min(data, (d) => d[1]), d3.max(data, (d) => d[1])])
+		       .domain([0, d3.max(data, (d) => d[1])])
 		       .range([svgHeight - margin.bottom, margin.top]);
   const active_yScale = d3.scaleLinear()
 			  .domain([0, d3.max(data, (d) => d[3])])
