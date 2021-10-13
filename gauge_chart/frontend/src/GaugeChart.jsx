@@ -26,21 +26,23 @@ const GaugeChart = (props) => {
   	const transitionMillisec = 1200;
 	
 	// Get properties
-	props.args.data =  props.args.data.map(d => [d[0], d[1], d[2]]);
-  	const {data, width, rotation, thickness, arc, u_ticks, color_scheme, color_step, tick_color, needle_color, key} = props.args
+  	const {data, width, rotation, thickness, arc, ticks, color_scheme, color_step, tick_color, needle_color, key} = props.args
 	const pi = Math.PI
 	const rad = pi / 180
 	const deg = 180 / pi
-
+	
   	// Set svg values
 	let needlePercent = data[2],
   		center = setCenter(svgWidth, svgHeight, margin),
 		radii = setRadii(svgHeight, margin, thickness),
 		angles = setAngles(arc, pi, rotation, rad),
-		ticks = setTicks(angles, u_ticks),
+		gauge_ticks = setTicks(angles, ticks, radii, data[1]),
 		gradient = setGradient(color_scheme, color_step, angles),
-		scales = setScales(radii,angles);
-
+		scales = setScales(radii, angles, data[1]);
+	
+	console.log(data)
+	console.log([angles.start_angle, angles.end_angle])
+	console.log(needlePercent)
   	// Set svgHeight and update it on window resize
   	useEffect(() => {
     	Streamlit.setFrameHeight(svgHeight);
@@ -52,6 +54,9 @@ const GaugeChart = (props) => {
   	useEffect(() => {
     	const svgElement = d3.select(svgRef.current);
     	svgElement.append("g").classed("gauge-container", true);
+		// svgElement.append("g").classed("gauge-arc", true);
+		// svgElement.append("g").classed("gauge-ticks", true);
+		// svgElement.append("g").classed("needle", true);
   	}, [])
 
 	// Hook to create / update gauge 
@@ -60,78 +65,85 @@ const GaugeChart = (props) => {
 
 		const gauge_container = (g) => g.attr("transform", `translate(${center.x}, ${center.y})`)
 				.transition().duration(transitionMillisec)
-		
-		// Append arc
-		gauge_container.append("g")
-			.attr("class", "gauge-arc")
-			.selectAll("path")
-			.data(gradient)
-			.enter()
-			.append("path")
-				.attr("d", scales.subArcScale)
-				.attr("fill", (d) => d.fill)
-				.attr("stroke-width", 0.5)
-				.attr("stroke", (d) => d.fill)		
 
-		// Append ticks
-		gauge_container.append("g")
-			.attr("class", "gauge-ticks")
-			.selectAll("paths")
-			.data(ticks)
-			.enter()
-			.append("g")
-				.attr("class", "tick")
-				.append("path")
-					.attr("d", (d) => scales.lineRadial(d.coordinates))
-					.attr("stroke", tick_color)
-					.attr("stroke-width", 2)
-					.attr("stroke-linecap", "round")
-					.attr("fill", "none")
-		
-		gauge_container.select("g.gauge_ticks")
-			.selectAll("text")
-			.data(ticks)
-			.enter()
-			.append("g")
-				.attr("class", "tick-label")
-				.append("text")
-					.attr("transform", (d) => 
-						`translate(${radii.tick_label * Math.sin(d.angle)},
-								   ${-radii.tick_label * Math.cos(d.angle)}
-						rotate(${d.angle * deg - pi}))`)
-					.attr("dy", "0.35em")
-					.attr("text-anchor", "middle")
-					.attr("font-size", "0.67em")
-					.text((d) => d.label)
-		
-		// Append needle
-		gauge_container.append("g")
-			.attr("class", "needle")
-			.selectAll("path")
-			.data([needlePercent])
-			.enter()
-			.append("path")
-				.attr("d", (d) => scales.lineRadial([[0,0], [scales.needleScale(d), radii.outer_tick]]))
-				.attr("stroke", needle_color)
-				.attr("stroke-width", 6)
-				.attr("stroke-linecap", "round")
+		svgElement.select(".gauge-container").append("g")
+				.attr("class", "gauge-arc")
+				.selectAll("path")
+				.data(gradient)
+				.join(
+				  	enter => enter.append("path")
+							.attr("d", scales.subArcScale)
+							.attr("fill", (d) => d.fill)
+							.attr("stroke-width", 0.5)
+							.attr("stroke", (d) => d.fill)
+							.call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
+				  	update => update
+							.attr("opacity", 0)
+							.call(el => el.transition().duration(transitionMillisec)
+									.attr("d", scales.subArcScale)
+									.attr("opacity", 1)),
+				);
+				
+		svgElement.select(".gauge-container").append("g")
+				.attr("class", "gauge-ticks")
+				.selectAll("path")
+				.data(gauge_ticks)
+				.join(
+					enter => enter.append("g")
+							.attr("class", "tick")
+							.append("path")
+							.attr("d", (d) => scales.lineRadial(d.coordinates))
+							.attr("stroke", tick_color)
+							.attr("stroke-width", 2)
+							.attr("stroke-linecap", "round")
+							.attr("fill", "none")
+				);
 
-		gauge_container.select("g.needle")
-			.append("circle")
-				.attr("cx", 0)
-				.attr("cy", 0)
-				.attr("r", radii.cap)
-				.attr("stroke", needle_color)
-				.attr("stroke-width", 6)
-				.style("fill", "white")
+		svgElement.select(".gauge-container").select(".gauge-ticks")
+				.selectAll("text")
+				.data(gauge_ticks)
+				.join(
+					enter => enter.append("g")
+						.attr("class", "tick-label")
+						.append("text")
+							.attr("transform", (d) => `translate(${radii.tick_label * Math.sin(d.angle)},
+																 ${-radii.tick_label * Math.cos(d.angle)})
+				   									   rotate(${d.angle * deg - pi})`)
+							.attr("dy", "0.35em")
+							.attr("text-anchor", "middle")
+							.attr("font-size", "0.67em")
+							.text((d) => d.label)
+				);
+		
+		svgElement.select(".gauge-container").append("g")
+				.attr("class", "needle")
+				.selectAll("path")
+				.data([needlePercent])
+				.join(
+					enter => enter.append("path")
+						.attr("d", (d) => scales.lineRadial([[0,0], [scales.needleScale(d), radii.outer_tick]]))
+						.attr("stroke", needle_color)
+						.attr("stroke-width", 3)
+						.attr("stroke-linecap", "round")
+				);
+				// .append("circle")
+				// 	.attr("cx", 0)
+				// 	.attr("cy", 0)
+				// 	.attr("r", radii.cap)
+				// 	.attr("stroke", needle_color)
+				// 	.attr("stroke-width", 6)
+				// 	.style("fill", "white")
 		
 		svgElement.select(".gauge-container").call(gauge_container);
+		// svgElement.select(".gauge-arc").call(gauge_arc);
+		// svgElement.select(".gauge-ticks").call(gauge_ticks)
+		// svgElement.select(".needle").call(gauge_needle)
 	})
 
     return (
       <div className="gaugechart-container">
 	<div className='tooltip hide' />
-	<svg className="gaugechart-svg" ref={svgRef}  />
+	<svg className="gaugechart-svg" style={{width: 100 + '%'}} ref={svgRef}  />
       </div>
     )
     
@@ -165,27 +177,27 @@ const setAngles = (arc, pi, rotation, rad) => {
 	let arc_complement = 1 - arc;
 
 	angles["arc_complement"] = arc_complement;
-	angles["start_angle"] = (-pi / 2) + (pi * arc_complement / 2) + (rotation * rad);
-	angles["end_angle"] = (pi / 2) - (pi * arc_complement / 2) + (rotation * rad);
+	angles["start_angle"] = (-pi / 2);
+	angles["end_angle"] = pi / 2;
 
 	return angles
 }
 
-const setTicks = (angles, ticks, radii) => {
-	let sub_arc = (angles.end_angle - angles.start_angle) / (ticks - 1),
-		tick_pct = 100 / (ticks - 1);
+const setTicks = (angles, u_ticks, radii, max_pct) => {
+	let sub_arc = (angles.end_angle - angles.start_angle) / (u_ticks - 1),
+		tick_pct = max_pct / (u_ticks - 1);
 	
-	ticks = d3.range(ticks).map( (d) => {
+	const gauge_ticks = d3.range(u_ticks).map( (d) => {
 		let sub_angle = angles.start_angle + (sub_arc * d);
 		return {
-			label: (tick_pct * d).toFixed(2) + "%",
+			label: formatPercent(tick_pct * d),
 			angle: sub_angle,
 			coordinates: [[sub_angle, radii.inner],
 						  [sub_angle, radii.outer_tick]]
 		}
 	});
 
-	return ticks
+	return gauge_ticks
 }
 
 const setGradient = (color_scheme, color_step, angles) => {
@@ -208,7 +220,7 @@ const setGradient = (color_scheme, color_step, angles) => {
 	return gradient
 }
 
-const setScales = (radii, angles) => {
+const setScales = (radii, angles, max_pct) => {
 	let scales = {};
 
 	scales["lineRadial"] = d3.lineRadial();
@@ -220,11 +232,13 @@ const setScales = (radii, angles) => {
 		.endAngle((d) => d.end)
 
 	scales["needleScale"] = d3.scaleLinear()
-		.domain([0,1])
+		.domain([0, max_pct])
 		.range([angles.start_angle, angles.end_angle])
 	
 	return scales
 }
+
+const formatPercent = d3.format(".2%")
 
 // Export component  
 export default withStreamlitConnection(GaugeChart)
