@@ -54,9 +54,6 @@ const GaugeChart = (props) => {
   	useEffect(() => {
     	const svgElement = d3.select(svgRef.current);
     	svgElement.append("g").classed("gauge-container", true);
-		// svgElement.append("g").classed("gauge-arc", true);
-		// svgElement.append("g").classed("gauge-ticks", true);
-		// svgElement.append("g").classed("needle", true);
   	}, [])
 
 	// Hook to create / update gauge 
@@ -97,6 +94,12 @@ const GaugeChart = (props) => {
 							.attr("stroke-width", 2)
 							.attr("stroke-linecap", "round")
 							.attr("fill", "none")
+							.call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
+					update => update
+							.attr("opacity", 0)
+							.call(el => el.transition().duration(transitionMillisec)
+									.attr("d", (d) => scales.lineRadial(d.coordinates))
+									.attr("opacity", 1)),
 				);
 
 		svgElement.select(".gauge-container").select(".gauge-ticks")
@@ -104,15 +107,23 @@ const GaugeChart = (props) => {
 				.data(gauge_ticks)
 				.join(
 					enter => enter.append("g")
-						.attr("class", "tick-label")
-						.append("text")
+							.attr("class", "tick-label")
+							.append("text")
 							.attr("transform", (d) => `translate(${radii.tick_label * Math.sin(d.angle)},
-																 ${-radii.tick_label * Math.cos(d.angle)})
-				   									   rotate(${d.angle * deg - pi})`)
+																${-radii.tick_label * Math.cos(d.angle)})
+													rotate(${d.angle * deg - pi})`)
 							.attr("dy", "0.35em")
 							.attr("text-anchor", "middle")
 							.attr("font-size", "0.67em")
 							.text((d) => d.label)
+							.call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
+					update => update
+							.attr("opacity", 0)
+							.call(el => el.transition().duration(transitionMillisec)
+									.attr("d", (d) => `translate(${radii.tick_label * Math.sin(d.angle)},
+																 ${-radii.tick_label * Math.cos(d.angle)})
+							 						   rotate(${d.angle * deg - pi})`)
+									.attr("opacity", 1)),
 				);
 		
 		svgElement.select(".gauge-container").append("g")
@@ -121,23 +132,44 @@ const GaugeChart = (props) => {
 				.data([needlePercent])
 				.join(
 					enter => enter.append("path")
-						.attr("d", (d) => scales.lineRadial([[0,0], [scales.needleScale(d), radii.outer_tick]]))
-						.attr("stroke", needle_color)
-						.attr("stroke-width", 3)
-						.attr("stroke-linecap", "round")
+							.attr("d", (d) => scales.lineRadial([[0,0], [scales.needleScale(d), radii.outer_tick]]))
+							.attr("stroke", needle_color)
+							.attr("stroke-width", 3)
+							.attr("stroke-linecap", "round")
+								.attr("fill", "white")
+							.call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
+					update => update
+							.attr("opacity", 0)
+							.call(el => el.transition().duration(transitionMillisec)
+									.attr("d", (d) => scales.lineRadial([[0,0], [scales.needleScale(d), radii.outer_tick]]))
+									.attr("opacity", 1)),
 				);
-				// .append("circle")
-				// 	.attr("cx", 0)
-				// 	.attr("cy", 0)
-				// 	.attr("r", radii.cap)
-				// 	.attr("stroke", needle_color)
-				// 	.attr("stroke-width", 6)
-				// 	.style("fill", "white")
+		
+		svgElement.select('.gauge-container').select('.needle')
+				.append("circle")
+				.attr("cx", 0)
+				.attr("cy", 0)
+				.attr("r", radii.cap)
+				.attr("stroke", needle_color)
+				.attr("stroke-width", 3)
+				.attr("fill", "white")
+				.attr("opacity", 1)
+				
+				// .attr("stroke", needle_color)
+				// .attr("stroke-width", 3)
+				// .style("fill", "white")
+				// .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1))
+					// update => update
+					// 		.attr("opacity", 0)
+					// 		.call(el => el.transition().duration(transitionMillisec)
+					// 				.attr("cx", 0)
+					// 				.attr("cy", 0)
+					// 				.attr("opacity", 1)),
+
+				
+				
 		
 		svgElement.select(".gauge-container").call(gauge_container);
-		// svgElement.select(".gauge-arc").call(gauge_arc);
-		// svgElement.select(".gauge-ticks").call(gauge_ticks)
-		// svgElement.select(".needle").call(gauge_needle)
 	})
 
     return (
