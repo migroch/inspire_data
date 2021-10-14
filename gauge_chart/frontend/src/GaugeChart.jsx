@@ -145,15 +145,26 @@ const GaugeChart = (props) => {
 									.attr("opacity", 1)),
 				);
 		
-		svgElement.select('.gauge-container').select('.needle')
-				.append("circle")
+		svgElement.select('.gauge-container').select('.needle').append("circle")
 				.attr("cx", 0)
 				.attr("cy", 0)
 				.attr("r", radii.cap)
 				.attr("stroke", needle_color)
 				.attr("stroke-width", 3)
 				.attr("fill", "white")
-				.attr("opacity", 1)
+				.call(el => el.transition().duration(transitionMillisec).attr("r", radii.cap))
+				// .join(
+				// 	enter => (enter.append("circle")
+				// 		.attr("cx", center.x)
+				// 		.attr("cy", center.y)
+				// 		.attr("r", radii.cap)
+				// 		.attr("stroke", needle_color)
+				// 		.attr("stroke-width", 3)
+				// 		.attr("fill", "white")
+				// 		.call(el => el.transition().duration(transitionMillisec).attr("r", radii.cap))
+				// 	),
+				// );
+				
 				
 				// .attr("stroke", needle_color)
 				// .attr("stroke-width", 3)
