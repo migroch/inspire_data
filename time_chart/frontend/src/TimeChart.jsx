@@ -10,7 +10,7 @@ const TimeChart = (props) => {
   let aspectRatio = 0.38
   let dimensions = get_client_dimensions();
   const [svgWidth, setWidth ] = useState(dimensions.width);
-  if (svgWidth < 600) aspectRatio = 0.61
+  if (svgWidth < 600) aspectRatio = 0.68
   const [svgHeight, setHeight ] = useState(aspectRatio*svgWidth);
   
   Streamlit.setFrameHeight(svgHeight);
@@ -26,7 +26,7 @@ const TimeChart = (props) => {
   props.args.data =  props.args.data.map(d => [new Date( typeof d[0] == "string" ? d[0].split('T')[0]+'T12:00:00' : d[0]), d[1], d[2], d[3], d[4], d[5]]);
   const data = props.args.data
   
-  const margin = {"top": 50, "bottom": 50, "left": 2*parseFloat(axis_font_size)-5, "right": 3*parseFloat(axis_font_size)};
+  const margin = {"top": 50, "bottom": 4*parseFloat(axis_font_size), "left": 2*parseFloat(axis_font_size)-5, "right": 3*parseFloat(axis_font_size)};
  
   const svgRef = useRef(null);
   const transitionMillisec = 1200;
@@ -87,6 +87,9 @@ const TimeChart = (props) => {
 				    .tickFormat(d3.timeFormat("%m/%d/%y"))
 				    .tickSize(-1 * (svgHeight - margin.top - margin.bottom))
 				    .tickSizeOuter(0))
+			    .call(g => g.selectAll('text')
+					.style("text-anchor", "end")
+					.attr("transform", "rotate(-65)"))
 			    .call(g => g.selectAll("path")
 					.attr("stroke", "black")
 					.attr("stroke-width", 1)
