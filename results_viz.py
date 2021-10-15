@@ -44,6 +44,7 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
     #if group_selected != 'ALL':
     #    filtered_df = filtered_df.query('Group == @group_selected')
     filtered_df = filter_groups(filtered_df, filter_columns)
+    filtered_df = filter_gender(filtered_df, filter_columns)
 
     ## Apply date filters
     #with st.sidebar.expander("Date Filter"):
@@ -78,12 +79,27 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
 
 def filter_groups(filtered_df, filters_columns):
     groups = results_df['Group'].unique()
-    groups_selected =[]
-    for i,group in enumerate(groups):
-        selection =  filters_columns[i].checkbox(group, value=True,  on_change=None, args=None, kwargs=None)
-        if selection: groups_selected.append(group)
-    filtered_df = filtered_df.query('Group in @groups_selected')
-    return filtered_df    
+    selection = filters_columns[0].multiselect(label='Select Groups:', options=groups, default=groups, on_change=None, args=None, kwargs=None)
+    filtered_df = filtered_df.query('Group in @selection')
+    return filtered_df  
+
+def filter_gender(filtered_df, filters_columns):
+    genders = results_df['Gender'].unique()
+    selection = filters_columns[1].multiselect(label='Select Genders:', options=genders, default=genders, on_change=None, args=None, kwargs=None)
+    filtered_df = filtered_df.query('Gender in @selection')
+    return filtered_df  
+
+def filter_race(filtered_df, filters_columns):
+    races = results_df['Race'].unique()
+    selection = filters_columns[2].multiselect(label='Select Race:', options=races, default=races, on_change=None, args=None, kwargs=None)
+    filtered_df = filtered_df.query('Race in @selection')
+    return filtered_df
+
+def filter_ethnicity(filtered_df, filters_columns):
+    ethnicities = results_df['Ethnicity'].unique()
+    selection = filters_columns[3].multiselect(label='Select Ethnicity:', options=ethnicities, default=ethnicities, on_change=None, args=None, kwargs=None)
+    filtered_df = filtered_df.query('Ethnicity in @selection')
+    return filtered_df
 
 def show_latest_metrics(filtered_df):
     '''
