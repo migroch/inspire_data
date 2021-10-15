@@ -165,7 +165,6 @@ const GaugeChart = (props) => {
 					      .attr('r', radii.cap)
 					      .attr("opacity", 1)),
 	      )
-
 	      
       // .attr("stroke", needle_color)
       // .attr("stroke-width", 3)
