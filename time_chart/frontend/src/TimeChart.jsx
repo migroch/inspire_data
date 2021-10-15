@@ -1,22 +1,18 @@
 import React, {useEffect, useState, useRef} from "react";
-import {ComponentProps, Streamlit, withStreamlitConnection,} from "./streamlit";
+import { Streamlit, withStreamlitConnection,} from "streamlit-component-lib";
 import * as d3 from "d3";
 
 import styles from './TimeChart.css';
-import { act } from "react-dom/test-utils";
-import { type } from "os";
 
 // Create TimeChart component
 const TimeChart = (props) => {
 
   let aspectRatio = 0.38
-  const [svgWidth, setWidth ] = useState(window.innerWidth);
+  let dimensions = get_client_dimensions();
+  const [svgWidth, setWidth ] = useState(dimensions.width);
+  if (svgWidth < 600) aspectRatio = 0.68
   const [svgHeight, setHeight ] = useState(aspectRatio*svgWidth);
   
-  const handleResize = () =>{
-    setWidth(window.innerWidth);
-    setHeight( aspectRatio*svgWidth );
-  }
   Streamlit.setFrameHeight(svgHeight);
 
   //let label_font_size = "15px";
@@ -30,7 +26,7 @@ const TimeChart = (props) => {
   props.args.data =  props.args.data.map(d => [new Date( typeof d[0] == "string" ? d[0].split('T')[0]+'T12:00:00' : d[0]), d[1], d[2], d[3], d[4], d[5]]);
   const data = props.args.data
   
-  const margin = {"top": 50, "bottom": 50, "left": 2*parseFloat(axis_font_size)-5, "right": 3*parseFloat(axis_font_size)};
+  const margin = {"top": 50, "bottom": 4*parseFloat(axis_font_size), "left": 2*parseFloat(axis_font_size)-5, "right": 3*parseFloat(axis_font_size)};
  
   const svgRef = useRef(null);
   const transitionMillisec = 1200;
@@ -48,6 +44,14 @@ const TimeChart = (props) => {
 
   // Set svgHeight and update it on window resize
   useEffect(() => {
+    const handleResize = () =>{
+      let aspectRatio = 0.38
+      let dimensions = get_client_dimensions();
+      setWidth(dimensions.width);
+      if (svgWidth < 600) aspectRatio = 0.61;
+      setHeight( aspectRatio*svgWidth );
+    }
+    
     Streamlit.setFrameHeight(svgHeight);
     d3.select(svgRef.current).style("height", svgHeight);
     window.addEventListener('resize', handleResize)
@@ -83,6 +87,9 @@ const TimeChart = (props) => {
 				    .tickFormat(d3.timeFormat("%m/%d/%y"))
 				    .tickSize(-1 * (svgHeight - margin.top - margin.bottom))
 				    .tickSizeOuter(0))
+			    .call(g => g.selectAll('text')
+					.style("text-anchor", "end")
+					.attr("transform", "rotate(-65)"))
 			    .call(g => g.selectAll("path")
 					.attr("stroke", "black")
 					.attr("stroke-width", 1)
@@ -179,6 +186,7 @@ const TimeChart = (props) => {
 		      .attr("cx", (d,i) => (1-i)*margin.left + i*(svgWidth - margin.right))
 		      .attr("cy",  margin.top/2 )
 		      .attr("r", parseFloat(legend_font_size)/2)
+		      .attr("opacity", 1)
 		  ))
 		
       svgElement.select(".legend").selectAll("text")
@@ -437,7 +445,7 @@ const buildScales = (data, svgWidth, svgHeight, margin) => {
 		   .domain(d3.extent(data, (d) => d[0]))
 		   .range([margin.left, svgWidth - margin.right]);
   const pos_yScale = d3.scaleLinear()
-		       .domain([d3.min(data, (d) => d[1]), d3.max(data, (d) => d[1])])
+		       .domain([0, d3.max(data, (d) => d[1])])
 		       .range([svgHeight - margin.bottom, margin.top]);
   const active_yScale = d3.scaleLinear()
 			  .domain([0, d3.max(data, (d) => d[3])])
@@ -448,7 +456,26 @@ const buildScales = (data, svgWidth, svgHeight, margin) => {
 
 // Format helpers
 const formatDate = d3.timeFormat("%m/%d/%y");
-const formatPercent = d3.format(".2%")
+const formatPercent = d3.format(".2%");
+
+ // Get client's window dimensions
+function get_client_dimensions() {
+  let clientsWidth = 0, clientsHeight = 0;
+  if( typeof( window.innerWidth ) == 'number' ) {
+    //Non-IE
+    clientsWidth = window.innerWidth;
+    clientsHeight = window.innerHeight;
+  } else if( document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight ) ) {
+    //IE 6+ in 'standards compliant mode'
+    clientsWidth = document.documentElement.clientWidth;
+    clientsHeight = document.documentElement.clientHeight;
+  } else if( document.body && ( document.body.clientWidth || document.body.clientHeight ) ) {
+    //IE 4 compatible
+    clientsWidth = document.body.clientWidth;
+    clientsHeight = document.body.clientHeight;
+  }
+  return {'width':clientsWidth, 'height': clientsHeight };
+}
 
 // Export component  
 export default withStreamlitConnection(TimeChart)

@@ -9,7 +9,8 @@ from bq_query import get_results_from_bq
 from time_chart import time_chart
 from gauge_chart import gauge_chart
 #import draw_donut from donut_charts
-#import pdb
+import pdb
+
 st.set_page_config(
     layout="wide",
     page_title="Santa Cruz County Covid Testing Dashboard",
@@ -199,10 +200,10 @@ def show_weekly_metrics(filtered_df):
             #display_index = 'Week '+ weeklymetrics_df.Week.astype('str')
             #display_df = weeklymetrics_df.set_index(display_index).drop(columns='Week')
             display_df = weeklymetrics_df.sort_values('Week', ascending=False)
-            display_df = display_df.drop(columns='Week')
-            display_df_styler = display_df.style.hide_index().apply(
+            display_df = display_df.drop(columns='Week').set_index('Dates').reset_index()
+            display_df_styler = display_df.style.apply(
                 lambda x: [f"background-color:{'#09ab3b' if x.name==display_df.index[0] else 'white'};" for row in x]
-                , axis=1 ).hide_index()
+                , axis=1 )
             st.dataframe(display_df_styler)
             st.caption("Highlighted row shows current week's data (week in progress).")
 
@@ -251,7 +252,7 @@ def draw_gauge_chart(fig_data):
     '''
     Create a d3 component with a gauge of 14-day average positive result rate 
     '''
-    st.subheader('14-Day Average Positive Result Rate')
+    #st.subheader('14-Day Average Positive Result Rate')
     curr_avg = fig_data.avg_pos_rate.iat[-1]
     max_avg = fig_data.avg_pos_rate.max()
     fig_data = tuple([0, max_avg, curr_avg])
@@ -265,7 +266,8 @@ if __name__ == '__main__':
     # Get results data from BQ
     results_df = get_results_from_bq()
 
-    title = st.empty()
+    # Set header columns as place holders
+    title_col, gauge_col = st.columns(2)
         
     # Filter results based on widgets
     filtered_df, selections_dict = apply_filters(results_df)
@@ -273,13 +275,22 @@ if __name__ == '__main__':
     if not filtered_df.size:
         st.markdown('<h1 style="color: #699900;">No data...     <small class="text-muted">check your filter selections</small></h1>', unsafe_allow_html=True)
     else:    
-        # Write title    
+        # Set district and n_sites    
         district =  'Santa Cruz County Schools'
         if 'district' in selections_dict.keys():
             district = selections_dict['district']
         if district == 'ALL': district = 'Santa Cruz County Schools'
-        n_sites = filtered_df.Organization.str.split('-', expand=True)[0].nunique()
-        title.markdown(f'<h1 style="color: #699900;">{district}     <small class="text-muted">{n_sites} School Sites Participating</small></h1>' , unsafe_allow_html=True)
+        n_sites = filtered_df.Organization.str.split('-', expand=True)[0].nunique()      
+
+        # Write title
+        title_col.markdown(f'<h1 class="p-0 " style="color: #699900;">{district}</h1><small class="text-muted">{n_sites} School Sites Participating</small>' , unsafe_allow_html=True)
+
+        # Prep figure data 
+        fig_data = prep_fig_data(filtered_df)
+        
+        # Show positivity rate gauge
+        with gauge_col:
+            draw_gauge_chart(fig_data)
         
         # Show latest metrics
         active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_latest_metrics(filtered_df)
@@ -287,11 +298,8 @@ if __name__ == '__main__':
         # Show weekly metrics
         show_weekly_metrics(filtered_df)
         
-        # Prep figure data and call d3 components
-        fig_data = prep_fig_data(filtered_df)
         #with st.expander("Show Time Trends", expanded=True):
-        # draw_time_chart(fig_data)
-        draw_gauge_chart(fig_data)
+        draw_time_chart(fig_data)
 
         # Animate latest metrics
         animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
