@@ -7,7 +7,7 @@ import styles from './GaugeChart.css';
 // Create GaugeChart component
 const GaugeChart = (props) => {
   
-  let aspectRatio = 0.3
+  let aspectRatio = 0.7
   let dimensions = get_client_dimensions();
   const [svgWidth, setWidth ] = useState(dimensions.width);
   const [svgHeight, setHeight ] = useState(aspectRatio*svgWidth);
@@ -15,11 +15,10 @@ const GaugeChart = (props) => {
   Streamlit.setFrameHeight(svgHeight);
 
   //let label_font_size = "15px";
-  let axis_font_size = `${11+5*svgWidth/1000}px`;
-  let legend_font_size = `${11+5*svgWidth/1000}px`;
+  let ticks_font_size = `${11+5*svgWidth/1000}px`;
   
-  const margin = {"top":25, "bottom": 20, "left": 0, "right": 0};
- 
+  const margin = {"top":2*parseFloat(ticks_font_size), "bottom": 4*parseFloat(ticks_font_size), "left": 2*parseFloat(ticks_font_size), "right": 2*parseFloat(ticks_font_size)};
+
   const svgRef = useRef(null);
   const transitionMillisec = 1200;
 	
@@ -32,7 +31,7 @@ const GaugeChart = (props) => {
   // Set svg values
   let needlePercent = data[2],
       center = setCenter(svgWidth, svgHeight, margin),
-      radii = setRadii(svgHeight, margin, thickness),
+      radii = setRadii(svgWidth, margin, thickness),
       angles = setAngles(arc, pi, rotation, rad),
       gauge_ticks = setTicks(angles, ticks, radii, data[1]),
       gradient = setGradient(color_scheme, color_step, angles),
@@ -152,13 +151,14 @@ const GaugeChart = (props) => {
 		
     svgElement.select('.gauge-container').select('.needle').append("circle")
 	      .join(
-		enter=> enter.attr("cx", 0)
-			     .attr("cy", 0)
-			     .attr('r', radii.cap)
-			     .attr("stroke", needle_color)
-			     .attr("stroke-width", 3)
-			     .attr("fill", "white")
-			     .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
+		enter=> enter.append("circle")
+          .attr("cx", 0)
+			    .attr("cy", 0)
+			    .attr('r', radii.cap)
+			    .attr("stroke", needle_color)
+			    .attr("stroke-width", 3)
+			    .attr("fill", "white")
+			    .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
 		update => update.attr("opacity", 0)
 				.attr("stroke", needle_color)
 				.attr("stroke-width", 3)
@@ -202,15 +202,16 @@ const setCenter = (svgWidth, svgHeight, margin) => {
   return center
 }
 
-const setRadii = (svgHeight, margin, thickness) => {
+const setRadii = (svgWidth, margin, thickness) => {
   let radii = {};
-  let base = svgHeight -  margin.bottom;
+  let base = svgWidth - margin.left - margin.right;
   
   radii["base"] = base;
-  radii["cap"] = base / 15;
-  radii["inner"] = base * (1 - thickness);
-  radii["outer_tick"] = base + 5;
-  radii["tick_label"] = base + 15;
+  radii["cap"] = base / 20;
+  radii["inner"] = (base / 2) - (base * thickness / 2);
+  radii["outer"] = base / 2;
+  radii["outer_tick"] = (base / 2) + 5;
+  radii["tick_label"] = (base/2) + 15;
   
   return radii
 }
@@ -273,7 +274,7 @@ const setScales = (radii, angles, max_pct) => {
   
   scales["subArcScale"] = d3.arc()
 			    .innerRadius(radii.inner + 1)
-			    .outerRadius(radii.base)
+			    .outerRadius(radii.outer)
 			    .startAngle((d) => d.start)
 			    .endAngle((d) => d.end);
 
