@@ -6,7 +6,6 @@ import styles from './GaugeChart.css';
 
 // Create GaugeChart component
 const GaugeChart = (props) => {
-  
   let aspectRatio = 0.7
   let dimensions = get_client_dimensions();
   const [svgWidth, setWidth ] = useState(dimensions.width);
@@ -37,6 +36,7 @@ const GaugeChart = (props) => {
       gradient = setGradient(color_scheme, color_step, angles),
       scales = setScales(radii, angles, data[1]);
   
+  console.log('first:', center)
   //console.log(data);
   //console.log([angles.start_angle, angles.end_angle]);
   //console.log(needlePercent);
@@ -57,130 +57,108 @@ const GaugeChart = (props) => {
   // On mount, create group containers for circles, path and both axis
   useEffect(() => {
     const svgElement = d3.select(svgRef.current);
-    svgElement.append("g").classed("gauge-container", true);
+    svgElement.append("g").classed("gauge-arc", true);
+    svgElement.append("g").classed("gauge-ticks", true);
+    svgElement.append("g").classed("needle", true);
+    svgElement.append("g").classed("needle-circle", true);
   }, []);
 
   // Hook to create / update gauge 
   useEffect(() => {
     const svgElement = d3.select(svgRef.current);
     
-    const gauge_container = (g) => g.attr("transform", `translate(${center.x}, ${center.y})`)
-				    .transition().duration(transitionMillisec);
-      
-    svgElement.select(".gauge-container").append("g")
-	      .attr("class", "gauge-arc")
-	      .selectAll("path")
-	      .data(gradient)
-	      .join(
-		enter => enter.append("path")
-			      .attr("d", scales.subArcScale)
-			      .attr("fill", (d) => d.fill)
-			      .attr("stroke-width", 0.5)
-			      .attr("stroke", (d) => d.fill)
-			      .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
-		update => update.attr("opacity", 0)
-				.call(el => el.transition().duration(transitionMillisec)
+    svgElement.select(".gauge-arc").selectAll("path")
+	    .data(gradient)
+	    .join(enter => enter.append("path").attr("transform", `translate(${center.x}, ${center.y})`)
+			        .attr("d", scales.subArcScale)
+			        .attr("fill", (d) => d.fill)
+			        .attr("stroke-width", 0.5)
+			        .attr("stroke", (d) => d.fill)
+			        .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
+		        update => update.attr("opacity", 0)
+				      .call(el => el.transition().duration(transitionMillisec)
+                .attr("transform", `translate(${center.x}, ${center.y})`)
 					      .attr("d", scales.subArcScale)
 					      .attr("opacity", 1)),
-	      );
-				
-    svgElement.select(".gauge-container").append("g")
-	      .attr("class", "gauge-ticks")
-	      .selectAll("path")
-	      .data(gauge_ticks)
-	      .join(
-		enter => enter.append("g")
-			      .attr("class", "tick")
-			      .append("path")
-			      .attr("d", (d) => scales.lineRadial(d.coordinates))
-			      .attr("stroke", tick_color)
-			      .attr("stroke-width", 2)
-			      .attr("stroke-linecap", "round")
-			      .attr("fill", "none")
-			      .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
-		update => update.attr("opacity", 0)
-				.call(el => el.transition().duration(transitionMillisec)
+	    );
+		
+    svgElement.select(".gauge-ticks").selectAll("path")
+	    .data(gauge_ticks)
+	    .join(enter => enter.append("path")
+              .attr("transform", `translate(${center.x}, ${center.y})`)
+			        .attr("d", (d) => scales.lineRadial(d.coordinates))
+			        .attr("stroke", tick_color)
+			        .attr("stroke-width", 2)
+			        .attr("stroke-linecap", "round")
+			        .attr("fill", "none")
+			        .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
+		        update => update.attr("opacity", 0)
+				      .call(el => el.transition().duration(transitionMillisec)
+              .attr("transform", `translate(${center.x}, ${center.y})`)
 					      .attr("d", (d) => scales.lineRadial(d.coordinates))
 					      .attr("opacity", 1)),
-	      );
+	    );
 
-    svgElement.select(".gauge-container").select(".gauge-ticks")
-	      .selectAll("text")
-	      .data(gauge_ticks)
-	      .join(
-		enter => enter.append("g")
-			      .attr("class", "tick-label")
-			      .append("text")
-			      .attr("transform", (d) =>{
-				let rot_angle = d.angle * deg - pi;
-				if (d.angle in [angles.start_angle, angles.end_angle]) rot_angle = 0;
-				return `translate(${radii.tick_label * Math.sin(d.angle)}, ${-radii.tick_label * Math.cos(d.angle)}) rotate(${rot_angle})`
-			      })
-			      .attr("dy", "0.35em")
-			      .attr("text-anchor", "middle")
-			      .attr("font-size", "0.67em")
-			      .text((d) => d.label)
-			      .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
-		update => update.attr("opacity", 0)
-				.call(el => el.transition().duration(transitionMillisec)
-					      .attr("d", (d) =>{
-						let rot_angle = d.angle * deg - pi;
-						if (d.angle in [angles.start_angle, angles.end_angle]) rot_angle = 90;
-						return `translate(${radii.tick_label * Math.sin(d.angle)}, ${-radii.tick_label * Math.cos(d.angle)}) rotate(${rot_angle})`
+    svgElement.select(".gauge-ticks").selectAll("text")
+	    .data(gauge_ticks)
+	    .join(enter => enter.append("text")
+			        .attr("transform", (d) => {
+				        let rot_angle = d.angle * deg - pi;
+				        if (d.angle in [angles.start_angle, angles.end_angle]) rot_angle = 0;
+				        return `translate(${center.x + (radii.tick_label * Math.sin(d.angle))}, ${center.y + (-radii.tick_label * Math.cos(d.angle))}) rotate(${rot_angle})`
+			        })
+			        .attr("dy", "0.35em")
+			        .attr("text-anchor", "middle")
+			        .attr("font-size", ticks_font_size)
+			        .text((d) => d.label)
+			        .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
+		        update => update.attr("opacity", 0)
+				      .call(el => el.transition().duration(transitionMillisec)
+					      .attr("transform", (d) => {
+						      let rot_angle = d.angle * deg - pi;
+						      if (d.angle in [angles.start_angle, angles.end_angle]) rot_angle = 0;
+						      return `translate(${center.x + (radii.tick_label * Math.sin(d.angle))}, ${center.y + (-radii.tick_label * Math.cos(d.angle))}) rotate(${rot_angle})`
 					      })
 					      .attr("opacity", 1)),
-				);
+			);
 		
-    svgElement.select(".gauge-container").append("g")
-	      .attr("class", "needle")
-	      .selectAll("path")
-	      .data([needlePercent])
-	      .join(
-		enter => enter.append("path")
-			      .attr("d", (d) => scales.lineRadial([[0,0], [scales.needleScale(d), radii.outer_tick]]))
-			      .attr("stroke", needle_color)
-			      .attr("stroke-width", 3)
-			      .attr("stroke-linecap", "round")
-			      .attr("fill", "white")
-			      .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
-		update => update.attr("opacity", 0)
-				.call(el => el.transition().duration(transitionMillisec)
+    svgElement.select(".needle").selectAll("path")
+	    .data([needlePercent])
+	    .join(enter => enter.append("path")
+              .attr("transform", `translate(${center.x}, ${center.y})`)
+              .attr("d", (d) => scales.lineRadial([[0,0], [scales.needleScale(d), radii.outer_tick]]))
+			        .attr("stroke", needle_color)
+			        .attr("stroke-width", 3)
+			        .attr("stroke-linecap", "round")
+			        .attr("fill", "white")
+			        .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
+		        update => update.attr("opacity", 0)
+				      .call(el => el.transition().duration(transitionMillisec)
+              .attr("transform", `translate(${center.x}, ${center.y})`)
 					      .attr("d", (d) => scales.lineRadial([[0,0], [scales.needleScale(d), radii.outer_tick]]))
 					      .attr("opacity", 1)),
-	      );
+	    );
 		
-    svgElement.select('.gauge-container').select('.needle').append("circle")
-	      .join(
-		enter=> enter.append("circle")
-          .attr("cx", 0)
-			    .attr("cy", 0)
-			    .attr('r', radii.cap)
-			    .attr("stroke", needle_color)
-			    .attr("stroke-width", 3)
-			    .attr("fill", "white")
-			    .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
-		update => update.attr("opacity", 0)
-				.attr("stroke", needle_color)
-				.attr("stroke-width", 3)
-				.attr("fill", "white")
-				.call(el => el.transition().duration(transitionMillisec)
-					      .attr("cx", 0)
-					      .attr("cy", 0)
-					      .attr('r', radii.cap)
-					      .attr("opacity", 1)),
-	      )
-	      
-      // .attr("stroke", needle_color)
-      // .attr("stroke-width", 3)
-      // .style("fill", "white")
-      // .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1))
-      // update => update
-      // 		.attr("opacity", 0)
-      // 		.call(el => el.transition().duration(transitionMillisec)
-      // 				.attr("cx", 0)
-      // 				.attr("cy", 0)
-      // 				.attr("opacity", 1)),		
-		svgElement.select(".gauge-container").call(gauge_container);
+    svgElement.select(".needle-circle").selectAll("circle")
+        .data([0])
+	      .join(enter=> enter.append("circle")
+                .attr("cx", center.x)
+			          .attr("cy", center.y)
+			          .attr('r', radii.cap)
+			          .attr("stroke", needle_color)
+			          .attr("stroke-width", 3)
+			          .attr("fill", "white")
+			          .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
+		          update => update.attr("opacity", 0)
+				        .attr("stroke", needle_color)
+				        .attr("stroke-width", 3)
+				        .attr("fill", "white")
+				        .call(el => el.transition().duration(transitionMillisec)
+					        .attr("cx", center.x)
+					        .attr("cy", center.y)
+					        .attr('r', radii.cap)
+					        .attr("opacity", 1)),
+	      );
 	});
 
     return (
@@ -207,10 +185,10 @@ const setRadii = (svgWidth, margin, thickness) => {
   let base = svgWidth - margin.left - margin.right;
   
   radii["base"] = base;
-  radii["cap"] = base / 20;
-  radii["inner"] = (base / 2) - (base * thickness / 2);
-  radii["outer"] = base / 2;
-  radii["outer_tick"] = (base / 2) + 5;
+  radii["cap"] = base/20;
+  radii["inner"] = (base/2) - (base*thickness/2);
+  radii["outer"] = base/2;
+  radii["outer_tick"] = (base/2) + 5;
   radii["tick_label"] = (base/2) + 15;
   
   return radii
@@ -256,7 +234,6 @@ const setGradient = (color_scheme, color_step, angles) => {
     let sub_color = d / (samples - 1),
 	sub_start_angle = angles.start_angle + (sub_arc * d),
 	sub_end_angle = sub_start_angle + sub_arc;
-    console.log(sub_color)
     return {
       fill: color(sub_color),
       start: sub_start_angle,

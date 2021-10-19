@@ -335,6 +335,8 @@ if __name__ == '__main__':
         # Show positivity rate gauge
         with gauge_col:
             draw_gauge_chart(fig_data)
+            curr_percent = '{:.2%}'.format(fig_data.avg_pos_rate.iat[-1])
+            gauge_col.caption(f'Current 14-Day Positivity Rate: {curr_percent}')
         
         # Show latest metrics
         active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_latest_metrics(filtered_df)
