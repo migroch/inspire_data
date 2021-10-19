@@ -38,9 +38,9 @@ const GaugeChart = (props) => {
       gradient = setGradient(color_scheme, color_step, angles),
       scales = setScales(radii, angles, data[1]);
   
-  console.log(data);
-  console.log([angles.start_angle, angles.end_angle]);
-  console.log(needlePercent);
+  //console.log(data);
+  //console.log([angles.start_angle, angles.end_angle]);
+  //console.log(needlePercent);
 
   // Set svgHeight and update it on window resize
   useEffect(() => {
@@ -53,7 +53,7 @@ const GaugeChart = (props) => {
     Streamlit.setFrameHeight(svgHeight);
     d3.select(svgRef.current).style("height", svgHeight);
     window.addEventListener('resize', handleResize)
-  }, [svgWidth, svgHeight]);
+  }, [svgWidth, svgHeight, aspectRatio]);
     
   // On mount, create group containers for circles, path and both axis
   useEffect(() => {
@@ -112,9 +112,11 @@ const GaugeChart = (props) => {
 		enter => enter.append("g")
 			      .attr("class", "tick-label")
 			      .append("text")
-			      .attr("transform", (d) =>
-				`translate(${radii.tick_label * Math.sin(d.angle)}, ${-radii.tick_label * Math.cos(d.angle)}) rotate(${d.angle * deg - pi})`
-			      )
+			      .attr("transform", (d) =>{
+				let rot_angle = d.angle * deg - pi;
+				if (d.angle in [angles.start_angle, angles.end_angle]) rot_angle = 0;
+				return `translate(${radii.tick_label * Math.sin(d.angle)}, ${-radii.tick_label * Math.cos(d.angle)}) rotate(${rot_angle})`
+			      })
 			      .attr("dy", "0.35em")
 			      .attr("text-anchor", "middle")
 			      .attr("font-size", "0.67em")
@@ -122,9 +124,11 @@ const GaugeChart = (props) => {
 			      .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
 		update => update.attr("opacity", 0)
 				.call(el => el.transition().duration(transitionMillisec)
-					      .attr("d", (d) =>
-						`translate(${radii.tick_label * Math.sin(d.angle)}, ${-radii.tick_label * Math.cos(d.angle)}) rotate(${d.angle * deg - pi})`
-					      )
+					      .attr("d", (d) =>{
+						let rot_angle = d.angle * deg - pi;
+						if (d.angle in [angles.start_angle, angles.end_angle]) rot_angle = 90;
+						return `translate(${radii.tick_label * Math.sin(d.angle)}, ${-radii.tick_label * Math.cos(d.angle)}) rotate(${rot_angle})`
+					      })
 					      .attr("opacity", 1)),
 				);
 		
@@ -239,17 +243,21 @@ const setTicks = (angles, u_ticks, radii, max_pct) => {
 }
 
 const setGradient = (color_scheme, color_step, angles) => {
-  let c = d3[color_scheme],
-      samples = color_step,
+  let  samples = color_step,
       total_arc = angles.end_angle - angles.start_angle,
       sub_arc = total_arc / (samples);
+
+  let color = d3.scaleLinear().domain([0, 1])
+		.interpolate(d3.interpolateHcl)
+		.range([ d3.rgb('#09ab3b'), d3.rgb("#ff006e")]);
   
   const gradient = d3.range(samples).map( (d) => {
     let sub_color = d / (samples - 1),
-			sub_start_angle = angles.start_angle + (sub_arc * d),
+	sub_start_angle = angles.start_angle + (sub_arc * d),
 	sub_end_angle = sub_start_angle + sub_arc;
+    console.log(sub_color)
     return {
-      fill: c(sub_color),
+      fill: color(sub_color),
       start: sub_start_angle,
       end: sub_end_angle
     }
