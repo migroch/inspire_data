@@ -23,9 +23,12 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
     Apply filters and return the data frame to use for figures
     '''
     filtered_df = results_df
+    filtered_df.Gender.fillna(value='Undisclosed', inplace=True)
+    filtered_df.Race.fillna(value='Undisclosed', inplace=True)
+    filtered_df.Ethnicity.fillna(value='Undisclosed', inplace=True)
 
-    filter_columns = st.columns([1,1,2,1])
-    
+    filter_columns = st.columns([1,1,1,1,3])
+
     ## Apply district and school filters 
     if district_filter:
         districts = np.append(['ALL'], filtered_df['District'].unique())
@@ -39,36 +42,36 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
         if site_selected != 'ALL':
             filtered_df = filtered_df.query('Organization == @site_selected')
 
-    ## Apply group filters
-    #groups = np.append(['ALL'], filtered_df['Group'].unique())
-    #if group_selected != 'ALL':
-    #    filtered_df = filtered_df.query('Group == @group_selected')
+
     filtered_df = filter_groups(filtered_df, filter_columns)
     filtered_df = filter_gender(filtered_df, filter_columns)
+    filtered_df = filter_race(filtered_df, filter_columns)
+    filtered_df = filter_ethnicity(filtered_df, filter_columns)
 
     ## Apply date filters
-    #with st.sidebar.expander("Date Filter"):
-       # week_range = st.slider('Select Weeks', min_value=int(filtered_df.Week.min()),
-       #                       max_value=int(filtered_df.Week.max()),
-       #                        value = (int(filtered_df.Week.min()), int(filtered_df.Week.max())),
-       #                        format = "Week %i",
-       #                        help = f"Select the week number since the start of the program (first results on: {filtered_df.Test_Date.min()})"
-       #                        )
-       # filtered_df = filtered_df.query('Week >= @week_range[0] and Week <= @week_range[1]')
+    # with st.sidebar.expander("Date Filter"):
+    #    week_range = st.slider('Select Weeks', min_value=int(filtered_df.Week.min()),
+    #                       max_value=int(filtered_df.Week.max()),
+    #                        value = (int(filtered_df.Week.min()), int(filtered_df.Week.max())),
+    #                        format = "Week %i",
+    #                        help = f"Select the week number since the start of the program (first results on: {filtered_df.Test_Date.min()})"
+    #                        )
+    # filtered_df = filtered_df.query('Week >= @week_range[0] and Week <= @week_range[1]')
 
     date_min = filtered_df.Test_Date.min() 
     date_max = filtered_df.Test_Date.max()
     if filtered_df.size:
-        date_range = filter_columns[-2].slider('Select dates', min_value=date_min,
-                                               max_value=date_max,
-                                               value = (date_min, date_max),
-                                               format = "M/D/YY",
-                                               #help = 'Filter the date range with the slider'
-                                               )   
+        date_range = filter_columns[4].slider('Select dates', 
+                                                min_value=date_min, 
+                                                max_value=date_max, 
+                                                value = (date_min, date_max), 
+                                                format = "M/D/YY", 
+                                                #help = 'Filter the date range with the slider'
+        )   
         filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
     else:
-         date_range=None   
-        
+        date_range=None   
+
     if site_filter and district_filter:
         selections_dict = { 'date_range':date_range, 'district': district_selected, 'site':site_selected}
     elif district_filter:
@@ -78,28 +81,56 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
     return filtered_df, selections_dict
 
 def filter_groups(filtered_df, filters_columns):
-    groups = results_df['Group'].unique()
-    selection = filters_columns[0].multiselect(label='Select Groups:', options=groups, default=groups, on_change=None, args=None, kwargs=None)
-    filtered_df = filtered_df.query('Group in @selection')
+    expander = filters_columns[0].expander(label='Select Group:')
+    groups = filtered_df['Group'].unique()
+    groups_selected = []
+
+    for group in groups:
+        selection = expander.checkbox(group, value=True, key=group+'_group_selected', on_change=None, args=None, kwargs=None)
+        if selection: 
+            groups_selected.append(group)
+    
+    filtered_df = filtered_df.query('Group in @groups_selected')
     return filtered_df  
 
 def filter_gender(filtered_df, filters_columns):
-    genders = results_df['Gender'].unique()
-    selection = filters_columns[1].multiselect(label='Select Genders:', options=genders, default=genders, on_change=None, args=None, kwargs=None)
-    filtered_df = filtered_df.query('Gender in @selection')
+    expander = filters_columns[1].expander(label='Select Gender:')
+    groups = filtered_df['Gender'].unique()
+    groups_selected = []
+
+    for group in groups:
+        selection = expander.checkbox(group, value=True, key=group+'_gender_selected', on_change=None, args=None, kwargs=None)
+        if selection: 
+            groups_selected.append(group)
+    
+    filtered_df = filtered_df.query('Gender in @groups_selected')
     return filtered_df  
 
 def filter_race(filtered_df, filters_columns):
-    races = results_df['Race'].unique()
-    selection = filters_columns[2].multiselect(label='Select Race:', options=races, default=races, on_change=None, args=None, kwargs=None)
-    filtered_df = filtered_df.query('Race in @selection')
-    return filtered_df
+    expander = filters_columns[2].expander(label='Select Race:')
+    groups = filtered_df['Race'].unique()
+    groups_selected = []
+
+    for group in groups:
+        selection = expander.checkbox(group, value=True, key=group+'_race_selected', on_change=None, args=None, kwargs=None)
+        if selection: 
+            groups_selected.append(group)
+    
+    filtered_df = filtered_df.query('Race in @groups_selected')
+    return filtered_df  
 
 def filter_ethnicity(filtered_df, filters_columns):
-    ethnicities = results_df['Ethnicity'].unique()
-    selection = filters_columns[3].multiselect(label='Select Ethnicity:', options=ethnicities, default=ethnicities, on_change=None, args=None, kwargs=None)
-    filtered_df = filtered_df.query('Ethnicity in @selection')
-    return filtered_df
+    expander = filters_columns[3].expander(label='Select Ethnicity:')
+    groups = filtered_df['Ethnicity'].unique()
+    groups_selected = []
+
+    for group in groups:
+        selection = expander.checkbox(group, value=True, key=group+'_ethnicity_selected', on_change=None, args=None, kwargs=None)
+        if selection: 
+            groups_selected.append(group)
+    
+    filtered_df = filtered_df.query('Ethnicity in @groups_selected')
+    return filtered_df  
 
 def show_latest_metrics(filtered_df):
     '''
@@ -227,7 +258,7 @@ def prep_fig_data(filtered_df):
     fig_data = pd.DataFrame({ 
         'test_count': filtered_df.groupby(['Test_Date']).size(), 
         'pos_count': filtered_df[filtered_df['Test_Result']=='POSITIVE'].groupby(['Test_Date']).size() 
-     }).reset_index()
+    }).reset_index()
     fig_data['pos_count'] = fig_data.pos_count.fillna(0)
     fig_data['pos_rate'] = 100.0*fig_data['pos_count']/fig_data['test_count']
     fig_data = fig_data.rename(columns={'index':'Test_Date'})
@@ -239,13 +270,12 @@ def prep_fig_data(filtered_df):
         lambda x:  fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
                             (fig_data['Test_Date'] <= x)]['pos_count'].sum() /
         fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
-                 (fig_data['Test_Date'] <= x)]['test_count'].sum()
+                (fig_data['Test_Date'] <= x)]['test_count'].sum()
     ) 
     fig_data['active_count'] = fig_data['Test_Date'].apply(
         lambda x: filtered_df[(filtered_df['Test_Date'] >= (x - timedelta_10days)) &
-                              (filtered_df['Test_Date'] <= x) &
-                              (filtered_df['Test_Result']=='POSITIVE')
-                              ].UID.nunique()
+                            (filtered_df['Test_Date'] <= x) &
+                            (filtered_df['Test_Result']=='POSITIVE')].UID.nunique()
     )  
     fig_data['Week'] = pd.to_datetime(fig_data.Test_Date).dt.week
     fig_data['Week'] = fig_data['Week']-fig_data['Week'].min()+1
@@ -278,6 +308,7 @@ if __name__ == '__main__':
     # Import Styles
     import_bootstrap()
     local_css('styles/main.css')
+    icon_css()
     
     # Get results data from BQ
     results_df = get_results_from_bq()
