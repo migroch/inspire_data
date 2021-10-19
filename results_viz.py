@@ -23,9 +23,6 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
     Apply filters and return the data frame to use for figures
     '''
     filtered_df = results_df
-    filtered_df.Gender.fillna(value='Undisclosed', inplace=True)
-    filtered_df.Race.fillna(value='Undisclosed', inplace=True)
-    filtered_df.Ethnicity.fillna(value='Undisclosed', inplace=True)
 
     filter_columns = st.columns([1,1,1,1,3])
 
