@@ -18,13 +18,11 @@ st.set_page_config(
     initial_sidebar_state = "collapsed",
 )
 
-def apply_filters(results_df, district_filter=False, site_filter=False):
+def apply_filters(results_df, column, district_filter=False, site_filter=False):
     '''
     Apply filters and return the data frame to use for figures
     '''
     filtered_df = results_df
-
-    filter_columns = st.columns([1,1,1,1,3])
 
     ## Apply district and school filters 
     if district_filter:
@@ -39,12 +37,7 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
         if site_selected != 'ALL':
             filtered_df = filtered_df.query('Organization == @site_selected')
 
-
-    filtered_df = filter_groups(filtered_df, filter_columns)
-    filtered_df = filter_gender(filtered_df, filter_columns)
-    filtered_df = filter_race(filtered_df, filter_columns)
-    filtered_df = filter_ethnicity(filtered_df, filter_columns)
-
+    filtered_df, date_range = build_filter_expander(filtered_df)
     ## Apply date filters
     # with st.sidebar.expander("Date Filter"):
     #    week_range = st.slider('Select Weeks', min_value=int(filtered_df.Week.min()),
@@ -55,19 +48,20 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
     #                        )
     # filtered_df = filtered_df.query('Week >= @week_range[0] and Week <= @week_range[1]')
 
-    date_min = filtered_df.Test_Date.min() 
-    date_max = filtered_df.Test_Date.max()
-    if filtered_df.size:
-        date_range = filter_columns[4].slider('Select dates', 
-                                                min_value=date_min, 
-                                                max_value=date_max, 
-                                                value = (date_min, date_max), 
-                                                format = "M/D/YY", 
-                                                #help = 'Filter the date range with the slider'
-        )   
-        filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
-    else:
-        date_range=None   
+    # date_min = filtered_df.Test_Date.min() 
+    # date_max = filtered_df.Test_Date.max()
+    # date_filter_col = st.columns([2,1,1,1,1])
+    # if filtered_df.size:
+    #     date_range = date_filter_col[0].slider('Select dates', 
+    #                                             min_value=date_min, 
+    #                                             max_value=date_max, 
+    #                                             value = (date_min, date_max), 
+    #                                             format = "M/D/YY", 
+    #                                             #help = 'Filter the date range with the slider'
+    #     )   
+    #     filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
+    # else:
+    #     date_range=None   
 
     if site_filter and district_filter:
         selections_dict = { 'date_range':date_range, 'district': district_selected, 'site':site_selected}
@@ -77,52 +71,80 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
         selections_dict = { 'date_range':date_range}
     return filtered_df, selections_dict
 
-def filter_groups(filtered_df, filters_columns):
-    expander = filters_columns[0].expander(label='Select Group:')
+def build_filter_expander(filtered_df):
+    with st.expander("Select Filters and Date Range"):
+        filter_columns = st.columns([1,1,1,1,2])
+        filtered_df = filter_groups(filtered_df, filter_columns[0])
+        filtered_df = filter_gender(filtered_df, filter_columns[1])
+        filtered_df = filter_race(filtered_df, filter_columns[2])
+        filtered_df = filter_ethnicity(filtered_df, filter_columns[3])
+        filtered_df, date_range = filter_date_range(filtered_df, filter_columns[4])
+
+    return filtered_df, date_range   
+
+def filter_date_range(filtered_df, column):
+    date_min = filtered_df.Test_Date.min()
+    date_max = filtered_df.Test_Date.max()
+
+    column.write("Select Date Range:")
+    if filtered_df.size:
+        date_range = column.slider('Select Dates:',
+                                    min_value=date_min,
+                                    max_value=date_max,
+                                    value=(date_min, date_max),
+                                    format="M/D/YY")
+        filtered_df = filtered_df.query("Test_Date >= @date_range[0] and Test_Date <= @date_range[1]")
+    else:
+        date_range=None
+    
+    return filtered_df, date_range
+
+def filter_groups(filtered_df, column):
     groups = filtered_df['Group'].unique()
     groups_selected = []
 
+    column.write("Group:")
     for group in groups:
-        selection = expander.checkbox(group, value=True, key=group+'_group_selected', on_change=None, args=None, kwargs=None)
+        selection = column.checkbox(group, value=True, key=group+'_group_selected', on_change=None, args=None, kwargs=None)
         if selection: 
             groups_selected.append(group)
     
     filtered_df = filtered_df.query('Group in @groups_selected')
     return filtered_df  
 
-def filter_gender(filtered_df, filters_columns):
-    expander = filters_columns[1].expander(label='Select Gender:')
+def filter_gender(filtered_df, column):
     groups = filtered_df['Gender'].unique()
     groups_selected = []
 
+    column.write("Gender:")
     for group in groups:
-        selection = expander.checkbox(group, value=True, key=group+'_gender_selected', on_change=None, args=None, kwargs=None)
+        selection = column.checkbox(group, value=True, key=group+'_gender_selected', on_change=None, args=None, kwargs=None)
         if selection: 
             groups_selected.append(group)
     
     filtered_df = filtered_df.query('Gender in @groups_selected')
     return filtered_df  
 
-def filter_race(filtered_df, filters_columns):
-    expander = filters_columns[2].expander(label='Select Race:')
+def filter_race(filtered_df, column):
     groups = filtered_df['Race'].unique()
     groups_selected = []
 
+    column.write("Race:")
     for group in groups:
-        selection = expander.checkbox(group, value=True, key=group+'_race_selected', on_change=None, args=None, kwargs=None)
+        selection = column.checkbox(group, value=True, key=group+'_race_selected', on_change=None, args=None, kwargs=None)
         if selection: 
             groups_selected.append(group)
     
     filtered_df = filtered_df.query('Race in @groups_selected')
     return filtered_df  
 
-def filter_ethnicity(filtered_df, filters_columns):
-    expander = filters_columns[3].expander(label='Select Ethnicity:')
+def filter_ethnicity(filtered_df, column):
     groups = filtered_df['Ethnicity'].unique()
     groups_selected = []
 
+    column.write("Ethnicity:")
     for group in groups:
-        selection = expander.checkbox(group, value=True, key=group+'_ethnicity_selected', on_change=None, args=None, kwargs=None)
+        selection = column.checkbox(group, value=True, key=group+'_ethnicity_selected', on_change=None, args=None, kwargs=None)
         if selection: 
             groups_selected.append(group)
     
@@ -314,7 +336,7 @@ if __name__ == '__main__':
     title_col, gauge_col = st.columns(2)
         
     # Filter results based on widgets
-    filtered_df, selections_dict = apply_filters(results_df)
+    filtered_df, selections_dict = apply_filters(results_df, title_col)
     
     if not filtered_df.size:
         st.markdown('<h1 style="color: #699900;">No data...     <small class="text-muted">check your filter selections</small></h1>', unsafe_allow_html=True)
