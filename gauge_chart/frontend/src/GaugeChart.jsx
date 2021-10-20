@@ -15,6 +15,7 @@ const GaugeChart = (props) => {
 
   //let label_font_size = "15px";
   let ticks_font_size = `${11+5*svgWidth/1000}px`;
+  let caption_font_size  = `${15+5*svgWidth/1000}px`;
   
   const margin = {"top":2*parseFloat(ticks_font_size), "bottom": 4*parseFloat(ticks_font_size), "left": 2*parseFloat(ticks_font_size), "right": 2*parseFloat(ticks_font_size)};
 
@@ -35,11 +36,6 @@ const GaugeChart = (props) => {
       gauge_ticks = setTicks(angles, ticks, radii, data[1]),
       gradient = setGradient(color_scheme, color_step, angles),
       scales = setScales(radii, angles, data[1]);
-  
-  console.log('first:', center)
-  //console.log(data);
-  //console.log([angles.start_angle, angles.end_angle]);
-  //console.log(needlePercent);
 
   // Set svgHeight and update it on window resize
   useEffect(() => {
@@ -61,6 +57,7 @@ const GaugeChart = (props) => {
     svgElement.append("g").classed("gauge-ticks", true);
     svgElement.append("g").classed("needle", true);
     svgElement.append("g").classed("needle-circle", true);
+    svgElement.append("g").classed("caption", true);
   }, []);
 
   // Hook to create / update gauge 
@@ -140,25 +137,39 @@ const GaugeChart = (props) => {
 	    );
 		
     svgElement.select(".needle-circle").selectAll("circle")
-        .data([0])
-	      .join(enter=> enter.append("circle")
+      .data([0])
+	    .join(enter=> enter.append("circle")
+              .attr("cx", center.x)
+			        .attr("cy", center.y)
+			        .attr('r', radii.cap)
+              .attr("stroke", needle_color)
+              .attr("stroke-width", 3)
+              .attr("fill", "white")
+              .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
+            update => update.attr("opacity", 0)
+              .attr("stroke", needle_color)
+              .attr("stroke-width", 3)
+              .attr("fill", "white")
+              .call(el => el.transition().duration(transitionMillisec)
                 .attr("cx", center.x)
-			          .attr("cy", center.y)
-			          .attr('r', radii.cap)
-			          .attr("stroke", needle_color)
-			          .attr("stroke-width", 3)
-			          .attr("fill", "white")
-			          .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
-		          update => update.attr("opacity", 0)
-				        .attr("stroke", needle_color)
-				        .attr("stroke-width", 3)
-				        .attr("fill", "white")
-				        .call(el => el.transition().duration(transitionMillisec)
-					        .attr("cx", center.x)
-					        .attr("cy", center.y)
-					        .attr('r', radii.cap)
-					        .attr("opacity", 1)),
+                .attr("cy", center.y)
+                .attr('r', radii.cap)
+                .attr("opacity", 1)),
 	      );
+
+    svgElement.select(".caption").selectAll("text")
+      .data([0])
+      .join(enter => enter.append("text")
+              .attr("transform", `translate(${center.x}, ${margin.top+20})`)
+              .attr("text-anchor", "middle")
+			        .attr("font-size", caption_font_size)
+			        .text(`Current 14-Day Average Positivity Rate: ${formatPercent(data[2])}`)
+			        .call(el => el.transition().duration(transitionMillisec).attr("opacity", 0.6)),
+            update => update.attr("opacity", 0)
+              .call(el => el.transition().duration(transitionMillisec)
+                .attr("transform", `translate(${center.x}, ${margin.top+20})`))
+                .attr("opacity", 0.6)
+      );
 	});
 
     return (
