@@ -104,7 +104,7 @@ const GaugeChart = (props) => {
 	    .join(enter => enter.append("text")
 			        .attr("transform", (d) => {
 				        let rot_angle = d.angle * deg - pi;
-				        if (d.angle in [angles.start_angle, angles.end_angle]) rot_angle = 0;
+				        // if ([angles.start_angle, angles.end_angle].includes(d.angle)) rot_angle = 0;
 				        return `translate(${center.x + (radii.tick_label * Math.sin(d.angle))}, ${center.y + (-radii.tick_label * Math.cos(d.angle))}) rotate(${rot_angle})`
 			        })
 			        .attr("dy", "0.35em")
@@ -116,7 +116,7 @@ const GaugeChart = (props) => {
 				      .call(el => el.transition().duration(transitionMillisec)
 					      .attr("transform", (d) => {
 						      let rot_angle = d.angle * deg - pi;
-						      if (d.angle in [angles.start_angle, angles.end_angle]) rot_angle = 0;
+						      // if ([angles.start_angle, angles.end_angle].includes(d.angle)) rot_angle = 0;
 						      return `translate(${center.x + (radii.tick_label * Math.sin(d.angle))}, ${center.y + (-radii.tick_label * Math.cos(d.angle))}) rotate(${rot_angle})`
 					      })
 					      .attr("opacity", 1)),
