@@ -72,7 +72,7 @@ def apply_filters(results_df, column, district_filter=False, site_filter=False):
     return filtered_df, selections_dict
 
 def build_filter_expander(filtered_df):
-    with st.expander("Select Filters and Date Range"):
+    with st.expander('Select Filters and Date Range'):
         filter_columns = st.columns([1,1,1,1,3])
         filtered_df = filter_groups(filtered_df, filter_columns[0])
         filtered_df = filter_gender(filtered_df, filter_columns[1])

@@ -5,10 +5,10 @@ def local_css(file_name):
         st.markdown('<style>{}</style>'.format(f.read()), unsafe_allow_html=True)
 
 def remote_css(url):
-    st.markdown('<style src="{}"></style>'.format(url), unsafe_allow_html=True)
+    st.markdown('<script src="{}" crossorigin="anonymous"></script>'.format(url), unsafe_allow_html=True)
 
 def icon_css():
-    remote_css('path/to/font-awesome/css/font-awesome.min.css')
+    remote_css('https://kit.fontawesome.com/445632ee1a.js')
 
 def icon(icon_name):
     st.markdown('<i class="material-icons-{}"></i>'.format(icon_name), unsafe_allow_html=True)
