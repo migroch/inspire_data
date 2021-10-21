@@ -160,15 +160,16 @@ const GaugeChart = (props) => {
     svgElement.select(".caption").selectAll("text")
       .data([0])
       .join(enter => enter.append("text")
-              .attr("transform", `translate(${center.x}, ${margin.top+20})`)
+              .attr("transform", `translate(${center.x}, ${margin.top})`)
+              .attr("dy", "-0.5em")
               .attr("text-anchor", "middle")
 			        .attr("font-size", caption_font_size)
-			        .text(`Current 14-Day Average Positivity Rate: ${formatPercent(data[2])}`)
+			        .text(`Current 14-Day Positivity Rate: ${formatPercent(data[2])}`)
 			        .call(el => el.transition().duration(transitionMillisec).attr("opacity", 0.6)),
             update => update.attr("opacity", 0)
               .call(el => el.transition().duration(transitionMillisec)
-                .attr("transform", `translate(${center.x}, ${margin.top+20})`))
-                .attr("opacity", 0.6)
+                .attr("transform", `translate(${center.x}, ${margin.top})`)
+                .attr("opacity", 0.6))
       );
 	});
 
