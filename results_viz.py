@@ -18,11 +18,15 @@ st.set_page_config(
     initial_sidebar_state = "collapsed",
 )
 
-def apply_filters(results_df, column, district_filter=False, site_filter=False):
+## Filter data
+def apply_filters(results_df, district_filter=False, site_filter=False):
     '''
     Apply filters and return the data frame to use for figures
     '''
     filtered_df = results_df
+
+    ## Build filter expander and apply user filters
+    filtered_df, date_range = build_filter_expander(filtered_df)  
 
     ## Apply district and school filters 
     if district_filter:
@@ -37,40 +41,16 @@ def apply_filters(results_df, column, district_filter=False, site_filter=False):
         if site_selected != 'ALL':
             filtered_df = filtered_df.query('Organization == @site_selected')
 
-    filtered_df, date_range = build_filter_expander(filtered_df)
-    ## Apply date filters
-    # with st.sidebar.expander("Date Filter"):
-    #    week_range = st.slider('Select Weeks', min_value=int(filtered_df.Week.min()),
-    #                       max_value=int(filtered_df.Week.max()),
-    #                        value = (int(filtered_df.Week.min()), int(filtered_df.Week.max())),
-    #                        format = "Week %i",
-    #                        help = f"Select the week number since the start of the program (first results on: {filtered_df.Test_Date.min()})"
-    #                        )
-    # filtered_df = filtered_df.query('Week >= @week_range[0] and Week <= @week_range[1]')
-
-    # date_min = filtered_df.Test_Date.min() 
-    # date_max = filtered_df.Test_Date.max()
-    # date_filter_col = st.columns([2,1,1,1,1])
-    # if filtered_df.size:
-    #     date_range = date_filter_col[0].slider('Select dates', 
-    #                                             min_value=date_min, 
-    #                                             max_value=date_max, 
-    #                                             value = (date_min, date_max), 
-    #                                             format = "M/D/YY", 
-    #                                             #help = 'Filter the date range with the slider'
-    #     )   
-    #     filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
-    # else:
-    #     date_range=None   
-
     if site_filter and district_filter:
         selections_dict = { 'date_range':date_range, 'district': district_selected, 'site':site_selected}
     elif district_filter:
         selections_dict = { 'date_range':date_range, 'district': district_selected}    
     else:
         selections_dict = { 'date_range':date_range}
+
     return filtered_df, selections_dict
 
+## Filter expander 
 def build_filter_expander(filtered_df):
     with st.expander('Select Filters and Date Range'):
         filter_columns = st.columns([1,1,1,1,3])
@@ -82,6 +62,7 @@ def build_filter_expander(filtered_df):
 
     return filtered_df, date_range   
 
+## Filtering for date range
 def filter_date_range(filtered_df, column):
     date_min = filtered_df.Test_Date.min()
     date_max = filtered_df.Test_Date.max()
@@ -99,6 +80,7 @@ def filter_date_range(filtered_df, column):
     
     return filtered_df, date_range
 
+## Filtering for group
 def filter_groups(filtered_df, column):
     groups = filtered_df['Group'].unique()
     groups_selected = []
@@ -112,6 +94,7 @@ def filter_groups(filtered_df, column):
     filtered_df = filtered_df.query('Group in @groups_selected')
     return filtered_df  
 
+## Filtering for gender
 def filter_gender(filtered_df, column):
     groups = filtered_df['Gender'].unique()
     groups_selected = []
@@ -125,6 +108,7 @@ def filter_gender(filtered_df, column):
     filtered_df = filtered_df.query('Gender in @groups_selected')
     return filtered_df  
 
+## Filtering for race
 def filter_race(filtered_df, column):
     groups = filtered_df['Race'].unique()
     groups_selected = []
@@ -138,6 +122,7 @@ def filter_race(filtered_df, column):
     filtered_df = filtered_df.query('Race in @groups_selected')
     return filtered_df  
 
+## Filtering for ethnicity
 def filter_ethnicity(filtered_df, column):
     groups = filtered_df['Ethnicity'].unique()
     groups_selected = []
@@ -151,6 +136,7 @@ def filter_ethnicity(filtered_df, column):
     filtered_df = filtered_df.query('Ethnicity in @groups_selected')
     return filtered_df  
 
+## Streamlit metrics bar
 def show_latest_metrics(filtered_df):
     '''
     Show the latest active, positive and total tests metrics
@@ -174,6 +160,7 @@ def show_latest_metrics(filtered_df):
     st.caption(f"Updated daily at 10am (latest test results are from tests completed on: {filtered_df.Test_Date.max().strftime('%m/%d/%y')})")
     return active_count, positive_count, unique_count, total_count, a_text, p_text, u_text, t_text
 
+## Streamlit metrics bar animation with bootstrap
 def animate_metrics(active_count, positive_count,  unique_count, total_count, a_text, p_text, u_text, t_text):
     '''
     Animate the latest metrics text
@@ -193,6 +180,7 @@ def animate_metrics(active_count, positive_count,  unique_count, total_count, a_
         t_text.markdown("<p   class='fs-1' style='color:#09ab3b'>{:.1f}K</p>".format(t_count), unsafe_allow_html=True)
         time.sleep(0.05)  
 
+## Retrieve data for streamlit metrics bar
 def get_weeklymetrics_df(filtered_df):
     '''
     Generate weeklymetrics_df
@@ -232,6 +220,7 @@ def get_weeklymetrics_df(filtered_df):
         weeklymetrics_df = pd.concat([weeklymetrics_df, pd.DataFrame([row], columns=weeklymetrics_df_columns, index=[week])])
     return weeklymetrics_df
 
+## Retrieve data for weekly metrics and build streamlit table
 def show_weekly_metrics(filtered_df):
     '''
     Show last week's metrics and weekly table
@@ -273,6 +262,7 @@ def show_weekly_metrics(filtered_df):
             st.dataframe(display_df_styler)
             st.caption("Highlighted row shows current week's data (week in progress).")
 
+## Prepare data for time chart and gauge chart figures
 def prep_fig_data(filtered_df):
     fig_data = pd.DataFrame({ 
         'test_count': filtered_df.groupby(['Test_Date']).size(), 
@@ -302,6 +292,7 @@ def prep_fig_data(filtered_df):
 
     return fig_data
 
+## Call time chart component 
 def draw_time_chart(fig_data):
     '''
     Create a d3 component with a results vs time chart of test results
@@ -313,6 +304,7 @@ def draw_time_chart(fig_data):
     )
     time_chart(fig_data,  key="time_chart")
 
+## Call gauge chart component
 def draw_gauge_chart(fig_data):
     '''
     Create a d3 component with a gauge of 14-day average positive result rate 
@@ -336,7 +328,7 @@ if __name__ == '__main__':
     title_col, gauge_col = st.columns(2)
         
     # Filter results based on widgets
-    filtered_df, selections_dict = apply_filters(results_df, title_col)
+    filtered_df, selections_dict = apply_filters(results_df)
     
     if not filtered_df.size:
         st.markdown('<h1 style="color: #699900;">No data...     <small class="text-muted">check your filter selections</small></h1>', unsafe_allow_html=True)
