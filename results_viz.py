@@ -18,15 +18,47 @@ st.set_page_config(
     initial_sidebar_state = "collapsed",
 )
 
+## Initialze state
+def initialize_state():
+    if 'group_selection' not in st.session_state: st.session_state.group_selection = []
+    if 'gender_selection' not in st.session_state: st.session_state.gender_selection = []
+    if 'race_selection' not in st.session_state: st.session_state.race_selection = []
+    if 'ethnicity_selection' not in st.session_state: st.session_state.ethnicity_selection = []
+
 ## Filter data
-def apply_filters(results_df, district_filter=False, site_filter=False):
+def apply_filters(results_df, title_col, filters_col, district_filter=False, site_filter=False):
     '''
     Apply filters and return the data frame to use for figures
     '''
     filtered_df = results_df
 
     ## Build filter expander and apply user filters
-    filtered_df, date_range = build_filter_expander(filtered_df)  
+    ##filtered_df, date_range = build_filter_expander(filtered_df)  
+
+    with title_col:
+        filtered_df, date_range = filter_date_range(filtered_df)
+
+    ## Create multiselect filters
+    with filters_col:
+        multiselect(filtered_df, 'Group')
+        selection = st.session_state.group_selection
+        if len(selection):
+            filtered_df = filtered_df.query('Group in @selection')    
+
+        multiselect(filtered_df, 'Gender')
+        selection = st.session_state.group_selection
+        if len(selection):
+            filtered_df = filtered_df.query('Group in @selection')
+
+        multiselect(filtered_df, 'Race')
+        selection = st.session_state.race_selection
+        if len(selection):
+            filtered_df = filtered_df.query('Race in @selection')    
+
+        multiselect(filtered_df, 'Ethnicity')
+        selection = st.session_state.ethnicity_selection
+        if len(selection):
+            filtered_df = filtered_df.query('Ethnicity in @selection')     
 
     ## Apply district and school filters 
     if district_filter:
@@ -50,6 +82,19 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
 
     return filtered_df, selections_dict
 
+## Multiselect Filter
+def multiselect(filtered_df, field):
+    st.write(field+' filter')
+    options = filtered_df[field].unique()
+    selection = st.multiselect(field, options, key=field.lower()+'_selection', args=(field,))
+
+def clean_selection(field):
+    selection = st.session_state[field.lower()+'_selection']
+    if ('All' in selection) and (len(selection) > 1):
+        selection.remove('All')
+        st.session_state[field.lower()+'_selection'] = selection
+    print(st.session_state[field.lower()+'_selection'])    
+
 ## Filter expander 
 def build_filter_expander(filtered_df):
     with st.expander('Filter Data'):
@@ -63,13 +108,13 @@ def build_filter_expander(filtered_df):
     return filtered_df, date_range   
 
 ## Filtering for date range
-def filter_date_range(filtered_df, column):
+def filter_date_range(filtered_df):
     date_min = filtered_df.Test_Date.min()
     date_max = filtered_df.Test_Date.max()
 
-    column.write("Select Date Range:")
+    st.write('Date filter')
     if filtered_df.size:
-        date_range = column.slider('Select Dates:',
+        date_range = st.slider('Select Dates:',
                                     min_value=date_min,
                                     max_value=date_max,
                                     value=(date_min, date_max),
@@ -324,11 +369,18 @@ if __name__ == '__main__':
     # Get results data from BQ
     results_df = get_results_from_bq()
 
+    # Write title
+    title_container = st.empty()
+
     # Set header columns as place holders
-    title_col, gauge_col = st.columns(2)
-        
+    gauge_col, filters_col = st.columns(2)
+    gauge_container = gauge_col.empty()
+    
+    # Initialize state
+    initialize_state()
+
     # Filter results based on widgets
-    filtered_df, selections_dict = apply_filters(results_df)
+    filtered_df, selections_dict = apply_filters(results_df, gauge_col, filters_col)
     
     if not filtered_df.size:
         st.markdown('<h1 style="color: #699900;">No data...     <small class="text-muted">check your filter selections</small></h1>', unsafe_allow_html=True)
@@ -341,13 +393,13 @@ if __name__ == '__main__':
         n_sites = filtered_df.Organization.str.split('-', expand=True)[0].nunique()      
 
         # Write title
-        title_col.markdown(f'<h1 class="p-0 " style="color: #699900;">{district}</h1><small class="text-muted">{n_sites} School Sites Participating</small>' , unsafe_allow_html=True)
+        title_container.markdown(f'<h1 class="p-0 " style="color: #699900;">{district}</h1><small class="text-muted">{n_sites} School Sites Participating</small>' , unsafe_allow_html=True)
 
         # Prep figure data 
         fig_data = prep_fig_data(filtered_df)
         
-        # Show positivity rate gauge
-        with gauge_col:
+        # Draw time chart
+        with gauge_container:
             draw_gauge_chart(fig_data)
         
         # Show latest metrics
