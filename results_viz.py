@@ -88,12 +88,6 @@ def multiselect(filtered_df, field):
     options = filtered_df[field].unique()
     selection = st.multiselect(field, options, key=field.lower()+'_selection', args=(field,))
 
-def clean_selection(field):
-    selection = st.session_state[field.lower()+'_selection']
-    if ('All' in selection) and (len(selection) > 1):
-        selection.remove('All')
-        st.session_state[field.lower()+'_selection'] = selection
-    print(st.session_state[field.lower()+'_selection'])    
 
 ## Filter expander 
 def build_filter_expander(filtered_df):
