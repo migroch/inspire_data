@@ -17,7 +17,6 @@ else:
 
 def gauge_chart(
     data: Tuple[float, float, float],
-    width: int = None,
     rotation: float = 0,
     thickness: float = 0.3,
     arc: float = 1,
@@ -36,7 +35,6 @@ def gauge_chart(
     """       
     component_value = _component_func(
         data=data,
-        svgWidth=width,
         rotation=rotation,
         thickness=thickness,
         arc=arc,

@@ -6,24 +6,24 @@ import styles from './GaugeChart.css';
 
 // Create GaugeChart component
 const GaugeChart = (props) => {
-  let aspectRatio = 0.7
+  const max_width = 400;
+  const aspectRatio = 0.5;
   let dimensions = get_client_dimensions();
-  const [svgWidth, setWidth ] = useState(dimensions.width);
-  const [svgHeight, setHeight ] = useState(aspectRatio*svgWidth);
-  
-  Streamlit.setFrameHeight(svgHeight);
-
+  let width = dimensions.width > max_width ? max_width : dimensions.width;
+  const [svgWidth, setWidth ] = useState(width);
   //let label_font_size = "15px";
   let ticks_font_size = `${11+5*svgWidth/1000}px`;
-  let caption_font_size  = `${15+5*svgWidth/1000}px`;
+  let caption_font_size  = `${10+5*svgWidth/400}px`;
+  const margin = {"top":5*parseFloat(ticks_font_size), "bottom": 4*parseFloat(caption_font_size), "left": 2*parseFloat(ticks_font_size), "right": 2*parseFloat(ticks_font_size)};
+  const [svgHeight, setHeight ] = useState(aspectRatio*svgWidth + margin.top);
   
-  const margin = {"top":2*parseFloat(ticks_font_size), "bottom": 4*parseFloat(ticks_font_size), "left": 2*parseFloat(ticks_font_size), "right": 2*parseFloat(ticks_font_size)};
+  Streamlit.setFrameHeight(svgHeight);
 
   const svgRef = useRef(null);
   const transitionMillisec = 1200;
 	
   // Get properties
-  const {data, width, rotation, thickness, arc, ticks, color_scheme, color_step, tick_color, needle_color, key} = props.args;
+  const {data, rotation, thickness, arc, ticks, color_scheme, color_step, tick_color, needle_color, key} = props.args;
   const pi = Math.PI;
   const rad = pi / 180;
   const deg = 180 / pi;
@@ -41,8 +41,9 @@ const GaugeChart = (props) => {
   useEffect(() => {
     const handleResize = () =>{
       let dimensions = get_client_dimensions();
-      setWidth(dimensions.width);
-      setHeight( aspectRatio*svgWidth );
+      let width = dimensions.width > max_width ? max_width : dimensions.width;
+      setWidth(width);
+      setHeight( aspectRatio*svgWidth + margin.top);
     }
     
     Streamlit.setFrameHeight(svgHeight);
@@ -116,7 +117,8 @@ const GaugeChart = (props) => {
 						      // if ([angles.start_angle, angles.end_angle].includes(d.angle)) rot_angle = 0;
 						      return `translate(${center.x + (radii.tick_label * Math.sin(d.angle))}, ${center.y + (-radii.tick_label * Math.cos(d.angle))}) rotate(${rot_angle})`
 					      })
-					      .attr("opacity", 1)),
+					.text((d) => d.label)
+					 .attr("opacity", 1)),
 			);
 		
     svgElement.select(".needle").selectAll("path")
@@ -160,16 +162,19 @@ const GaugeChart = (props) => {
     svgElement.select(".caption").selectAll("text")
       .data([0])
       .join(enter => enter.append("text")
-              .attr("transform", `translate(${center.x}, ${margin.top})`)
-              .attr("dy", "-0.5em")
+	      .attr("transform", `translate(${center.x}, ${svgHeight-parseFloat(caption_font_size)} )`)
+	      .attr("fill", "#F77F00")
+	      .attr("font-weight", "bold")
               .attr("text-anchor", "middle")
-			        .attr("font-size", caption_font_size)
-			        .text(`Current 14-Day Positivity Rate: ${formatPercent(data[2])}`)
-			        .call(el => el.transition().duration(transitionMillisec).attr("opacity", 0.6)),
+	      .attr("font-size", caption_font_size)
+	      .text(`14-Day Positivity Rate: ${formatPercent(data[2])}`)
+	      .call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
             update => update.attr("opacity", 0)
               .call(el => el.transition().duration(transitionMillisec)
-                .attr("transform", `translate(${center.x}, ${margin.top})`)
-                .attr("opacity", 0.6))
+			    .attr("transform", `translate(${center.x}, ${svgHeight-parseFloat(caption_font_size)})`)
+			    .attr("font-size", caption_font_size)
+			    .text(`14-Day Positivity Rate: ${formatPercent(data[2])}`)
+                           .attr("opacity", 1))
       );
 	});
 
