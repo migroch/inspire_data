@@ -332,7 +332,7 @@ def prep_fig_data(filtered_df):
     return fig_data
 
 ## Call time chart component 
-def draw_time_chart(fig_data, filters):
+def draw_time_chart(fig_data):
     '''
     Create a d3 component with a results vs time chart of test results
     '''
@@ -341,8 +341,7 @@ def draw_time_chart(fig_data, filters):
         zip(fig_data.Test_Date, fig_data.avg_pos_rate, fig_data.pos_count,
             fig_data.active_count, fig_data.test_count, fig_data.Week)
     )
-    print(type(filters))
-    time_chart(fig_data, filters, key="time_chart")
+    time_chart(fig_data, key="time_chart")
 
 ## Call gauge chart component
 def draw_gauge_chart(fig_data):
