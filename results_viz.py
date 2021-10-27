@@ -293,7 +293,7 @@ def prep_fig_data(filtered_df):
     return fig_data
 
 ## Call time chart component 
-def draw_time_chart(fig_data):
+def draw_time_chart(fig_data, filters):
     '''
     Create a d3 component with a results vs time chart of test results
     '''
@@ -302,7 +302,8 @@ def draw_time_chart(fig_data):
         zip(fig_data.Test_Date, fig_data.avg_pos_rate, fig_data.pos_count,
             fig_data.active_count, fig_data.test_count, fig_data.Week)
     )
-    time_chart(fig_data,  key="time_chart")
+    print(type(filters))
+    time_chart(fig_data, filters, key="time_chart")
 
 ## Call gauge chart component
 def draw_gauge_chart(fig_data):
@@ -329,6 +330,7 @@ if __name__ == '__main__':
         
     # Filter results based on widgets
     filtered_df, selections_dict = apply_filters(results_df)
+    filter_options = [list(filtered_df.Group.unique()), list(filtered_df.Gender.unique()), list(filtered_df.Race.unique()), list(filtered_df.Ethnicity.unique())]
     
     if not filtered_df.size:
         st.markdown('<h1 style="color: #699900;">No data...     <small class="text-muted">check your filter selections</small></h1>', unsafe_allow_html=True)
@@ -357,7 +359,7 @@ if __name__ == '__main__':
         show_weekly_metrics(filtered_df)
         
         #with st.expander("Show Time Trends", expanded=True):
-        draw_time_chart(fig_data)
+        draw_time_chart(fig_data, filter_options)
 
         # Animate latest metrics
         animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
