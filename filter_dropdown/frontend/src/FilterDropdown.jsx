@@ -5,7 +5,6 @@ import "./FilterDropdown.css";
 
 const FilterDropdown = (props) => {
     const svgRef = useRef(null);
-    Streamlit.setFrameHeight(50);
 
     const {Option} = Select;
 
@@ -16,13 +15,18 @@ const FilterDropdown = (props) => {
     for (let i = 0; i < data.length; i++) {
         options.push(<Option key={data[i]}>{data[i]}</Option>);
     }
+
+    useEffect(() => {
+        console.log(svgRef.current.offsetHeight)
+        Streamlit.setFrameHeight(200);
+    })
     
     function handleChange(value) {
         Streamlit.setComponentValue(value);
     }
 
     return (
-        <div className="filterdropdown-container">
+        <div className="filterdropdown-container" ref={svgRef}>
             <Select
                 mode="multiple"
                 allowClear
