@@ -403,8 +403,8 @@ if __name__ == '__main__':
             show_weekly_metrics(filtered_df)
             
             #with st.expander("Show Time Trends", expanded=True):
+            filter_dropdown(data=list(filtered_df.Gender.unique()), key='filter_dropdown')
             draw_time_chart(fig_data)
-            #filter_dropdown(list(filtered_df.Group.unique()))
 
             # Animate latest metrics
             animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)

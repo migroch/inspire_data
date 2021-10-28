@@ -10,12 +10,13 @@ const FilterDropdown = (props) => {
 
     for (let i = 0; i < data.length; i++) {
         const value = i.toString(36) + i;
+
         options.push({
             label: `${data[i]}: ${value}`,
             value,
         });
     }
-    
+
     const [value, setValue] = useState(['a10', 'c12', 'h17', 'j19', 'k20']);
     const selectProps = {
         mode: 'multiple',
@@ -40,7 +41,6 @@ const FilterDropdown = (props) => {
                 }}
             >
                 <Select {...selectProps} />
-                <Select {...selectProps} disabled />
             </Space>
         </div>
     )
