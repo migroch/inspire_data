@@ -49,10 +49,10 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
 
         for i,field in enumerate(dropdown_fields):
             with filter_columns[i]:
-                multiselect(filtered_df, field)
-                selection = st.session_state[field.lower()+'_selection']
-                if len(selection):
-                    filtered_df = filtered_df.query('Group in @selection')    
+                selection = filter_dropdown(list(filtered_df[field].unique()), field=field.lower(), key=field.lower()+'_filter_dropdown')
+                print(field, selection)
+                if selection:
+                    filtered_df = filtered_df.query(f'{field} in @selection') 
 
     ## Apply district and school filters 
     if district_filter:
@@ -76,25 +76,6 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
 
     return filtered_df, selections_dict
 
-## Multiselect Filter
-def multiselect(filtered_df, field):
-    st.markdown(f'<p class="m-0">{field}</p>', unsafe_allow_html=True)
-    options = filtered_df[field].unique()
-    selection = st.multiselect(field, options, key=field.lower()+'_selection', args=(field,))
-
-
-## Filter expander 
-def build_filter_expander(filtered_df):
-    with st.expander('Filter Data'):
-        filter_columns = st.columns([1,1,1,1,3])
-        filtered_df = filter_groups(filtered_df, filter_columns[0])
-        filtered_df = filter_gender(filtered_df, filter_columns[1])
-        filtered_df = filter_race(filtered_df, filter_columns[2])
-        filtered_df = filter_ethnicity(filtered_df, filter_columns[3])
-        filtered_df, date_range = filter_date_range(filtered_df, filter_columns[4])
-
-    return filtered_df, date_range   
-
 ## Filtering for date range
 def filter_date_range(filtered_df):
     date_min = filtered_df.Test_Date.min()
@@ -112,62 +93,6 @@ def filter_date_range(filtered_df):
         date_range=None
     
     return filtered_df, date_range
-
-## Filtering for group
-def filter_groups(filtered_df, column):
-    groups = filtered_df['Group'].unique()
-    groups_selected = []
-
-    column.write("Group:")
-    for group in groups:
-        selection = column.checkbox(group, value=True, key=group+'_group_selected', on_change=None, args=None, kwargs=None)
-        if selection: 
-            groups_selected.append(group)
-    
-    filtered_df = filtered_df.query('Group in @groups_selected')
-    return filtered_df  
-
-## Filtering for gender
-def filter_gender(filtered_df, column):
-    groups = filtered_df['Gender'].unique()
-    groups_selected = []
-
-    column.write("Gender:")
-    for group in groups:
-        selection = column.checkbox(group, value=True, key=group+'_gender_selected', on_change=None, args=None, kwargs=None)
-        if selection: 
-            groups_selected.append(group)
-    
-    filtered_df = filtered_df.query('Gender in @groups_selected')
-    return filtered_df  
-
-## Filtering for race
-def filter_race(filtered_df, column):
-    groups = filtered_df['Race'].unique()
-    groups_selected = []
-
-    column.write("Race:")
-    for group in groups:
-        selection = column.checkbox(group, value=True, key=group+'_race_selected', on_change=None, args=None, kwargs=None)
-        if selection: 
-            groups_selected.append(group)
-    
-    filtered_df = filtered_df.query('Race in @groups_selected')
-    return filtered_df  
-
-## Filtering for ethnicity
-def filter_ethnicity(filtered_df, column):
-    groups = filtered_df['Ethnicity'].unique()
-    groups_selected = []
-
-    column.write("Ethnicity:")
-    for group in groups:
-        selection = column.checkbox(group, value=True, key=group+'_ethnicity_selected', on_change=None, args=None, kwargs=None)
-        if selection: 
-            groups_selected.append(group)
-    
-    filtered_df = filtered_df.query('Ethnicity in @groups_selected')
-    return filtered_df  
 
 ## Streamlit metrics bar
 def show_latest_metrics(filtered_df):
@@ -369,7 +294,7 @@ if __name__ == '__main__':
     
         # Set header columns as place holders
         title_col, gauge_col = st.columns(2)
-      
+
         # Initialize state
         initialize_state()
 
@@ -403,8 +328,6 @@ if __name__ == '__main__':
             show_weekly_metrics(filtered_df)
             
             #with st.expander("Show Time Trends", expanded=True):
-            filters=filter_dropdown(data=list(filtered_df.Gender.unique()), field='gender', key='filter_dropdown')
-            print(filters)
             draw_time_chart(fig_data)
 
             # Animate latest metrics
