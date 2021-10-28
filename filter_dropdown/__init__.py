@@ -15,6 +15,7 @@ else:
 
 def filter_dropdown(
     data: List[str],
+    field: str,
     key=None,
 ):
     """Display a line chart with overlapping circles on a list of (x, y) points, using the D3 library.
@@ -25,6 +26,7 @@ def filter_dropdown(
     """       
     component_value = _component_func(
         data=data,
+        field=field,
         key=key,
         default=None,
     )

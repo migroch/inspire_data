@@ -1,47 +1,38 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Streamlit, withStreamlitConnection, } from "streamlit-component-lib";
-import { Select, Dropdown, Space } from "antd";
-// import { DownOutlined } from "@ant-design/icons"
+import { Select} from "antd";
+import "./FilterDropdown.css";
 
 const FilterDropdown = (props) => {
+    const svgRef = useRef(null);
+    Streamlit.setFrameHeight(50);
+
+    const {Option} = Select;
 
     const data = props.args.data;
+    const field = props.args.field;
     const options = [];
 
     for (let i = 0; i < data.length; i++) {
-        const value = i.toString(36) + i;
-
-        options.push({
-            label: `${data[i]}: ${value}`,
-            value,
-        });
+        options.push(<Option key={data[i]}>{data[i]}</Option>);
     }
-
-    const [value, setValue] = useState(['a10', 'c12', 'h17', 'j19', 'k20']);
-    const selectProps = {
-        mode: 'multiple',
-        style: {
-            width: '100%',
-        },
-        value,
-        options,
-        onChange: (newValue) => {
-            setValue(newValue);
-        },
-        placeholder: 'Select Item...',
-        maxTagCount: 'responsive',
-    };
+    
+    function handleChange(value) {
+        Streamlit.setComponentValue(value);
+    }
 
     return (
         <div className="filterdropdown-container">
-            <Space
-                direction="vertical"
-                style={{
-                    width: '100%',
-                }}
+            <Select
+                mode="multiple"
+                allowClear
+                style={{ width: '100%'}}
+                placeholder={"Select " + field} 
+                defaultValue={[]}
+                onChange={handleChange}
             >
-                <Select {...selectProps} />
-            </Space>
+                {options}
+            </Select>
         </div>
     )
 }
