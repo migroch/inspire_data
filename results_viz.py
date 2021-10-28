@@ -8,6 +8,7 @@ from import_styles import *
 from bq_query import get_results_from_bq
 from time_chart import time_chart
 from gauge_chart import gauge_chart
+from filter_dropdown import filter_dropdown
 #import draw_donut from donut_charts
 import pdb
 
@@ -334,7 +335,7 @@ def draw_time_chart(fig_data):
         zip(fig_data.Test_Date, fig_data.avg_pos_rate, fig_data.pos_count,
             fig_data.active_count, fig_data.test_count, fig_data.Week)
     )
-    time_chart(fig_data,  key="time_chart")
+    time_chart(fig_data, key="time_chart")
 
 ## Call gauge chart component
 def draw_gauge_chart(fig_data):
@@ -403,6 +404,7 @@ if __name__ == '__main__':
             
             #with st.expander("Show Time Trends", expanded=True):
             draw_time_chart(fig_data)
+            #filter_dropdown(list(filtered_df.Group.unique()))
 
             # Animate latest metrics
             animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
