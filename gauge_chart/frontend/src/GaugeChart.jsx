@@ -1,25 +1,25 @@
 import React, {useEffect, useState, useRef} from "react";
 import { Streamlit, withStreamlitConnection,} from "streamlit-component-lib";
 import * as d3 from "d3";
-
 import styles from './GaugeChart.css';
 
 // Create GaugeChart component
 const GaugeChart = (props) => {
-  const max_width = 400;
-  const aspectRatio = 0.5;
+  const max_width = 250;
+  const aspectRatio = 0.4;
   let dimensions = get_client_dimensions();
   let width = dimensions.width > max_width ? max_width : dimensions.width;
   const [svgWidth, setWidth ] = useState(width);
   //let label_font_size = "15px";
   let ticks_font_size = `${11+5*svgWidth/1000}px`;
   let caption_font_size  = `${10+5*svgWidth/400}px`;
-  const margin = {"top":5*parseFloat(ticks_font_size), "bottom": 4*parseFloat(caption_font_size), "left": 2*parseFloat(ticks_font_size), "right": 2*parseFloat(ticks_font_size)};
+  const margin = {"top":5*parseFloat(ticks_font_size), "bottom": 2*parseFloat(ticks_font_size), "left": 2*parseFloat(ticks_font_size), "right": 2*parseFloat(ticks_font_size)};
   const [svgHeight, setHeight ] = useState(aspectRatio*svgWidth + margin.top);
   
-  Streamlit.setFrameHeight(svgHeight);
-
   const svgRef = useRef(null);
+  Streamlit.setFrameHeight(svgHeight);
+  d3.select(svgRef.current).style("width", svgWidth).style("height", svgHeight);
+
   const transitionMillisec = 1200;
 	
   // Get properties
@@ -47,7 +47,7 @@ const GaugeChart = (props) => {
     }
     
     Streamlit.setFrameHeight(svgHeight);
-    d3.select(svgRef.current).style("height", svgHeight);
+    d3.select(svgRef.current).style("width", svgWidth).style("height", svgHeight);
     window.addEventListener('resize', handleResize)
   }, [svgWidth, svgHeight, aspectRatio]);
     
@@ -159,7 +159,7 @@ const GaugeChart = (props) => {
                 .attr("opacity", 1)),
 	      );
 
-    svgElement.select(".caption").selectAll("text")
+/*     svgElement.select(".caption").selectAll("text")
       .data([0])
       .join(enter => enter.append("text")
 	      .attr("transform", `translate(${center.x}, ${svgHeight-parseFloat(caption_font_size)} )`)
@@ -175,13 +175,13 @@ const GaugeChart = (props) => {
 			    .attr("font-size", caption_font_size)
 			    .text(`14-Day Positivity Rate: ${formatPercent(data[2])}`)
                            .attr("opacity", 1))
-      );
+      ); */
 	});
 
     return (
       <div className="gaugechart-container">
-	<div className='tooltip hide' />
-	<svg className="gaugechart-svg"  ref={svgRef}  />
+	      <div className='tooltip hide' />
+	      <svg className="gaugechart-svg"  ref={svgRef}  />
       </div>
     )
     
@@ -299,7 +299,7 @@ function get_client_dimensions() {
   return {'width':clientsWidth, 'height': clientsHeight };
 }
 
-const formatPercent = d3.format(".2%");
+const formatPercent = d3.format(".1%");
 
   
 // Export component  

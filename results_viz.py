@@ -26,7 +26,7 @@ def initialize_state():
     if 'ethnicity_selection' not in st.session_state: st.session_state.ethnicity_selection = []
 
 ## Filter data
-def apply_filters(results_df, title_col, filters_col, district_filter=False, site_filter=False):
+def apply_filters(results_df, district_filter=False, site_filter=False):
     '''
     Apply filters and return the data frame to use for figures
     '''
@@ -35,30 +35,23 @@ def apply_filters(results_df, title_col, filters_col, district_filter=False, sit
     ## Build filter expander and apply user filters
     ##filtered_df, date_range = build_filter_expander(filtered_df)  
 
-    with title_col:
-        filtered_df, date_range = filter_date_range(filtered_df)
-
     ## Create multiselect filters
-    with filters_col:
-        multiselect(filtered_df, 'Group')
-        selection = st.session_state.group_selection
-        if len(selection):
-            filtered_df = filtered_df.query('Group in @selection')    
+    dropdown_fields = ['Group', 'Gender', 'Race', 'Ethnicity']
 
-        multiselect(filtered_df, 'Gender')
-        selection = st.session_state.group_selection
-        if len(selection):
-            filtered_df = filtered_df.query('Group in @selection')
+    with st.expander('Show filters', expanded=False):
 
-        multiselect(filtered_df, 'Race')
-        selection = st.session_state.race_selection
-        if len(selection):
-            filtered_df = filtered_df.query('Race in @selection')    
+        dates_col = st.columns(2)[0]
+        with dates_col:    
+            filtered_df, date_range = filter_date_range(filtered_df)    
 
-        multiselect(filtered_df, 'Ethnicity')
-        selection = st.session_state.ethnicity_selection
-        if len(selection):
-            filtered_df = filtered_df.query('Ethnicity in @selection')     
+        filter_columns = st.columns([10,10,10,10,1])
+
+        for i,field in enumerate(dropdown_fields):
+            with filter_columns[i]:
+                multiselect(filtered_df, field)
+                selection = st.session_state[field.lower()+'_selection']
+                if len(selection):
+                    filtered_df = filtered_df.query('Group in @selection')    
 
     ## Apply district and school filters 
     if district_filter:
@@ -84,7 +77,7 @@ def apply_filters(results_df, title_col, filters_col, district_filter=False, sit
 
 ## Multiselect Filter
 def multiselect(filtered_df, field):
-    st.write(field+' filter')
+    st.markdown(f'<p class="m-0">{field}</p>', unsafe_allow_html=True)
     options = filtered_df[field].unique()
     selection = st.multiselect(field, options, key=field.lower()+'_selection', args=(field,))
 
@@ -106,7 +99,7 @@ def filter_date_range(filtered_df):
     date_min = filtered_df.Test_Date.min()
     date_max = filtered_df.Test_Date.max()
 
-    st.write('Date filter')
+    st.markdown(f'<p class="m-0">Date range</p>', unsafe_allow_html=True)
     if filtered_df.size:
         date_range = st.slider('Select Dates:',
                                     min_value=date_min,
@@ -353,58 +346,65 @@ def draw_gauge_chart(fig_data):
     max_avg = fig_data.avg_pos_rate.max()
     fig_data = tuple([0, max_avg, curr_avg])
     gauge_chart(fig_data, key="gauge_chart")
+    st.markdown('''
+        <p class="m-0 text-center">14-day positivityrate: <strong style="color:#F77F00;">{:.1f}%</string></p>
+        '''.format(curr_avg*100), unsafe_allow_html=True
+        )
     
-if __name__ == '__main__':
-    # Import Styles
-    import_bootstrap()
-    local_css('styles/main.css')
-    icon_css()
-    
+if __name__ == '__main__': 
     # Get results data from BQ
     results_df = get_results_from_bq()
 
-    # Write title
-    title_container = st.empty()
+    imports_container = st.container()
+    app_conainer = st.container()
 
-    # Set header columns as place holders
-    gauge_col, filters_col = st.columns(2)
-    gauge_container = gauge_col.empty()
+    # Import Styles
+    with imports_container:
+        import_bootstrap()
+        local_css('styles/main.css')
+        icon_css()
+
+    with app_conainer:
     
-    # Initialize state
-    initialize_state()
+        # Set header columns as place holders
+        title_col, gauge_col = st.columns(2)
+      
+        # Initialize state
+        initialize_state()
 
-    # Filter results based on widgets
-    filtered_df, selections_dict = apply_filters(results_df, gauge_col, filters_col)
+        # Filter results based on widgets
+        filtered_df, selections_dict = apply_filters(results_df)
+        
+        if not filtered_df.size:
+            st.markdown('<h1 style="color: #699900;">No data...     <small class="text-muted">check your filter selections</small></h1>', unsafe_allow_html=True)
+        else:    
+            # Set district and n_sites    
+            district =  'Santa Cruz County Schools'
+            if 'district' in selections_dict.keys():
+                district = selections_dict['district']
+            if district == 'ALL': district = 'Santa Cruz County Schools'
+            n_sites = filtered_df.Organization.str.split('-', expand=True)[0].nunique()      
+
+            # Write title
+            title_col.markdown(f'<h1 class="p-0 " style="color: #699900;">{district}</h1><small class="text-muted">{n_sites} School Sites Participating</small>' , unsafe_allow_html=True)
+
+            # Prep figure data 
+            fig_data = prep_fig_data(filtered_df)
+            
+            # Draw time chart
+            with gauge_col:
+                draw_gauge_chart(fig_data)
+            
+            # Show latest metrics
+            active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_latest_metrics(filtered_df)
+
+            # Show weekly metrics
+            show_weekly_metrics(filtered_df)
+            
+            #with st.expander("Show Time Trends", expanded=True):
+            draw_time_chart(fig_data)
+
+            # Animate latest metrics
+            animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
+
     
-    if not filtered_df.size:
-        st.markdown('<h1 style="color: #699900;">No data...     <small class="text-muted">check your filter selections</small></h1>', unsafe_allow_html=True)
-    else:    
-        # Set district and n_sites    
-        district =  'Santa Cruz County Schools'
-        if 'district' in selections_dict.keys():
-            district = selections_dict['district']
-        if district == 'ALL': district = 'Santa Cruz County Schools'
-        n_sites = filtered_df.Organization.str.split('-', expand=True)[0].nunique()      
-
-        # Write title
-        title_container.markdown(f'<h1 class="p-0 " style="color: #699900;">{district}</h1><small class="text-muted">{n_sites} School Sites Participating</small>' , unsafe_allow_html=True)
-
-        # Prep figure data 
-        fig_data = prep_fig_data(filtered_df)
-        
-        # Draw time chart
-        with gauge_container:
-            draw_gauge_chart(fig_data)
-        
-        # Show latest metrics
-        active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_latest_metrics(filtered_df)
-
-        # Show weekly metrics
-        show_weekly_metrics(filtered_df)
-        
-        #with st.expander("Show Time Trends", expanded=True):
-        draw_time_chart(fig_data)
-
-        # Animate latest metrics
-        animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
-

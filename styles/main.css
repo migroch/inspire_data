@@ -6,16 +6,25 @@ footer {visibility: hidden !important;}
 viewerBadge_container__1QSob{visibility: hidden !important;}
 .block-container {padding:20px !important;}
 
+/* .e1tzin5v3:first-child {
+    display: none !important;
+} */
+
 .streamlit-expander{
   border: none !important;
 }
 
-.streamlit-expanderHeader.st-ae.st-bp.st-ag.st-ah.st-ai.st-aj.st-bq.st-br.st-bs.st-bt.st-bu.st-bv.st-bw.st-as.st-at.st-bx.st-by.st-bz.st-c0.st-c1.st-b4.st-c2.st-c3.st-c4.st-b5.st-c5.st-c6.st-c7.st-c8 {
+.streamlit-expanderHeader{
+  justify-content: left !important;
   font-size: 16px;
 }
 
 .row_heading{
   display: none !important;
+}
+
+.css-1byorgg{
+  padding: 0px !important;
 }
 
 .css-12w0qpk {

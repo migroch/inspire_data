@@ -10,20 +10,16 @@ p{
   justify-content: center;
 }
 
-.gaugechart-svg{
-  width:100%;
-}
-
 .circle {
     transition: fill 0.1s ease;
 }
+
 
 .circle:hover {
   cursor:pointer;
   stroke:black;
   strike-width:1;
 }
-
 
 .tooltip {
     position: absolute;
