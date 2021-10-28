@@ -16,7 +16,7 @@ else:
 
 
 def filter_dropdown(
-    data: List[List[str]],
+    data: List[str],
     key=None,
 ):
     """Display a line chart with overlapping circles on a list of (x, y) points, using the D3 library.

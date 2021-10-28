@@ -8,6 +8,7 @@ from import_styles import *
 from bq_query import get_results_from_bq
 from time_chart import time_chart
 from gauge_chart import gauge_chart
+from filter_dropdown import filter_dropdown
 #import draw_donut from donut_charts
 import pdb
 
@@ -388,7 +389,6 @@ if __name__ == '__main__':
 
         # Write title
         title_container.markdown(f'<h1 class="p-0 " style="color: #699900;">{district}</h1><small class="text-muted">{n_sites} School Sites Participating</small>' , unsafe_allow_html=True)
-
         # Prep figure data 
         fig_data = prep_fig_data(filtered_df)
         
@@ -403,7 +403,8 @@ if __name__ == '__main__':
         show_weekly_metrics(filtered_df)
         
         #with st.expander("Show Time Trends", expanded=True):
-        draw_time_chart(fig_data, filter_options)
+        draw_time_chart(fig_data)
+        filter_dropdown(list(filtered_df.Group.unique()))
 
         # Animate latest metrics
         animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
