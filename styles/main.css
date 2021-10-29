@@ -10,6 +10,12 @@ viewerBadge_container__1QSob{visibility: hidden !important;}
     display: none !important;
 } */
 
+.stSlider{
+  max-width: 600px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
 .streamlit-expander{
   border: none !important;
 }
@@ -20,6 +26,10 @@ viewerBadge_container__1QSob{visibility: hidden !important;}
 }
 
 .row_heading{
+  display: none !important;
+}
+
+.css-vkiler{
   display: none !important;
 }
 
