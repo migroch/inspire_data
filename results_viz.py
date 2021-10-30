@@ -52,7 +52,7 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
         date_slider_container = st.container()
         with date_slider_container:    
             filtered_df, date_range = filter_date_range(filtered_df)    
-            
+
     ## Apply district and school filters 
     if district_filter:
         districts = np.append(['ALL'], filtered_df['District'].unique())
@@ -80,7 +80,7 @@ def filter_date_range(filtered_df):
     date_min = filtered_df.Test_Date.min()
     date_max = filtered_df.Test_Date.max()
 
-    st.markdown(f'<p class="m-0 text-center text-muted">Date range</p>', unsafe_allow_html=True)
+    #st.markdown(f'<p class="m-0 text-center text-muted">Date range</p>', unsafe_allow_html=True)
     if filtered_df.size:
         date_range = st.slider('Select Dates:',
                                     min_value=date_min,
@@ -271,10 +271,7 @@ def draw_gauge_chart(fig_data):
     max_avg = fig_data.avg_pos_rate.max()
     fig_data = tuple([0, max_avg, curr_avg])
     gauge_chart(fig_data, key="gauge_chart")
-    st.markdown('''
-        <p class="m-0 text-center">14-day positivityrate: <strong style="color:#F77F00;">{:.1f}%</string></p>
-        '''.format(curr_avg*100), unsafe_allow_html=True
-        )
+    #st.caption("The maximum 14-day positivity in the the gauge is the the maximum observed since 8/30/21")
     
 if __name__ == '__main__': 
     # Get results data from BQ

@@ -3,7 +3,7 @@ from typing import List
 
 import streamlit.components.v1 as components
 
-_RELEASE = False  # on packaging, pass this to True
+_RELEASE = True  # on packaging, pass this to True
 
 if not _RELEASE:
     _component_func = components.declare_component("filter_dropdown", url="http://localhost:3001",)
