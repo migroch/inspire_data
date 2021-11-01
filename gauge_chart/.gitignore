@@ -10,9 +10,9 @@
 
 # production
 /build
-package-lock.json
 
 # misc
+__pycache__
 .DS_Store
 .env.local
 .env.development.local

@@ -1,0 +1,19 @@
+@import '~antd/dist/antd.css';
+
+.ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
+    border-color: #197A7B !important;
+    border-right-width: 1px !important;
+    outline: 0;
+    box-shadow: 0 0 0 2px rgba(25, 122, 123, 0.2) !important;
+  }
+
+  .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+    border-color: #197A7B;
+    border-right-width: 1px !important;
+  }
+
+  .ant-select-item-option-selected:not(.ant-select-item-option-disabled) .ant-select-item-option-state {
+    color: #197A7B !important;
+  }
+
+/*@primary-color: #197A7B; */

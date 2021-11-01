@@ -51,4 +51,7 @@ def get_results_from_bq():
     df['Week'] = df.Test_Date.dt.week - df.Test_Date.dt.week.min()  + 1
     df['Test_Date'] = df.Test_Date.dt.date
     df['Group'] = df['Group'].replace({'STAFF':'Staff', 'STUDENT':'Students'})
+    df['Gender'] = df['Gender'].fillna('Undisclosed')
+    df['Race'] = df['Race'].fillna('Undisclosed')
+    df['Ethnicity'] = df['Ethnicity'].fillna('Undisclosed')
     return df

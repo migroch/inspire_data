@@ -1,13 +1,17 @@
 import time
 import datetime
+from typing import Tuple
 import pandas as pd
 import numpy as np
 import streamlit as st
 from import_styles import *
 from bq_query import get_results_from_bq
 from time_chart import time_chart
+from gauge_chart import gauge_chart
+from filter_dropdown import filter_dropdown
 #import draw_donut from donut_charts
-#import pdb
+import pdb
+
 st.set_page_config(
     layout="wide",
     page_title="Santa Cruz County Covid Testing Dashboard",
@@ -15,14 +19,40 @@ st.set_page_config(
     initial_sidebar_state = "collapsed",
 )
 
+## Initialze state
+def initialize_state():
+    if 'group_selection' not in st.session_state: st.session_state.group_selection = []
+    if 'gender_selection' not in st.session_state: st.session_state.gender_selection = []
+    if 'race_selection' not in st.session_state: st.session_state.race_selection = []
+    if 'ethnicity_selection' not in st.session_state: st.session_state.ethnicity_selection = []
+
+## Filter data
 def apply_filters(results_df, district_filter=False, site_filter=False):
     '''
     Apply filters and return the data frame to use for figures
     '''
     filtered_df = results_df
 
-    filter_columns = st.columns([1,1,2,1])
-    
+    ## Build filter expander and apply user filters
+    ##filtered_df, date_range = build_filter_expander(filtered_df)  
+
+    ## Create multiselect filters
+    dropdown_fields = ['Group', 'Gender', 'Race', 'Ethnicity']
+
+    with st.expander('Show filters', expanded=False):
+
+        filter_columns = st.columns([10,10,10,10,1])
+        for i,field in enumerate(dropdown_fields):
+            with filter_columns[i]:
+                selection = filter_dropdown(list(filtered_df[field].unique()), field=field, key=field.lower()+'_filter_dropdown')
+                print(field, selection)
+                if selection:
+                    filtered_df = filtered_df.query(f'{field} in @selection') 
+
+        date_slider_container = st.container()
+        with date_slider_container:    
+            filtered_df, date_range = filter_date_range(filtered_df)    
+
     ## Apply district and school filters 
     if district_filter:
         districts = np.append(['ALL'], filtered_df['District'].unique())
@@ -36,52 +66,34 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
         if site_selected != 'ALL':
             filtered_df = filtered_df.query('Organization == @site_selected')
 
-    ## Apply group filters
-    #groups = np.append(['ALL'], filtered_df['Group'].unique())
-    #if group_selected != 'ALL':
-    #    filtered_df = filtered_df.query('Group == @group_selected')
-    filtered_df = filter_groups(filtered_df, filter_columns)
-
-    ## Apply date filters
-    #with st.sidebar.expander("Date Filter"):
-       # week_range = st.slider('Select Weeks', min_value=int(filtered_df.Week.min()),
-       #                       max_value=int(filtered_df.Week.max()),
-       #                        value = (int(filtered_df.Week.min()), int(filtered_df.Week.max())),
-       #                        format = "Week %i",
-       #                        help = f"Select the week number since the start of the program (first results on: {filtered_df.Test_Date.min()})"
-       #                        )
-       # filtered_df = filtered_df.query('Week >= @week_range[0] and Week <= @week_range[1]')
-
-    date_min = filtered_df.Test_Date.min() 
-    date_max = filtered_df.Test_Date.max()
-    if filtered_df.size:
-        date_range = filter_columns[-2].slider('Select dates', min_value=date_min,
-                                               max_value=date_max,
-                                               value = (date_min, date_max),
-                                               format = "M/D/YY",
-                                               #help = 'Filter the date range with the slider'
-                                               )   
-        filtered_df = filtered_df.query('Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
-    else:
-         date_range=None   
-        
     if site_filter and district_filter:
         selections_dict = { 'date_range':date_range, 'district': district_selected, 'site':site_selected}
     elif district_filter:
         selections_dict = { 'date_range':date_range, 'district': district_selected}    
     else:
         selections_dict = { 'date_range':date_range}
+
     return filtered_df, selections_dict
 
-def filter_groups(filtered_df, filters_columns):
-    groups = results_df['Group'].unique()
-    groups_selected =[]
-    for i,group in enumerate(groups):
-        selection =  filters_columns[i].checkbox(group, value=True,  on_change=None, args=None, kwargs=None)
-        if selection: groups_selected.append(group)
-    filtered_df = filtered_df.query('Group in @groups_selected')
-    return filtered_df    
+## Filtering for date range
+def filter_date_range(filtered_df):
+    date_min = filtered_df.Test_Date.min()
+    date_max = filtered_df.Test_Date.max()
 
+    #st.markdown(f'<p class="m-0 text-center text-muted">Date range</p>', unsafe_allow_html=True)
+    if filtered_df.size:
+        date_range = st.slider('Select Dates:',
+                                    min_value=date_min,
+                                    max_value=date_max,
+                                    value=(date_min, date_max),
+                                    format="M/D/YY")
+        filtered_df = filtered_df.query("Test_Date >= @date_range[0] and Test_Date <= @date_range[1]")
+    else:
+        date_range=None
+    
+    return filtered_df, date_range
+
+## Streamlit metrics bar
 def show_latest_metrics(filtered_df):
     '''
     Show the latest active, positive and total tests metrics
@@ -105,6 +117,7 @@ def show_latest_metrics(filtered_df):
     st.caption(f"Updated daily at 10am (latest test results are from tests completed on: {filtered_df.Test_Date.max().strftime('%m/%d/%y')})")
     return active_count, positive_count, unique_count, total_count, a_text, p_text, u_text, t_text
 
+## Streamlit metrics bar animation with bootstrap
 def animate_metrics(active_count, positive_count,  unique_count, total_count, a_text, p_text, u_text, t_text):
     '''
     Animate the latest metrics text
@@ -124,6 +137,7 @@ def animate_metrics(active_count, positive_count,  unique_count, total_count, a_
         t_text.markdown("<p   class='fs-1' style='color:#09ab3b'>{:.1f}K</p>".format(t_count), unsafe_allow_html=True)
         time.sleep(0.05)  
 
+## Retrieve data for streamlit metrics bar
 def get_weeklymetrics_df(filtered_df):
     '''
     Generate weeklymetrics_df
@@ -156,6 +170,7 @@ def get_weeklymetrics_df(filtered_df):
             week_date_max =  datetime.datetime.strptime(str(datetime.date.today().isocalendar()[0])+'-'+str(datetime.date.today().isocalendar()[1])+'-6', "%Y-%W-%w").date()
             active_date_min = week_date_min  - datetime.timedelta(days=10)
             active_date_max = week_date_max
+            if datetime.date.today() < week_date_max: week_date_max = datetime.date.today()
             active_df = filtered_df.query('Test_Result=="POSITIVE" and Test_Date>=@active_date_min and Test_Date<=@active_date_max')
             active_count = len(active_df.UID.unique())
             dates = week_date_min.strftime('%m/%d/%y')+' - '+week_date_max.strftime('%m/%d/%y')
@@ -163,6 +178,7 @@ def get_weeklymetrics_df(filtered_df):
         weeklymetrics_df = pd.concat([weeklymetrics_df, pd.DataFrame([row], columns=weeklymetrics_df_columns, index=[week])])
     return weeklymetrics_df
 
+## Retrieve data for weekly metrics and build streamlit table
 def show_weekly_metrics(filtered_df):
     '''
     Show last week's metrics and weekly table
@@ -197,22 +213,19 @@ def show_weekly_metrics(filtered_df):
             #display_index = 'Week '+ weeklymetrics_df.Week.astype('str')
             #display_df = weeklymetrics_df.set_index(display_index).drop(columns='Week')
             display_df = weeklymetrics_df.sort_values('Week', ascending=False)
-            display_df = display_df.drop(columns='Week')
-            display_df_styler = display_df.style.hide_index().apply(
-                lambda x: [f"background-color:{'#09ab3b' if x.name==display_df.index[0] else 'white'};" for row in x]
+            display_df = display_df.set_index('Week').reset_index().drop(columns='Week')
+            display_df_styler = display_df.style.apply(
+                lambda x: [f"background-color:{'#F77F00' if x.name==display_df.index[0] else 'white'};" for row in x]
                 , axis=1 ).hide_index()
             st.dataframe(display_df_styler)
             st.caption("Highlighted row shows current week's data (week in progress).")
-        
-def draw_time_chart(filtered_df):
-    '''
-    Create a d3 component with a results vs time chart of test results
-    '''
-    st.subheader('Time Trend')
+
+## Prepare data for time chart and gauge chart figures
+def prep_fig_data(filtered_df):
     fig_data = pd.DataFrame({ 
         'test_count': filtered_df.groupby(['Test_Date']).size(), 
         'pos_count': filtered_df[filtered_df['Test_Result']=='POSITIVE'].groupby(['Test_Date']).size() 
-     }).reset_index()
+    }).reset_index()
     fig_data['pos_count'] = fig_data.pos_count.fillna(0)
     fig_data['pos_rate'] = 100.0*fig_data['pos_count']/fig_data['test_count']
     fig_data = fig_data.rename(columns={'index':'Test_Date'})
@@ -224,60 +237,96 @@ def draw_time_chart(filtered_df):
         lambda x:  fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
                             (fig_data['Test_Date'] <= x)]['pos_count'].sum() /
         fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
-                 (fig_data['Test_Date'] <= x)]['test_count'].sum()
+                (fig_data['Test_Date'] <= x)]['test_count'].sum()
     ) 
     fig_data['active_count'] = fig_data['Test_Date'].apply(
         lambda x: filtered_df[(filtered_df['Test_Date'] >= (x - timedelta_10days)) &
-                              (filtered_df['Test_Date'] <= x) &
-                              (filtered_df['Test_Result']=='POSITIVE')
-                              ].UID.nunique()
+                            (filtered_df['Test_Date'] <= x) &
+                            (filtered_df['Test_Result']=='POSITIVE')].UID.nunique()
     )  
     fig_data['Week'] = pd.to_datetime(fig_data.Test_Date).dt.week
     fig_data['Week'] = fig_data['Week']-fig_data['Week'].min()+1
     fig_data['Test_Date'] = pd.to_datetime(fig_data.Test_Date).dt.strftime('%Y-%m-%d')
+
+    return fig_data
+
+## Call time chart component 
+def draw_time_chart(fig_data):
+    '''
+    Create a d3 component with a results vs time chart of test results
+    '''
+    st.subheader('Time Trend')
     fig_data = list(
         zip(fig_data.Test_Date, fig_data.avg_pos_rate, fig_data.pos_count,
             fig_data.active_count, fig_data.test_count, fig_data.Week)
     )
-    #circle_radius = st.sidebar.slider("Circle radius", 1, 25, 5)
-    #circle_color = st.sidebar.color_picker("Circle color", "#ED647C")
-    time_chart(fig_data,  key="time_chart")    
+    time_chart(fig_data, key="time_chart")
+
+## Call gauge chart component
+def draw_gauge_chart(fig_data):
+    '''
+    Create a d3 component with a gauge of 14-day average positive result rate 
+    '''
+    #st.subheader('14-Day Average Positive Result Rate')
+    curr_avg = fig_data.avg_pos_rate.iat[-1]
+    max_avg = fig_data.avg_pos_rate.max()
+    fig_data = tuple([0, max_avg, curr_avg])
+    gauge_chart(fig_data, key="gauge_chart")
     
-if __name__ == '__main__':
-    # Import Styles
-    import_bootstrap()
-    local_css('styles/main.css')
-    
+if __name__ == '__main__': 
     # Get results data from BQ
     results_df = get_results_from_bq()
 
-    title = st.empty()
-        
-    # Filter results based on widgets
-    filtered_df, selections_dict = apply_filters(results_df)
+    imports_container = st.container()
+    app_conainer = st.container()
+
+    # Import Styles
+    with imports_container:
+        import_bootstrap()
+        local_css('styles/main.css')
+        icon_css()
+
+    with app_conainer:
     
-    if not filtered_df.size:
-        st.markdown('<h1 style="color: #699900;">No data...     <small class="text-muted">check your filter selections</small></h1>', unsafe_allow_html=True)
-    else:    
-        # Write title    
-        district =  'Santa Cruz County Schools'
-        if 'district' in selections_dict.keys():
-            district = selections_dict['district']
-        if district == 'ALL': district = 'Santa Cruz County Schools'
-        n_sites = filtered_df.Organization.str.split('-', expand=True)[0].nunique()
-        title.markdown(f'<h1 style="color: #699900;">{district}     <small class="text-muted">{n_sites} School Sites Participating</small></h1>' , unsafe_allow_html=True)
-        
-        # Show latest metrics
-        active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_latest_metrics(filtered_df)
+        # Set header columns as place holders
+        title_col, gauge_col = st.columns(2)
 
-        # Show weekly metrics
-        show_weekly_metrics(filtered_df)
-        
-        # Show time chart
-        #with st.expander("Show Time Trends", expanded=True):
-        draw_time_chart(filtered_df)
+        # Initialize state
+        initialize_state()
 
-        # Animate latest metrics
-        animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
-
+        # Filter results based on widgets
+        filtered_df, selections_dict = apply_filters(results_df)
         
+        if not filtered_df.size:
+            st.markdown('<h1 style="color: #699900;">No data...     <small class="text-muted">check your filter selections</small></h1>', unsafe_allow_html=True)
+        else:    
+            # Set district and n_sites    
+            district =  'Santa Cruz County Schools'
+            if 'district' in selections_dict.keys():
+                district = selections_dict['district']
+            if district == 'ALL': district = 'Santa Cruz County Schools'
+            n_sites = filtered_df.Organization.str.split('-', expand=True)[0].nunique()      
+
+            # Write title
+            title_col.markdown(f'<h1 class="p-0 " style="color: #699900;">{district}</h1><small class="text-muted">{n_sites} School Sites Participating</small>' , unsafe_allow_html=True)
+
+            # Prep figure data 
+            fig_data = prep_fig_data(filtered_df)
+            
+            # Draw time chart
+            with gauge_col:
+                draw_gauge_chart(fig_data)
+            
+            # Show latest metrics
+            active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text = show_latest_metrics(filtered_df)
+
+            # Show weekly metrics
+            show_weekly_metrics(filtered_df)
+            
+            #with st.expander("Show Time Trends", expanded=True):
+            draw_time_chart(fig_data)
+
+            # Animate latest metrics
+            animate_metrics(active_count, positive_count, unique_count,  total_count, a_text, p_text, u_text,  t_text)
+
+    

@@ -6,18 +6,67 @@ footer {visibility: hidden !important;}
 viewerBadge_container__1QSob{visibility: hidden !important;}
 .block-container {padding:20px !important;}
 
+/* .e1tzin5v3:first-child {
+    display: none !important;
+} */
+
+.col_heading{
+    font-weight: bold;
+    background-color: #F0F0F0;
+ 
+}
+
+.stSlider{
+  max-width: 600px !important; 
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
 .streamlit-expander{
   border: none !important;
+}
+
+.streamlit-expanderHeader{
+  justify-content: left !important;
+  font-size: 16px;
 }
 
 .row_heading{
   display: none !important;
 }
 
+.css-vkiler{
+  display: none !important;
+}
+
+.css-1byorgg{
+  padding: 0px !important;
+}
+
 .css-12w0qpk {
   border-left: 1px solid rgba(38, 39, 48, 0.6);
   padding-left: 15px;
   padding-right: none;
+}
+
+.css-1b2d4l5.e1tzin5v2 {
+  padding: 0px;
+  /* border: 2px solid #207c7c;
+  border-radius: 5px; */
+}
+
+.css-1djdyxw {
+  vertical-align: middle;
+  display: flex;
+  flex-direction: row;
+  -webkit-box-align: center;
+  align-items: center;
+  font-size: 13px;
+  text-align: left;
+}
+
+.css-1rrbo1k.e1tzin5v2 {
+  padding-left: 40px;
 }
 
 .effi0qh0{
@@ -28,3 +77,4 @@ viewerBadge_container__1QSob{visibility: hidden !important;}
   padding-left: 30px;
   padding-right: 30px;
 }
+

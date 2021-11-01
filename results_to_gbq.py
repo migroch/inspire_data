@@ -23,21 +23,21 @@ district_name_map = {'BONNYDOON-UESD':'Bonny Doon', 'HAPPYVALLEY-UESD':'Happy Va
                 'SCOTTSVALLEY-USD':'Scotts Valley', 'SLVUSD':'San Lorenzo Valley',
                 'SOQUEL-UESD':'Soquel'}
 
-### Write rgistrations to BigQuery ###
-registrations_df = read_inspire_files('data/registrations/all_*.csv')
-registrations_df = registrations_df.rename(columns={col: col.replace(' ','_') for col in registrations_df.columns})
-registrations_df['Phone'] = registrations_df['Phone'].astype('Int64')
-registrations_df['Registration_Date'] = pd.to_datetime(registrations_df['Registration_Date'])
-#registrations_df = registrations_df[~registrations_df.duplicated(subset='')]
+# ### Write rgistrations to BigQuery ###
+# registrations_df = read_inspire_files('data/registrations/all_*.csv')
+# registrations_df = registrations_df.rename(columns={col: col.replace(' ','_') for col in registrations_df.columns})
+# registrations_df['Phone'] = registrations_df['Phone'].astype('Int64')
+# registrations_df['Registration_Date'] = pd.to_datetime(registrations_df['Registration_Date'])
+# #registrations_df = registrations_df[~registrations_df.duplicated(subset='')]
 
-registrations_df['key1'] = (registrations_df['Last_Name'].apply(lambda s: s.lower().split('-')[0].split(' ')[0]) +
-                     registrations_df['DOB'].str.replace('-','')  +
-                     registrations_df['First_Name'].str.lower().str.slice(stop=3) )
-registrations_df['key2'] = (registrations_df['Last_Name'].apply(lambda s: s.lower().split('-')[0].split(' ')[0]) +
-                     registrations_df['DOB'].str.replace('-','')  +
-                     registrations_df['First_Name'].apply(lambda s: s.lower().split('-')[0].split(' ')[0]) )
+# registrations_df['key1'] = (registrations_df['Last_Name'].apply(lambda s: s.lower().split('-')[0].split(' ')[0]) +
+#                      registrations_df['DOB'].str.replace('-','')  +
+#                      registrations_df['First_Name'].str.lower().str.slice(stop=3) )
+# registrations_df['key2'] = (registrations_df['Last_Name'].apply(lambda s: s.lower().split('-')[0].split(' ')[0]) +
+#                      registrations_df['DOB'].str.replace('-','')  +
+#                      registrations_df['First_Name'].apply(lambda s: s.lower().split('-')[0].split(' ')[0]) )
 
-pandas_gbq.to_gbq(registrations_df,  "InspireTesting.rgistrations",  if_exists='replace', project_id="covidtesting-1602910185026") 
+# pandas_gbq.to_gbq(registrations_df,  "InspireTesting.rgistrations",  if_exists='replace', project_id="covidtesting-1602910185026") 
 
 ### Write results to BigQuery ###
 results_df = read_inspire_files('data/results/santacruz*.txt')
