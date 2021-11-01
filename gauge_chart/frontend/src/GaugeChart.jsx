@@ -1,29 +1,31 @@
 import React, {useEffect, useState, useRef} from "react";
 import { Streamlit, withStreamlitConnection,} from "streamlit-component-lib";
 import * as d3 from "d3";
-import styles from './GaugeChart.css';
+import './GaugeChart.css';
 
 // Create GaugeChart component
 const GaugeChart = (props) => {
+  const {data, rotation, thickness, arc, ticks, color_scheme, color_step, tick_color, needle_color} = props.args;
+
   const max_width = 250;
-  const aspectRatio = 0.4;
+  const aspectRatio = 0.35;
   let dimensions = get_client_dimensions();
   let width = dimensions.width > max_width ? max_width : dimensions.width;
   const [svgWidth, setWidth ] = useState(width);
-  //let label_font_size = "15px";
+  
   let ticks_font_size = `${11+5*svgWidth/1000}px`;
   let caption_font_size  = `${10+5*svgWidth/400}px`;
-  const margin = {"top":5*parseFloat(ticks_font_size), "bottom": 2*parseFloat(ticks_font_size), "left": 2*parseFloat(ticks_font_size), "right": 2*parseFloat(ticks_font_size)};
+  let label_font_size = caption_font_size;
+  const margin = {"top":5*parseFloat(ticks_font_size), "bottom": 1.25*parseFloat(ticks_font_size), "left": 2*parseFloat(ticks_font_size), "right": 2*parseFloat(ticks_font_size)};
   const [svgHeight, setHeight ] = useState(aspectRatio*svgWidth + margin.top);
   
   const svgRef = useRef(null);
-  Streamlit.setFrameHeight(svgHeight);
+  Streamlit.setFrameHeight(svgHeight + 2*parseFloat(label_font_size));
   d3.select(svgRef.current).style("width", svgWidth).style("height", svgHeight);
 
   const transitionMillisec = 1200;
 	
   // Get properties
-  const {data, rotation, thickness, arc, ticks, color_scheme, color_step, tick_color, needle_color, key} = props.args;
   const pi = Math.PI;
   const rad = pi / 180;
   const deg = 180 / pi;
@@ -46,10 +48,10 @@ const GaugeChart = (props) => {
       setHeight( aspectRatio*svgWidth + margin.top);
     }
     
-    Streamlit.setFrameHeight(svgHeight);
+    Streamlit.setFrameHeight(svgHeight + 2*parseFloat(label_font_size));
     d3.select(svgRef.current).style("width", svgWidth).style("height", svgHeight);
     window.addEventListener('resize', handleResize)
-  }, [svgWidth, svgHeight, aspectRatio]);
+  }, [svgWidth, svgHeight, aspectRatio, margin.top, label_font_size]);
     
   // On mount, create group containers for circles, path and both axis
   useEffect(() => {
@@ -179,13 +181,16 @@ const GaugeChart = (props) => {
 	});
 
     return (
-      <div className="gaugechart-container">
-	      <div className='tooltip hide' />
-	      <svg className="gaugechart-svg"  ref={svgRef}  />
-        <p>
-          14-day positivityrate: <strong class="caption_percent">{formatPercent(data[2])}</strong>
-        </p>
-      </div>
+      <>
+        <div className="gaugechart-container">
+          <div><svg className="gaugechart-svg"  ref={svgRef}/></div>
+        </div>
+        <div className="legend-container" >
+          <p style={{fontSize:label_font_size}}>
+            14-day positivity rate: <span style={{color:"#F77F00", fontWeight:"bold"}}>{formatPercentLegend(data[2])}</span>
+          </p>
+        </div>
+      </>
     )
     
 }
@@ -303,6 +308,7 @@ function get_client_dimensions() {
 }
 
 const formatPercent = d3.format(".1%");
+const formatPercentLegend = d3.format(".2%");
 
   
 // Export component  

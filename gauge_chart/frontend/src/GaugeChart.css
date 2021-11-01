@@ -11,15 +11,18 @@ p{
   align-items: center;
 }
 
+.legend-container{
+  text-align: center;
+}
+
 .circle {
     transition: fill 0.1s ease;
 }
 
-
 .circle:hover {
   cursor:pointer;
   stroke:black;
-  strike-width:1;
+  stroke-width:1;
 }
 
 .tooltip {
@@ -49,10 +52,6 @@ p{
     visibility: hidden;
     opacity: 0;
     transition: visibility 1s, opacity 1s;
-}
-
-.caption {
-  
 }
 
 .caption_percent {

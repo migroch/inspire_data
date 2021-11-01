@@ -41,18 +41,17 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
 
     with st.expander('Show filters', expanded=False):
 
-        dates_col = st.columns(2)[0]
-        with dates_col:    
-            filtered_df, date_range = filter_date_range(filtered_df)    
-
         filter_columns = st.columns([10,10,10,10,1])
-
         for i,field in enumerate(dropdown_fields):
             with filter_columns[i]:
-                selection = filter_dropdown(list(filtered_df[field].unique()), field=field.lower(), key=field.lower()+'_filter_dropdown')
+                selection = filter_dropdown(list(filtered_df[field].unique()), field=field, key=field.lower()+'_filter_dropdown')
                 print(field, selection)
                 if selection:
                     filtered_df = filtered_df.query(f'{field} in @selection') 
+
+        date_slider_container = st.container()
+        with date_slider_container:    
+            filtered_df, date_range = filter_date_range(filtered_df)    
 
     ## Apply district and school filters 
     if district_filter:
@@ -81,7 +80,7 @@ def filter_date_range(filtered_df):
     date_min = filtered_df.Test_Date.min()
     date_max = filtered_df.Test_Date.max()
 
-    st.markdown(f'<p class="m-0">Date range</p>', unsafe_allow_html=True)
+    #st.markdown(f'<p class="m-0 text-center text-muted">Date range</p>', unsafe_allow_html=True)
     if filtered_df.size:
         date_range = st.slider('Select Dates:',
                                     min_value=date_min,
@@ -272,10 +271,14 @@ def draw_gauge_chart(fig_data):
     max_avg = fig_data.avg_pos_rate.max()
     fig_data = tuple([0, max_avg, curr_avg])
     gauge_chart(fig_data, key="gauge_chart")
+<<<<<<< HEAD
     # st.markdown('''
     #     <p class="m-0 text-center">14-day positivityrate: <strong style="color:#F77F00;">{:.1f}%</string></p>
     #     '''.format(curr_avg*100), unsafe_allow_html=True
     #     )
+=======
+    #st.caption("The maximum 14-day positivity in the the gauge is the the maximum observed since 8/30/21")
+>>>>>>> 920486ce2c91b54a84da52b9dbb43c9aac81c262
     
 if __name__ == '__main__': 
     # Get results data from BQ

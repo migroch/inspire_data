@@ -27,11 +27,8 @@ def gauge_chart(
     needle_color: str = "#BB345B",
     key=None,
 ):
-    """Display a line chart with overlapping circles on a list of (x, y) points, using the D3 library.
-
-    :param data: A list of (x, y) points
-    :param width:  Width of canvas, in pixels
-    :param key:  An optional string to use as the unique key for the widget.
+    """
+        Create a gauge chart showing the current positivity rate.
     """       
     component_value = _component_func(
         data=data,
@@ -43,7 +40,7 @@ def gauge_chart(
         color_step=color_step,
         tick_color=tick_color,
         needle_color=needle_color,
-        key=key,
+        #key=key,
         default=None,
     )
     return component_value
