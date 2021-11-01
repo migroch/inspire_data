@@ -83,7 +83,7 @@ const TimeChart = (props) => {
 			    .attr("font-size", axis_font_size)
 			    .call(d3.axisBottom(xScale)
 				    .ticks(d3.timeWeek)
-				    .tickFormat(d3.timeFormat("%m/%d/%y"))
+				    .tickFormat(d3.timeFormat("%b %d"))
 				    .tickSize(-1 * (svgHeight - margin.top - margin.bottom))
 				    .tickSizeOuter(0))
 			    .call(g => g.selectAll('text')
