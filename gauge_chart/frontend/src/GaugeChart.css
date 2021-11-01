@@ -7,7 +7,8 @@ p{
 
 .gaugechart-container{
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
 }
 
 .circle {
@@ -48,4 +49,12 @@ p{
     visibility: hidden;
     opacity: 0;
     transition: visibility 1s, opacity 1s;
+}
+
+.caption {
+  
+}
+
+.caption_percent {
+  color: #F77F00;
 }

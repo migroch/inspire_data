@@ -272,10 +272,10 @@ def draw_gauge_chart(fig_data):
     max_avg = fig_data.avg_pos_rate.max()
     fig_data = tuple([0, max_avg, curr_avg])
     gauge_chart(fig_data, key="gauge_chart")
-    st.markdown('''
-        <p class="m-0 text-center">14-day positivityrate: <strong style="color:#F77F00;">{:.1f}%</string></p>
-        '''.format(curr_avg*100), unsafe_allow_html=True
-        )
+    # st.markdown('''
+    #     <p class="m-0 text-center">14-day positivityrate: <strong style="color:#F77F00;">{:.1f}%</string></p>
+    #     '''.format(curr_avg*100), unsafe_allow_html=True
+    #     )
     
 if __name__ == '__main__': 
     # Get results data from BQ

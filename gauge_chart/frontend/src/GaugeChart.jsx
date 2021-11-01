@@ -182,6 +182,9 @@ const GaugeChart = (props) => {
       <div className="gaugechart-container">
 	      <div className='tooltip hide' />
 	      <svg className="gaugechart-svg"  ref={svgRef}  />
+        <p>
+          14-day positivityrate: <strong class="caption_percent">{formatPercent(data[2])}</strong>
+        </p>
       </div>
     )
     
