@@ -7,7 +7,8 @@ p{
 
 .gaugechart-container{
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
 }
 
 .legend-container{
@@ -18,11 +19,10 @@ p{
     transition: fill 0.1s ease;
 }
 
-
 .circle:hover {
   cursor:pointer;
   stroke:black;
-  strike-width:1;
+  stroke-width:1;
 }
 
 .tooltip {
@@ -52,4 +52,8 @@ p{
     visibility: hidden;
     opacity: 0;
     transition: visibility 1s, opacity 1s;
+}
+
+.caption_percent {
+  color: #F77F00;
 }

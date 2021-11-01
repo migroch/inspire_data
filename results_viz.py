@@ -271,7 +271,6 @@ def draw_gauge_chart(fig_data):
     max_avg = fig_data.avg_pos_rate.max()
     fig_data = tuple([0, max_avg, curr_avg])
     gauge_chart(fig_data, key="gauge_chart")
-    #st.caption("The maximum 14-day positivity in the the gauge is the the maximum observed since 8/30/21")
     
 if __name__ == '__main__': 
     # Get results data from BQ
