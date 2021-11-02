@@ -62,13 +62,33 @@ if __name__ == '__main__':
             t_count += 1
 
             col_text0.markdown(f"<p  class='fs-1' style='color:#ff006e'>{a_count}</p>", unsafe_allow_html=True)
-            col_text1.markdown(f"<p  class='fs-1' style='color:#ff006e'>{p_count}</p>", unsafe_allow_html=True)
-            col_text2.markdown(f"<p  class='fs-1' style='color:#ff006e'>{u_count}</p>", unsafe_allow_html=True)
-            col_text3.markdown(f"<p  class='fs-1' style='color:#ff006e'>{t_count}</p>", unsafe_allow_html=True)
+            col_text1.markdown(f"<p  class='fs-1' style='color:#f77f00'>{p_count}</p>", unsafe_allow_html=True)
+            col_text2.markdown("<p   class='text-primary fs-1' >{:.1f}K</p>".format(u_count), unsafe_allow_html=True)
+            col_text3.markdown("<p   class='fs-1' style='color:#09ab3b'>{:.1f}K</p>".format(t_count), unsafe_allow_html=True)
 
             time.sleep(0.005)
 
         st.caption(f"Updated daily at 10am (latest test results are from tests completed on:")
 
         # Set last week's data metrics bar
-        
+        lastweek_dates = True
+        prevweek_dates = None
+
+        if lastweek_dates:
+            st.markdown(f"<h3>Last Week's Data     <small class='text-muted'>{lastweek_dates}</small></h3>",  unsafe_allow_html=True)
+            last_summ_cols = st.columns(4)
+
+            ## TODO: add delta value
+            last_summ_cols[0].metric(label="Active Cases", value=1)
+            last_summ_cols[1].metric(label="Positive Tests", value=1)
+            last_summ_cols[2].metric(label="People Tested", value=1)
+            last_summ_cols[3].metric(label="Tests Completed", value=1)
+            st.caption(f"Delta values represent changes from previous week ({prevweek_dates})")
+
+            with st.expander("Show Weekly Table", expanded=False):
+                st.subheader("Weekly Table")
+                ## TODO: add weekly table view
+
+        # Time chart section
+        st.subheader('Time Trend')
+        st.write('insert time chart here')
