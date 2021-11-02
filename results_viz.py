@@ -162,6 +162,7 @@ def get_weeklymetrics_df(filtered_df):
             week_date_max =  datetime.datetime.strptime(str(datetime.date.today().isocalendar()[0])+'-'+str(datetime.date.today().isocalendar()[1])+'-6', "%Y-%W-%w").date()
             active_date_min = week_date_min  - datetime.timedelta(days=10)
             active_date_max = week_date_max
+            if datetime.date.today() < week_date_max: week_date_max = datetime.date.today()
             active_df = filtered_df.query('Test_Result=="POSITIVE" and Test_Date>=@active_date_min and Test_Date<=@active_date_max')
             active_count = len(active_df.UID.unique())
             dates = week_date_min.strftime('%m/%d/%y')+' - '+week_date_max.strftime('%m/%d/%y')
@@ -204,10 +205,10 @@ def show_weekly_metrics(filtered_df):
             #display_index = 'Week '+ weeklymetrics_df.Week.astype('str')
             #display_df = weeklymetrics_df.set_index(display_index).drop(columns='Week')
             display_df = weeklymetrics_df.sort_values('Week', ascending=False)
-            display_df = display_df.drop(columns='Week').set_index('Dates').reset_index()
+            display_df = display_df.set_index('Week').reset_index().drop(columns='Week')
             display_df_styler = display_df.style.apply(
-                lambda x: [f"background-color:{'#09ab3b' if x.name==display_df.index[0] else 'white'};" for row in x]
-                , axis=1 )
+                lambda x: [f"background-color:{'#F77F00' if x.name==display_df.index[0] else 'white'};" for row in x]
+                , axis=1 ).hide_index()
             st.dataframe(display_df_styler)
             st.caption("Highlighted row shows current week's data (week in progress).")
 

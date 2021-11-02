@@ -10,8 +10,14 @@ viewerBadge_container__1QSob{visibility: hidden !important;}
     display: none !important;
 } */
 
+.col_heading{
+    font-weight: bold;
+    background-color: #F0F0F0;
+ 
+}
+
 .stSlider{
-  max-width: 600px !important;
+  max-width: 600px !important; 
   margin-left: auto !important;
   margin-right: auto !important;
 }

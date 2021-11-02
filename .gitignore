@@ -1,3 +1,6 @@
 __pycache__
-data
 .DS_Store
+.streamlit/covidtesting-1602910185026-de8a6f94062f.json
+.streamlit/secrets.toml
+data
+*~
