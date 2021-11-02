@@ -6,6 +6,9 @@ import './GaugeChart.css';
 // Create GaugeChart component
 const GaugeChart = (props) => {
   const {data, rotation, thickness, arc, ticks, color_scheme, color_step, tick_color, needle_color} = props.args;
+  if(data[2] > data[1]) {
+    data[1] = data[2];
+  }
 
   const max_width = 250;
   const aspectRatio = 0.35;

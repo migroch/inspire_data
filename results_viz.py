@@ -269,7 +269,7 @@ def draw_gauge_chart(fig_data):
     '''
     #st.subheader('14-Day Average Positive Result Rate')
     curr_avg = fig_data.avg_pos_rate.iat[-1]
-    max_avg = fig_data.avg_pos_rate.max()
+    max_avg = 0.02
     fig_data = tuple([0, max_avg, curr_avg])
     gauge_chart(fig_data, key="gauge_chart")
     
