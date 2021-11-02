@@ -48,7 +48,7 @@ const TimeChart = (props) => {
 			let aspectRatio = 0.38
 			let dimensions = get_client_dimensions();
 			setWidth(dimensions.width);
-			if (svgWidth < 600) aspectRatio = 0.61;
+			if (svgWidth < 600) aspectRatio = 0.68;
 			setHeight( aspectRatio*svgWidth );
 		}
 		
