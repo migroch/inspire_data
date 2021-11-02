@@ -9,7 +9,6 @@ const GaugeChart = (props) => {
   if(data[2] > data[1]) {
     data[1] = data[2];
   }
-  
   const max_width = 250;
   const aspectRatio = 0.35;
   let dimensions = get_client_dimensions();
