@@ -19,13 +19,6 @@ st.set_page_config(
     initial_sidebar_state = "collapsed",
 )
 
-## Initialze state
-def initialize_state():
-    if 'group_selection' not in st.session_state: st.session_state.group_selection = []
-    if 'gender_selection' not in st.session_state: st.session_state.gender_selection = []
-    if 'race_selection' not in st.session_state: st.session_state.race_selection = []
-    if 'ethnicity_selection' not in st.session_state: st.session_state.ethnicity_selection = []
-
 ## Filter data
 def apply_filters(results_df, district_filter=False, site_filter=False):
     '''
@@ -45,7 +38,6 @@ def apply_filters(results_df, district_filter=False, site_filter=False):
         for i,field in enumerate(dropdown_fields):
             with filter_columns[i]:
                 selection = filter_dropdown(list(filtered_df[field].unique()), field=field, key=field.lower()+'_filter_dropdown')
-                print(field, selection)
                 if selection:
                     filtered_df = filtered_df.query(f'{field} in @selection') 
 
@@ -289,9 +281,6 @@ if __name__ == '__main__':
     
         # Set header columns as place holders
         title_col, gauge_col = st.columns(2)
-
-        # Initialize state
-        initialize_state()
 
         # Filter results based on widgets
         filtered_df, selections_dict = apply_filters(results_df)

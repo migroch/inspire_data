@@ -55,3 +55,16 @@ def get_results_from_bq():
     df['Race'] = df['Race'].fillna('Undisclosed')
     df['Ethnicity'] = df['Ethnicity'].fillna('Undisclosed')
     return df
+
+@st.cache(show_spinner=False, ttl=600)
+def get_weekly_summary_from_bq():
+    '''
+    Get inspire weekly summary data from bigquery
+    '''
+    query = f"""
+    SELECT * 
+    FROM `InspireTesting.weekly_summary`
+    """
+
+    df = bq_query(query)
+    return df
