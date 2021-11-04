@@ -23,35 +23,6 @@ district_name_map = {'BONNYDOON-UESD':'Bonny Doon', 'HAPPYVALLEY-UESD':'Happy Va
                 'SCOTTSVALLEY-USD':'Scotts Valley', 'SLVUSD':'San Lorenzo Valley',
                 'SOQUEL-UESD':'Soquel'}
 
-def prep_weekly_summary(df):
-    weekly_summary_df = pd.DataFrame({ 
-        'test_count': df.groupby(['Test_Date']).size(), 
-        'pos_count': df[df['Test_Result']=='POSITIVE'].groupby(['Test_Date']).size() 
-    }).reset_index()
-    weekly_summary_df['pos_count'] = weekly_summary_df.pos_count.fillna(0)
-    weekly_summary_df['pos_rate'] = 100.0*weekly_summary_df['pos_count']/weekly_summary_df['test_count']
-    weekly_summary_df = weekly_summary_df.rename(columns={'index':'Test_Date'})
-    
-    # Compute 10-day active cases & 14-day positive rate averages
-    timedelta_14days = datetime.timedelta(days=14)
-    timedelta_10days = datetime.timedelta(days=10)
-    weekly_summary_df['avg_pos_rate'] = weekly_summary_df['Test_Date'].apply(
-        lambda x:  weekly_summary_df[(weekly_summary_df['Test_Date'] >= (x - timedelta_14days)) &
-                            (weekly_summary_df['Test_Date'] <= x)]['pos_count'].sum() /
-        weekly_summary_df[(weekly_summary_df['Test_Date'] >= (x - timedelta_14days)) &
-                (weekly_summary_df['Test_Date'] <= x)]['test_count'].sum()
-    ) 
-    weekly_summary_df['active_count'] = weekly_summary_df['Test_Date'].apply(
-        lambda x: df[(df['Test_Date'] >= (x - timedelta_10days)) &
-                            (df['Test_Date'] <= x) &
-                            (df['Test_Result']=='POSITIVE')].UID.nunique()
-    )  
-    weekly_summary_df['Week'] = pd.to_datetime(weekly_summary_df.Test_Date).dt.week
-    weekly_summary_df['Week'] = weekly_summary_df['Week']-weekly_summary_df['Week'].min()+1
-    weekly_summary_df['Test_Date'] = pd.to_datetime(weekly_summary_df.Test_Date).dt.strftime('%Y-%m-%d')
-
-    return weekly_summary_df
-
 # ### Write rgistrations to BigQuery ###
 # registrations_df = read_inspire_files('data/registrations/all_*.csv')
 # registrations_df = registrations_df.rename(columns={col: col.replace(' ','_') for col in registrations_df.columns})
@@ -91,11 +62,7 @@ results_df['key2'] = (results_df['Last_Name'].apply(lambda s: s.lower().split('-
                      results_df['DOB'].str.replace('-','')  +
                      results_df['First_Name'].apply(lambda s: s.lower().split('-')[0].split(' ')[0]) )
 
-pandas_gbq.to_gbq(results_df,  "InspireTesting.results_dev",  if_exists='replace', project_id="covidtesting-1602910185026")
-
-### Write weekly summary to BigQuery ###
-weekly_summary_df = prep_weekly_summary(results_df)
-pandas_gbq.to_gbq(weekly_summary_df, "InspireTesting.weekly_summary", if_exists='replace', project_id="covidtesting-1602910185026")
+pandas_gbq.to_gbq(results_df,  "InspireTesting.results",  if_exists='replace', project_id="covidtesting-1602910185026")
 
 ### Write results-summary to BigQuery ###
 results_df['Status'] = results_df.apply(
@@ -109,4 +76,4 @@ summary_df = summary_df.join(active_df, how='left', on=['District', 'Organizatio
 summary_df = summary_df.rename(columns={'UID':'Active'})
 summary_df = summary_df.reset_index()
 summary_df['Active'] = summary_df['Active'].fillna(0)
-pandas_gbq.to_gbq(summary_df,  "InspireTesting.summary_dev",  if_exists='replace', project_id="covidtesting-1602910185026")
+pandas_gbq.to_gbq(summary_df,  "InspireTesting.summary",  if_exists='replace', project_id="covidtesting-1602910185026")
