@@ -1,15 +1,14 @@
-import datetime
 import streamlit as st
 import pandas as pd
 import time
-import backend as bk
+import prep_results as pr
 from import_styles import *
 from filter_dropdown import filter_dropdown
 from gauge_chart import gauge_chart
 from time_chart import time_chart
 
 # Initial data load
-app_data = bk.APP_DATA
+app_data = pr.APP_DATA
 
 def refresh_data(query):
     global app_data
@@ -65,7 +64,7 @@ if __name__ == '__main__':
                     refresh_data(query='Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
 
         # Set figure data after filtering
-        fig_data = bk.prep_fig_data(app_data)
+        fig_data = pr.prep_fig_data(app_data)
 
         # Set title and gauge chart after filtering
         with title_col:
@@ -89,7 +88,7 @@ if __name__ == '__main__':
 
         
         ## Get latest metrics and animate
-        active_count, positive_count, unique_count, total_count = bk.get_lates_metrics(app_data)
+        active_count, positive_count, unique_count, total_count = pr.get_latest_metrics(app_data)
         a_count = 0
         p_count = 0
         u_count = 0
@@ -109,24 +108,45 @@ if __name__ == '__main__':
 
         st.caption(f"Updated daily at 10am (latest test results are from tests completed on: {app_data.Test_Date.max().strftime('%m/%d/%y')})")
 
-        # Set last week's data metrics bar
-        lastweek_dates = True
-        prevweek_dates = None
+        # Set last week's data metrics bar and weekly table
+        weekly_metrics = pr.get_weekly_metrics(app_data)
+        last_week_dates = None
+        prev_week_dates = None
 
-        if lastweek_dates:
-            st.markdown(f"<h3>Last Week's Data     <small class='text-muted'>{lastweek_dates}</small></h3>",  unsafe_allow_html=True)
-            last_summ_cols = st.columns(4)
+        if len(weekly_metrics.Week) > 1:
+            last_week_dates = weekly_metrics.sort_values('Week').iloc[-1].Dates
+        if len(weekly_metrics.Week) > 2:
+            prev_week_dates = weekly_metrics.sort_values('Week').iloc[-3].Dates
 
-            ## TODO: add delta value
-            last_summ_cols[0].metric(label="Active Cases", value=1)
-            last_summ_cols[1].metric(label="Positive Tests", value=1)
-            last_summ_cols[2].metric(label="People Tested", value=1)
-            last_summ_cols[3].metric(label="Tests Completed", value=1)
-            st.caption(f"Delta values represent changes from previous week ({prevweek_dates})")
+        def calculate_delta(field):
+            try:
+                delta = weekly_metrics.iloc[-2][field] - weekly_metrics.iloc[-3][field]
+                delta = delta if delta != 0 else None
+            except:
+                delta = None
+            return delta
+
+        if last_week_dates:
+            st.markdown(f"<h3>Last Week's Data     <small class='text-muted'>{last_week_dates}</small></h3>",  unsafe_allow_html=True)
+            week_summ_cols = st.columns(4)
+
+            week_summ_cols[0].metric(label="Active Cases", value=weekly_metrics.iloc[-2]['Active Cases'], delta=calculate_delta('Active Cases'))
+            week_summ_cols[1].metric(label="Positive Tests", value=weekly_metrics.iloc[-2]['Positives'], delta=calculate_delta('Positives'))
+            week_summ_cols[2].metric(label="People Tested", value=weekly_metrics.iloc[-2]['People Tested'], delta=calculate_delta('People Tested'))
+            week_summ_cols[3].metric(label="Tests Completed", value=weekly_metrics.iloc[-2]['Tests Completed'], delta=calculate_delta('Tests Completed'))
+            st.caption(f"Delta values represent changes from previous week ({prev_week_dates})")
 
             with st.expander("Show Weekly Table", expanded=False):
                 st.subheader("Weekly Table")
-                ## TODO: add weekly table view
+                weekly_display = weekly_metrics.sort_values('Week', ascending=False)
+                weekly_display = weekly_display.set_index('Week').reset_index().drop(columns='Week')
+                weekly_display = weekly_display.style.apply(
+                    lambda x: [f"background-color:{'#F77F00' if x.name==weekly_display.index[0] else 'white'};" for row in x]
+                    , axis=1
+                ).hide_index()
+
+                st.dataframe(weekly_display)
+                st.caption("Highlighted row shows current week's data (week in progress).")
 
         # Time chart section
         time_trend_container = st.container()
