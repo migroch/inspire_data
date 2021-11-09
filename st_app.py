@@ -151,9 +151,6 @@ if __name__ == '__main__':
         # Time chart section
         time_trend_container = st.container()
         with time_trend_container:
-            time_data = list(
-                zip(fig_data.Test_Date, fig_data.avg_pos_rate, fig_data.pos_count,
-                    fig_data.active_count, fig_data.test_count, fig_data.Week)
-            )
+            time_data = fig_data[['Test_Date', 'avg_pos_rate', 'active_count']]
             st.subheader('Time Trend')
             time_chart(time_data, key="time_chart")

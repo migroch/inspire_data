@@ -1,11 +1,12 @@
 import os
+import pandas as pd
 from typing import Dict
 from typing import List
 from typing import Tuple
 
 import streamlit.components.v1 as components
 
-_RELEASE = True  # on packaging, pass this to True
+_RELEASE = False  # on packaging, pass this to True
 
 if not _RELEASE:
     _component_func = components.declare_component("time_chart", url="http://localhost:3001/",)
@@ -16,7 +17,7 @@ else:
 
 
 def time_chart(
-    data: List[Tuple[str, float, int, int, int, int]],
+    data: pd.DataFrame,
     width: int = None,
     key=None,
 ):

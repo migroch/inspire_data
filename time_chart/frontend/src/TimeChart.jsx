@@ -1,8 +1,10 @@
 import React, {useEffect, useState, useRef} from "react";
 import { Streamlit, withStreamlitConnection,} from "streamlit-component-lib";
+import { Table, Schema } from "apache-arrow"; 
 import * as d3 from "d3";
 
 import styles from './TimeChart.css';
+import { devNull, type } from "os";
 
 // Create TimeChart component
 const TimeChart = (props) => {
@@ -23,8 +25,12 @@ const TimeChart = (props) => {
 	let posColor = "#f77f00"
 	let activeColor = "#ff006e"
 
-	props.args.data =  props.args.data.map(d => [new Date( typeof d[0] == "string" ? d[0].split('T')[0]+'T12:00:00' : d[0]), d[1], d[2], d[3], d[4], d[5]]);
-	const data = props.args.data
+	let data = props.args.data.dataTable
+	data.schema.fields.map((d) => d.name = rename_column(d.name))
+	console.log(data.getColumn("date"))
+
+	// props.args.data =  props.args.data.map(d => [new Date( typeof d[0] == "string" ? d[0].split('T')[0]+'T12:00:00' : d[0]), d[1], d[2], d[3], d[4], d[5]]);
+	// const data = props.args.data
 
 	const margin = {"top": 50, "bottom": 4*parseFloat(axis_font_size), "left": 2*parseFloat(axis_font_size)-5, "right": 3*parseFloat(axis_font_size)};
 
@@ -454,6 +460,11 @@ function get_client_dimensions() {
 	}
 
 	return {'width':clientsWidth, 'height': clientsHeight };
+}
+
+function rename_column(index) {
+	let fields = ['date', 'avg_pos_rate', 'pos_count'];
+	return fields[Number(index)];
 }
 
 // Export component  
