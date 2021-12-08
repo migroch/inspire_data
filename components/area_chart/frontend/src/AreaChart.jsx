@@ -24,7 +24,7 @@ const AreaChart = (props) => {
 	let studentColor = "#ff006e"
 
 	props.args.data =  props.args.data.map(d => [new Date( typeof d[0] == "string" ? d[0].split('T')[0]+'T12:00:00' : d[0]), d[1], d[2]]);
-	const data = props.args.data.map(d => {return({ date: d[0], Staff: d[1], Students: d[2] })});
+	const data = props.args.data.map(d => {return({ date: d[0], Students: d[1], Staff: d[2] })});
 	const margin = {"top": 100, "bottom": 4*parseFloat(axis_font_size), "left": 2*parseFloat(axis_font_size)+30, "right": 3*parseFloat(axis_font_size)};
 
 	const svgRef = useRef(null);
@@ -67,7 +67,7 @@ const AreaChart = (props) => {
 
 	// Build scales, group & stack data, and set colors
 	let [xScale, yScale] = buildScales(data, svgWidth, svgHeight, margin);
-	let keys = ["Staff", "Students"]
+	let keys = ["Students", "Staff"]
 	let stackedData = d3.stack()
 		.keys(keys)
 		(data)
@@ -125,8 +125,6 @@ const AreaChart = (props) => {
     // Hook to create / update legend
     useEffect(() => {
     	const svgElement = d3.select(svgRef.current);
-
-    	const keys = ["Staff", "Students"];
 
     	svgElement.select(".legend").selectAll("circle")
 			.data(keys)	
