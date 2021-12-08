@@ -25,7 +25,7 @@ const AreaChart = (props) => {
 
 	props.args.data =  props.args.data.map(d => [new Date( typeof d[0] == "string" ? d[0].split('T')[0]+'T12:00:00' : d[0]), d[1], d[2]]);
 	const data = props.args.data.map(d => {return({ date: d[0], Students: d[1], Staff: d[2] })});
-	const margin = {"top": 100, "bottom": 4*parseFloat(axis_font_size), "left": 2*parseFloat(axis_font_size)+30, "right": 3*parseFloat(axis_font_size)};
+	const margin = {"top": 10, "bottom": 4*parseFloat(axis_font_size)-10, "left": 2*parseFloat(axis_font_size)+30, "right": 3*parseFloat(axis_font_size)};
 
 	const svgRef = useRef(null);
 	const transitionMillisec = 1200;
@@ -61,8 +61,6 @@ const AreaChart = (props) => {
 		svgElement.append("g").classed('y-axis', true);
 		svgElement.append("g").classed('stacked-area', true);
 		svgElement.append("g").classed('legend', true);
-		svgElement.append("text").classed('active-axis-label', true);
-		svgElement.append("text").classed('pos-axis-label', true);
 	}, [])
 
 	// Build scales, group & stack data, and set colors
@@ -81,42 +79,57 @@ const AreaChart = (props) => {
 		const svgElement = d3.select(svgRef.current);
 		
 		const xAxis = (g) => g.attr("transform", `translate(0, ${svgHeight - margin.bottom})`)
-			    .transition().duration(transitionMillisec)
-			    .attr("font", "sans-serif")
-			    .attr("font-size", axis_font_size)
-			    .call(d3.axisBottom(xScale)
-				    .ticks(d3.timeWeek)
-				    .tickFormat(d3.timeFormat("%b %d"))
-				    .tickSize(-1 * (svgHeight - margin.top - margin.bottom))
-				    .tickSizeOuter(0))
-			    .call(g => g.selectAll('text')
-					.style("text-anchor", "end")
-					.attr("transform", "rotate(-65)"))
-			    .call(g => g.selectAll("path")
-					.attr("stroke", "black")
-					.attr("stroke-width", 1)
-					.attr("stroke-opacity", 1))
-			    .call(g => g.selectAll(".tick line")
-					.attr("stroke", "black")
-					.attr("stroke-opacity", 1)
-					.attr("stroke-dasharray", "2,2")
-					.attr("stroke-width", 1));
+			.transition().duration(transitionMillisec)
+			.attr("font", "sans-serif")
+			.attr("font-size", axis_font_size)
+			.call(d3.axisBottom(xScale)
+				.ticks(d3.timeWeek)
+				.tickFormat(d3.timeFormat("%b %d"))
+				.tickSize(1)
+				.tickSizeOuter(0)
+			)
+			.call(g => g.selectAll('text')
+				.style("text-anchor", "end")
+				// .attr("transform", "rotate(-65)")
+			)
+			.call(g => g.selectAll("path")
+				.attr("stroke", "black")
+				.attr("stroke-width", 1)
+				.attr("stroke-opacity", 1)
+			)
+			.call(g => g.selectAll(".tick line")
+				.attr("stroke", "black")
+				.attr("stroke-opacity", 1)
+				.attr("stroke-dasharray", "2,2")
+				.attr("stroke-width", 1)
+			);
         
 		const yAxis = (g) => g.attr("transform", `translate(${margin.left}, 0)`)
-				.transition().duration(transitionMillisec)
-				.attr("font", "sans-serif")
-				.attr("font-size", axis_font_size)
-				.attr("font-weight", "bold")
-				.call(d3.axisLeft(yScale).ticks(5).tickSize(4))
-				.call(g => g.selectAll('text'))
-				.call(g => g.selectAll("path")
-						.attr("stroke", "black" )
-						.attr("stroke-width", 1)
-						.attr("stroke-opacity", 1))
-				.call(g => g.selectAll("line")
-					    .attr("stroke", "black")
-					    .attr("stroke-width", 1)
-					    .attr("stroke-opacity", 1));
+			.transition().duration(transitionMillisec)
+			.attr("font", "sans-serif")
+			.attr("font-size", axis_font_size)
+			.call(d3.axisLeft(yScale)
+				.ticks(8,".1s")
+				.tickSize(-1 * (svgWidth - margin.right - margin.left))
+				.tickSizeOuter(0)
+			)
+			.call(g => g.selectAll('text'))
+			.call(g => g.selectAll("path")
+				.attr("stroke", "black" )
+				.attr("stroke-width", 1)
+				.attr("stroke-opacity", 1)
+			)
+			.call(g => g.selectAll("line")
+				.attr("stroke", "black")
+				.attr("stroke-width", 1)
+				.attr("stroke-opacity", 1)
+			)
+			.call(g => g.selectAll(".tick line")
+				.attr("stroke", "black")
+				.attr("stroke-width", 1)
+				.attr("stroke-opacity", 0.25)
+				.attr("stroke-dasharray", "2,2")
+			);
 
     svgElement.select(".x-axis").call(xAxis);
     svgElement.select(".y-axis").call(yAxis);
@@ -130,16 +143,16 @@ const AreaChart = (props) => {
 			.data(keys)	
 			.join(
 				enter => enter.append("circle")
-					.attr("cx", (d,i) => (1-i)*margin.left + i*(svgWidth - margin.right))
-					.attr("cy",  margin.top/2 )
+					.attr("cx", margin.left + 20)
+					.attr("cy", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i))
 					.attr("r", parseInt(legend_font_size)/2)
 					.style("fill", d => color(d))
 					.attr("opacity", 0)
 					.call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
 				update => update
 					.call(el => el.transition().duration(transitionMillisec)
-							.attr("cx", (d,i) => (1-i)*margin.left + i*(svgWidth - margin.right))
-							.attr("cy",  margin.top/2 )
+							.attr("cx", margin.left + 20)
+							.attr("cy", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i))
 							.attr("r", parseFloat(legend_font_size)/2)
 							.attr("opacity", 1)
 					)
@@ -149,26 +162,18 @@ const AreaChart = (props) => {
 			.data(keys)
 			.join(
 				enter => enter.append("text")
-					.attr("y", margin.top/2)
+					.attr("x", margin.left + parseFloat(legend_font_size)/2 + 25)
 					.text(d => d )
 					.attr("font-size", legend_font_size)
 					.attr("font-weight", "bold")
 					.attr("text-anchor", "left")
 					.style("alignment-baseline", "middle")
 					.style("fill", d => color(d) )
-					.call(el => el.attr("x", (d,i) => {
-						let x = margin.left + parseFloat(legend_font_size)/2 + 3;
-						if (i===1) x = svgWidth - margin.right - parseFloat(legend_font_size)/2 -  el.nodes()[1].getComputedTextLength() - 3
-						return x
-					})), 
+					.call(el => el.attr("y", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i) + 1)), 
 				update => update.call(el => el.transition().duration(transitionMillisec)
-					.attr("y", margin.top/2)
+					.attr("x", margin.left + parseFloat(legend_font_size)/2 + 25)
 					.attr("font-size", legend_font_size)
-					.attr("x", (d,i) => {
-						let x = margin.left + parseFloat(legend_font_size)/2 + 3;
-						if (i===1) x = svgWidth - margin.right - parseFloat(legend_font_size)/2 - el.nodes()[1].getComputedTextLength() - 3;
-						return x
-					}))
+					.attr("y", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i) + 1))
 			);
     })
 
@@ -327,7 +332,7 @@ const buildScales = (data, svgWidth, svgHeight, margin) => {
 		.domain(d3.extent(data, (d) => d.date))
 		.range([margin.left, svgWidth - margin.right]);
 	const yScale = d3.scaleLinear()
-		.domain([0,d3.max(data, (d) => d.Students)])
+		.domain([0,d3.max(data, (d) => d.Students) + d3.max(data, (d) => d.Staff)])
 		.range([svgHeight - margin.bottom, margin.top]);
 
 	return [xScale, yScale]
