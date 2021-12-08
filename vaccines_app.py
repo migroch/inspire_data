@@ -11,6 +11,10 @@ from area_chart import area_chart
 # Initial data load
 app_data = pv.APP_DATA
 
+def refresh_data(query):
+    global app_data
+    app_data = app_data.query(query)
+
 if __name__ == '__main__':
     ## Initialize page configurations and containers
     st.set_page_config(
@@ -36,6 +40,16 @@ if __name__ == '__main__':
         else:
             district = 'Santa Cruz County Schools'
             n_sites = app_data.Organization.str.split('-', expand=True)[0].nunique()
+
+        # Set expander for filter dropdowns and date slider
+        with st.expander('Show filters', expanded=False):
+            dropdown_fields = ['Gender', 'Race', 'Ethnicity']
+            filter_columns = st.columns([10,10,10,10,1])
+            for i, field in enumerate(dropdown_fields):
+                with filter_columns[i]:
+                    selection = filter_dropdown(list(app_data[field].unique()), field=field, key=field.lower()+'_filter_dropdown')
+                    if selection:
+                        refresh_data(query=f'{field} in @selection')
 
         # Set figure data
         fig_data = pv.prep_fig_data(app_data)
