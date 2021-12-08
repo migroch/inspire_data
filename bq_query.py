@@ -55,3 +55,18 @@ def get_results_from_bq():
     df['Race'] = df['Race'].fillna('Undisclosed')
     df['Ethnicity'] = df['Ethnicity'].fillna('Undisclosed')
     return df
+
+@st.cache(show_spinner=False, ttl=600)
+def get_vaccinated_from_bq():
+    '''
+    Get inspire results data from bigquery
+    '''
+    query = f"""
+    SELECT *
+    FROM `InspireTesting.vaccinated`
+    """
+    df = bq_query(query)
+    df['Group'] = df['Group'].replace({'STAFF':'Staff', 'STUDENT':'Students'})
+    df['District'] = df['District'].replace({'SANTA-CRUZ-OTHERS':'Other'})
+
+    return df

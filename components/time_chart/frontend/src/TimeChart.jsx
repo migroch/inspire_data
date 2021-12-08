@@ -1,10 +1,8 @@
 import React, {useEffect, useState, useRef} from "react";
 import { Streamlit, withStreamlitConnection,} from "streamlit-component-lib";
-import { Table, Schema } from "apache-arrow"; 
 import * as d3 from "d3";
 
 import styles from './TimeChart.css';
-import { devNull, type } from "os";
 
 // Create TimeChart component
 const TimeChart = (props) => {
@@ -25,12 +23,8 @@ const TimeChart = (props) => {
 	let posColor = "#f77f00"
 	let activeColor = "#ff006e"
 
-	let data = props.args.data.dataTable
-	data.schema.fields.map((d) => d.name = rename_column(d.name))
-	console.log(data.getColumn("date"))
-
-	// props.args.data =  props.args.data.map(d => [new Date( typeof d[0] == "string" ? d[0].split('T')[0]+'T12:00:00' : d[0]), d[1], d[2], d[3], d[4], d[5]]);
-	// const data = props.args.data
+	props.args.data =  props.args.data.map(d => [new Date( typeof d[0] == "string" ? d[0].split('T')[0]+'T12:00:00' : d[0]), d[1], d[2]]);
+	const data = props.args.data
 
 	const margin = {"top": 50, "bottom": 4*parseFloat(axis_font_size), "left": 2*parseFloat(axis_font_size)-5, "right": 3*parseFloat(axis_font_size)};
 
@@ -40,7 +34,7 @@ const TimeChart = (props) => {
 	const tooltipHtml = (d) => {
 		const html = `
 				<p>Date: <strong>${formatDate(d[0])}</strong></p>
-				<p>Active Cases: <strong style='color:${activeColor}'>${d[3]}</strong></p>
+				<p>Active Cases: <strong style='color:${activeColor}'>${d[2]}</strong></p>
 				<p>14-Day Positivity Rate: <strong style='color:${posColor}'>${formatPercent(d[1])}</strong></p>
 				`
 		return html;
@@ -225,7 +219,7 @@ const TimeChart = (props) => {
 		const active_area = d3.area()
 			.x(d => xScale(d[0]))
 			.y0(active_yScale(0))
-			.y1(d => active_yScale(d[3]));
+			.y1(d => active_yScale(d[2]));
 
 		svgElement.select(".active-area").selectAll("path")
 			.data([data]) // Array with 1 element keyed by index, so enters once then only updates
@@ -252,7 +246,7 @@ const TimeChart = (props) => {
 
 		const active_line = d3.line()
 			.x(d => xScale(d[0]))
-			.y(d => active_yScale(d[3]));
+			.y(d => active_yScale(d[2]));
 
 		svgElement.select(".active-line").selectAll("path")
 			.data([data]) // Array with 1 element keyed by index, so enters once then only updates
@@ -314,7 +308,7 @@ const TimeChart = (props) => {
 		    		// Bind each circle to [x,y] coordinate
 					.classed("circle", true)
 					.attr("cx", (d) => xScale(d[0]))
-					.attr("cy", (d) => active_yScale(d[3]))
+					.attr("cy", (d) => active_yScale(d[2]))
 					.attr("fill", activeColor)
 					.attr("r", 0)
 		    		// Transition from invisible to visible circle
@@ -338,7 +332,7 @@ const TimeChart = (props) => {
 					// so transition from original position to new position
 					el.transition().duration(transitionMillisec)
 						.attr("cx", (d) => xScale(d[0]))
-						.attr("cy", (d) => active_yScale(d[3]))
+						.attr("cy", (d) => active_yScale(d[2]))
 		      			// NB : keep radius value, it seems in Streamlit lifecycle there are 2 renders when mounting ?
 						// so circles enter and during transition to full radius rerender
 		    			// so if r < circleRadius while update then animation breaks and circle stay small for first render
@@ -432,7 +426,7 @@ const buildScales = (data, svgWidth, svgHeight, margin) => {
 		.domain([0, d3.max(data, (d) => d[1])])
 		.range([svgHeight - margin.bottom, margin.top]);
 	const active_yScale = d3.scaleLinear()
-		.domain([0, d3.max(data, (d) => d[3])])
+		.domain([0, d3.max(data, (d) => d[2])])
 		.range([svgHeight - margin.bottom, margin.top]);
 
 	return [xScale, pos_yScale, active_yScale]
@@ -460,11 +454,6 @@ function get_client_dimensions() {
 	}
 
 	return {'width':clientsWidth, 'height': clientsHeight };
-}
-
-function rename_column(index) {
-	let fields = ['date', 'avg_pos_rate', 'pos_count'];
-	return fields[Number(index)];
 }
 
 // Export component  

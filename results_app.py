@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import time
+import sys
+sys.path.append("./components")
 import prep_results as pr
 from import_styles import *
 from filter_dropdown import filter_dropdown
@@ -151,6 +153,6 @@ if __name__ == '__main__':
         # Time chart section
         time_trend_container = st.container()
         with time_trend_container:
-            time_data = fig_data[['Test_Date', 'avg_pos_rate', 'active_count']]
+            time_data = list(zip(fig_data.Test_Date, fig_data.avg_pos_rate, fig_data.active_count))
             st.subheader('Time Trend')
             time_chart(time_data, key="time_chart")
