@@ -67,6 +67,14 @@ def get_vaccinated_from_bq():
     JOIN `InspireTesting.vacreg` ON `InspireTesting.vaccinated`.UID = `InspireTesting.vacreg`.UID
     """
     df = bq_query(query)
+    df['Week_First_Day'] = df.Vaccination_Date.apply(
+        lambda x: datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1]-1)+'-0', "%Y-%W-%w")
+    )
+    df['Week_Last_Day'] = df.Vaccination_Date.apply(
+        lambda x: datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1])+'-6', "%Y-%W-%w")
+    )
+    df['Week'] = df.Vaccination_Date.dt.week - df.Vaccination_Date.dt.week.min()  + 1
+    df['Vaccination_Date'] = df.Vaccination_Date.dt.date
     df['Group'] = df['Group'].replace({'STAFF':'Staff', 'STUDENT':'Students'})
     df['District'] = df['District'].replace({'SANTA-CRUZ-OTHERS':'Other'})
 

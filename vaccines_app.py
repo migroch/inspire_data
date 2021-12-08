@@ -50,6 +50,19 @@ if __name__ == '__main__':
                     selection = filter_dropdown(list(app_data[field].unique()), field=field, key=field.lower()+'_filter_dropdown')
                     if selection:
                         refresh_data(query=f'{field} in @selection')
+            
+            date_slider_container = st.container()
+            with date_slider_container:
+                date_min = app_data.Vaccination_Date.min()
+                date_max = app_data.Vaccination_Date.max()
+
+                if app_data.size:
+                    date_range = st.slider('Select Dates:',
+                                            min_value=date_min,
+                                            max_value=date_max,
+                                            value=(date_min, date_max),
+                                            format="M/D/YY")
+                    refresh_data(query='Vaccination_Date >= @date_range[0] and Vaccination_Date <= @date_range[1]')
 
         # Set figure data
         fig_data = pv.prep_fig_data(app_data)
