@@ -47,6 +47,6 @@ if __name__ == '__main__':
         # Stacked area chart section
         stacked_area_container = st.container()
         with stacked_area_container:
-            area_data = list(zip(fig_data.Vaccination_Date, fig_data.Staff, fig_data.Students))
+            area_data = list(zip(fig_data.Vaccination_Date, fig_data.Students, fig_data.Staff))
             st.subheader('Time Trend')
             area_chart(area_data, key="area_chart")

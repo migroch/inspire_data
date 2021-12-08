@@ -62,8 +62,9 @@ def get_vaccinated_from_bq():
     Get inspire results data from bigquery
     '''
     query = f"""
-    SELECT *
+    SELECT `InspireTesting.vaccinated`.UID, `InspireTesting.vaccinated`.District, `InspireTesting.vaccinated`.Organization, `InspireTesting.vaccinated`.Group, `InspireTesting.vaccinated`.Vaccination_Date, `InspireTesting.vaccinated`.DOB, `InspireTesting.vacreg`.Gender, `InspireTesting.vacreg`.Race, `InspireTesting.vacreg`.Ethnicity
     FROM `InspireTesting.vaccinated`
+    JOIN `InspireTesting.vacreg` ON `InspireTesting.vaccinated`.UID = `InspireTesting.vacreg`.UID
     """
     df = bq_query(query)
     df['Group'] = df['Group'].replace({'STAFF':'Staff', 'STUDENT':'Students'})
