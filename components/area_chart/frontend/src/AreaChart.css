@@ -16,14 +16,20 @@ p{
 
 .circle {
     transition: fill 0.1s ease;
+    opacity: 0.1;
 }
 
 .circle:hover {
   cursor:pointer;
   stroke:black;
-  strike-width:1;
+  stroke-width:1;
+  opacity: 1;
 }
 
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
 
 .tooltip {
     position: absolute;

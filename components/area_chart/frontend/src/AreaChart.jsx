@@ -3,6 +3,7 @@ import { Streamlit, withStreamlitConnection,} from "streamlit-component-lib";
 import * as d3 from "d3";
 
 import styles from './AreaChart.css';
+import { svg } from "d3";
 
 // Create AreaChart component
 const AreaChart = (props) => {
@@ -18,10 +19,10 @@ const AreaChart = (props) => {
 	//let label_font_size = "15px";
 	let axis_font_size = `${11+5*svgWidth/1000}px`;
 	let legend_font_size = `${11+5*svgWidth/1000}px`;
-	let  circleRadius = 0.002*svgWidth;
+	let  circleRadius = 0.004*svgWidth;
 
-	let staffColor = "#f77f00"
-	let studentColor = "#ff006e"
+	let staffColor = "#ff006e"
+	let studentColor = "#f77f00"
 
 	props.args.data =  props.args.data.map(d => [new Date( typeof d[0] == "string" ? d[0].split('T')[0]+'T12:00:00' : d[0]), d[1], d[2]]);
 	const data = props.args.data.map(d => {return({ date: d[0], Students: d[1], Staff: d[2] })});
@@ -30,11 +31,10 @@ const AreaChart = (props) => {
 	const svgRef = useRef(null);
 	const transitionMillisec = 1200;
 
-	const tooltipHtml = (d) => {
+	const tooltipHtml = (d, group, color) => {
 		const html = `
 				<p>Date: <strong>${formatDate(d.data.date)}</strong></p>
-				<p>Student Vaccination Count: <strong style='color:${staffColor}'>${d[0]}</strong></p>
-				<p>Staff Vaccination Count: <strong style='color:${studentColor}'>${d[1]}</strong></p>
+				<p>${group} Vaccination Count: <strong style='color:${color}'>${d[1]}</strong></p>
 				`
 		return html;
 	}
@@ -61,6 +61,9 @@ const AreaChart = (props) => {
 		svgElement.append("g").classed('y-axis', true);
 		svgElement.append("g").classed('stacked-area', true);
 		svgElement.append("g").classed('legend', true);
+		svgElement.append("g").classed('student-focus', true);
+		svgElement.append("g").classed('staff-focus', true);
+		svgElement.append("g").classed('box', true);
 		svgElement.append("g").classed('staff-circles', true);
 		svgElement.append("g").classed('student-circles', true);
 	}, [])
@@ -71,13 +74,10 @@ const AreaChart = (props) => {
 	let stackedData = d3.stack()
 		.keys(keys)
 		(data)
-	// console.log("Stacked data: ", stackedData)
+	console.log("Stacked data: ", stackedData)
 		let color = d3.scaleOrdinal()
 			.domain(keys)
-			.range([staffColor,studentColor])
-
-		const cx_coord = (d) => xScale(d.data.date);
-		const cy_coord = (d) => yScale(d[1]);
+			.range([studentColor,staffColor])
 
     // Hook to create / update axis and grid
     useEffect(() => {
@@ -211,42 +211,42 @@ const AreaChart = (props) => {
 			);
     })
 
-    // Hook to create / update staff-circles
+    // Hook to create / update student-circles
     useEffect(() => {
 			const svgElement = d3.select(svgRef.current);
 			let tooltip = d3.select(".tooltip");
 			
-			svgElement.select(".staff-circles").selectAll("circle")
-			.data(stackedData)
+			svgElement.select(".student-circles").selectAll("circle")
+			.data(stackedData[0])
 			.join(
 				enter => (enter.append("circle")
 		    	// Bind each circle to [x,y] coordinate
 					.classed("circle", true)
-					.attr("cx", function(d,i) { console.log(d[i]); return cx_coord(d[i]); })
-					.attr("cy", (d,i) => cy_coord(d[i]))
-					.attr("fill", staffColor)
+					.attr("cx", (d) => xScale(d.data.date))
+					.attr("cy", (d) => yScale(d[1]))
+					.attr("fill", studentColor)
 					.attr("r", 0)
 		    	// Transition from invisible to visible circle
 					.call(el => el.transition().duration(transitionMillisec).attr("r", circleRadius))
 					// Add d3 mouseover to display and move tooltip around
-					.on("mouseover", (d,i) => {
-						tooltip.html(tooltipHtml(d[i]));
+					.on("mouseover", (d) => {
+						tooltip.html(tooltipHtml(d, "Student", studentColor));
 						let tooltipLeft = d3.event.pageX > svgWidth/2 ? d3.event.pageX - parseFloat(tooltip.style('width')) : d3.event.pageX;
 						let tooltipTop = d3.event.pageY > svgHeight/2 ? d3.event.pageY - parseFloat(tooltip.style('height')) : d3.event.pageY;
 						tooltip.style("left", `${tooltipLeft}px` ).style("top", `${tooltipTop}px`);
 						tooltip.classed("hide", false);
 						tooltip.classed("show", true);
 					})
-					.on("mouseout", (d) => {
+					.on("mouseout", () => {
 						tooltip.classed("show", false);
 						tooltip.classed("hide", true);
 					})
 				),
 				update => update.call(el => el.transition().duration(transitionMillisec)
-					.attr("cx", (d,i) => cx_coord(d[i]))
-					.attr("cy", (d,i) => cy_coord(d[i]))
+					.attr("cx", (d) => xScale(d.data.date))
+					.attr("cy", (d) => yScale(d[1]))
 					.attr("r", circleRadius)
-					.attr("fill", staffColor)
+					.attr("fill", studentColor)
 				),
 				exit => (exit.dispatch("mouseout")
 					.on("mouseover", null)
@@ -262,40 +262,40 @@ const AreaChart = (props) => {
 			);
     })
 
-    // Hook to create / update pos-circles
+    // Hook to create / update staff-circles
     useEffect(() => {
 		const svgElement = d3.select(svgRef.current);
 		let tooltip = d3.select(".tooltip");
 
-		svgElement.select(".student-circles").selectAll("circle")
-			.data(stackedData)
+		svgElement.select(".staff-circles").selectAll("circle")
+			.data(stackedData[1])
 			.join(
 				enter => (enter.append("circle")
           // Bind each circle to [x,y] coordinate
 					.classed("circle", true)
-					.attr("cx", (d,i) => cx_coord(d[i]))
-					.attr("cy", (d,i) => cy_coord(d[i]))
+					.attr("cx", (d) => xScale(d.data.date))
+					.attr("cy", (d) => yScale(d[1]))
 					.attr("fill", studentColor)
 					.attr("r", 0)
 					// Transition from invisible to visible circle
 					.call(el => el.transition().duration(transitionMillisec).attr("r", circleRadius))
 					// Add d3 mouseover to display and move tooltip around
-					.on("mouseover", (d,i) => {
+					.on("mouseover", (d) => {
 						let tooltipLeft = d3.event.pageX > svgWidth/2 ? d3.event.pageX - parseFloat(tooltip.style('width')) : d3.event.pageX;
 						let tooltipTop = d3.event.pageY > svgHeight/2 ? d3.event.pageY - parseFloat(tooltip.style('height')) : d3.event.pageY;
 						tooltip.style("left", `${tooltipLeft}px` ).style("top", `${tooltipTop}px`);
-						tooltip.html(tooltipHtml(d[i]));
+						tooltip.html(tooltipHtml(d, "Staff", staffColor));
 						tooltip.classed("hide", false);
 						tooltip.classed("show", true);
 					})
-					.on("mouseout", (d) => {
+					.on("mouseout", () => {
 						tooltip.classed("show", false);
 						tooltip.classed("hide", true);
 					})
 				),
 				update => update.call(el => el.transition().duration(transitionMillisec)
-					.attr("cx", (d,i) => cx_coord(d[i]))
-					.attr("cy", (d,i) => cy_coord(d[i]))
+					.attr("cx", (d) => xScale(d.data.date))
+					.attr("cy", (d) => yScale(d[1]))
 					.attr("r", circleRadius)
 					.attr("fill", studentColor)
 				),
@@ -334,6 +334,7 @@ const buildScales = (data, svgWidth, svgHeight, margin) => {
 
 // Format helpers
 const formatDate = d3.timeFormat("%m/%d/%y");
+const bisectDate = d3.bisector((d) => d.date).left;
 
  // Get client's window dimensions
 function get_client_dimensions() {
