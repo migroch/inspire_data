@@ -18,7 +18,7 @@ const AreaChart = (props) => {
 	//let label_font_size = "15px";
 	let axis_font_size = `${11+5*svgWidth/1000}px`;
 	let legend_font_size = `${11+5*svgWidth/1000}px`;
-	let  circleRadius = 0.004*svgWidth;
+	let  circleRadius = 0.002*svgWidth;
 
 	let staffColor = "#f77f00"
 	let studentColor = "#ff006e"
@@ -30,14 +30,14 @@ const AreaChart = (props) => {
 	const svgRef = useRef(null);
 	const transitionMillisec = 1200;
 
-	// const tooltipHtml = (d) => {
-	// 	const html = `
-	// 			<p>Date: <strong>${formatDate(d[0])}</strong></p>
-	// 			<p>Staff Vaccination Count: <strong style='color:${staffColor}'>${d[1]}</strong></p>
-	// 			<p>Student Vaccination Count: <strong style='color:${studentColor}'>${d[2]}</strong></p>
-	// 			`
-	// 	return html;
-	// }
+	const tooltipHtml = (d) => {
+		const html = `
+				<p>Date: <strong>${formatDate(d.data.date)}</strong></p>
+				<p>Student Vaccination Count: <strong style='color:${staffColor}'>${d[0]}</strong></p>
+				<p>Staff Vaccination Count: <strong style='color:${studentColor}'>${d[1]}</strong></p>
+				`
+		return html;
+	}
 
 	// Set svgHeight and update it on window resize
 	useEffect(() => {
@@ -61,6 +61,8 @@ const AreaChart = (props) => {
 		svgElement.append("g").classed('y-axis', true);
 		svgElement.append("g").classed('stacked-area', true);
 		svgElement.append("g").classed('legend', true);
+		svgElement.append("g").classed('staff-circles', true);
+		svgElement.append("g").classed('student-circles', true);
 	}, [])
 
 	// Build scales, group & stack data, and set colors
@@ -69,10 +71,13 @@ const AreaChart = (props) => {
 	let stackedData = d3.stack()
 		.keys(keys)
 		(data)
-	console.log(stackedData)
+	// console.log("Stacked data: ", stackedData)
 		let color = d3.scaleOrdinal()
 			.domain(keys)
 			.range([staffColor,studentColor])
+
+		const cx_coord = (d) => xScale(d.data.date);
+		const cy_coord = (d) => yScale(d[1]);
 
     // Hook to create / update axis and grid
     useEffect(() => {
@@ -137,9 +142,9 @@ const AreaChart = (props) => {
 
     // Hook to create / update legend
     useEffect(() => {
-    	const svgElement = d3.select(svgRef.current);
+			const svgElement = d3.select(svgRef.current);
 
-    	svgElement.select(".legend").selectAll("circle")
+			svgElement.select(".legend").selectAll("circle")
 			.data(keys)	
 			.join(
 				enter => enter.append("circle")
@@ -151,10 +156,10 @@ const AreaChart = (props) => {
 					.call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
 				update => update
 					.call(el => el.transition().duration(transitionMillisec)
-							.attr("cx", margin.left + 20)
-							.attr("cy", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i))
-							.attr("r", parseFloat(legend_font_size)/2)
-							.attr("opacity", 1)
+						.attr("cx", margin.left + 20)
+						.attr("cy", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i))
+						.attr("r", parseFloat(legend_font_size)/2)
+						.attr("opacity", 1)
 					)
 			);
 		
@@ -173,7 +178,8 @@ const AreaChart = (props) => {
 				update => update.call(el => el.transition().duration(transitionMillisec)
 					.attr("x", margin.left + parseFloat(legend_font_size)/2 + 25)
 					.attr("font-size", legend_font_size)
-					.attr("y", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i) + 1))
+					.attr("y", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i) + 1)
+				)
 			);
     })
 
@@ -205,118 +211,106 @@ const AreaChart = (props) => {
 			);
     })
 
-    // // Hook to create / update active-circles
-    // useEffect(() => {
-    // 	const svgElement = d3.select(svgRef.current);
-    // 	let tooltip = d3.select(".tooltip");
-	
-    // 	svgElement.select(".active-circles").selectAll("circle")
-		// 	.data(data)
-		// 	.join(
-		// 		enter => (enter.append("circle")
-		//     		// Bind each circle to [x,y] coordinate
-		// 			.classed("circle", true)
-		// 			.attr("cx", (d) => xScale(d[0]))
-		// 			.attr("cy", (d) => active_yScale(d[2]))
-		// 			.attr("fill", activeColor)
-		// 			.attr("r", 0)
-		//     		// Transition from invisible to visible circle
-		// 			.call(el => el.transition().duration(transitionMillisec).attr("r", circleRadius))
-		// 			// Add d3 mouseover to display and move tooltip around
-		// 			.on("mouseover", (d) => {
-		// 				tooltip.html(tooltipHtml(d));
-		// 				let tooltipLeft = d3.event.pageX > svgWidth/2 ? d3.event.pageX - parseFloat(tooltip.style('width')) : d3.event.pageX;
-		// 				let tooltipTop = d3.event.pageY > svgHeight/2 ? d3.event.pageY - parseFloat(tooltip.style('height')) : d3.event.pageY;
-		// 				tooltip.style("left", `${tooltipLeft}px` ).style("top", `${tooltipTop}px`);
-		// 				tooltip.classed("hide", false);
-		// 				tooltip.classed("show", true);
-		// 			})
-		// 			.on("mouseout", (d) => {
-		// 				tooltip.classed("show", false);
-		// 				tooltip.classed("hide", true);
-		// 			})
-		// 		),
-		// 		update => update.call(el =>
-		// 			// If circle has not changed coordinates, maybe data scale changed
-		// 			// so transition from original position to new position
-		// 			el.transition().duration(transitionMillisec)
-		// 				.attr("cx", (d) => xScale(d[0]))
-		// 				.attr("cy", (d) => active_yScale(d[2]))
-		//       			// NB : keep radius value, it seems in Streamlit lifecycle there are 2 renders when mounting ?
-		// 				// so circles enter and during transition to full radius rerender
-		//     			// so if r < circleRadius while update then animation breaks and circle stay small for first render
-		// 				.attr("r", circleRadius)
-		// 				.attr("fill", activeColor)
-		// 		),
-		// 		exit => (exit.dispatch("mouseout")
-		// 			.on("mouseover", null)
-		// 			.on("mouseout", null)
-		// 			// Transition from visible to invisible circle then remove entirely
-		// 			.call(el => el.transition().duration(transitionMillisec / 2)
-		// 					.attr("r", 0)
-		// 					.attr("fill", activeColor)
-		// 					.style("opacity", 0)
-		// 					.remove()
-		// 			)
-		// 		),
-		// 	);
-    // })
+    // Hook to create / update staff-circles
+    useEffect(() => {
+			const svgElement = d3.select(svgRef.current);
+			let tooltip = d3.select(".tooltip");
+			
+			svgElement.select(".staff-circles").selectAll("circle")
+			.data(stackedData)
+			.join(
+				enter => (enter.append("circle")
+		    	// Bind each circle to [x,y] coordinate
+					.classed("circle", true)
+					.attr("cx", function(d,i) { console.log(d[i]); return cx_coord(d[i]); })
+					.attr("cy", (d,i) => cy_coord(d[i]))
+					.attr("fill", staffColor)
+					.attr("r", 0)
+		    	// Transition from invisible to visible circle
+					.call(el => el.transition().duration(transitionMillisec).attr("r", circleRadius))
+					// Add d3 mouseover to display and move tooltip around
+					.on("mouseover", (d,i) => {
+						tooltip.html(tooltipHtml(d[i]));
+						let tooltipLeft = d3.event.pageX > svgWidth/2 ? d3.event.pageX - parseFloat(tooltip.style('width')) : d3.event.pageX;
+						let tooltipTop = d3.event.pageY > svgHeight/2 ? d3.event.pageY - parseFloat(tooltip.style('height')) : d3.event.pageY;
+						tooltip.style("left", `${tooltipLeft}px` ).style("top", `${tooltipTop}px`);
+						tooltip.classed("hide", false);
+						tooltip.classed("show", true);
+					})
+					.on("mouseout", (d) => {
+						tooltip.classed("show", false);
+						tooltip.classed("hide", true);
+					})
+				),
+				update => update.call(el => el.transition().duration(transitionMillisec)
+					.attr("cx", (d,i) => cx_coord(d[i]))
+					.attr("cy", (d,i) => cy_coord(d[i]))
+					.attr("r", circleRadius)
+					.attr("fill", staffColor)
+				),
+				exit => (exit.dispatch("mouseout")
+					.on("mouseover", null)
+					.on("mouseout", null)
+					// Transition from visible to invisible circle then remove entirely
+					.call(el => el.transition().duration(transitionMillisec / 2)
+							.attr("r", 0)
+							.attr("fill", staffColor)
+							.style("opacity", 0)
+							.remove()
+					)
+				),
+			);
+    })
 
-    // // Hook to create / update pos-circles
-    // useEffect(() => {
-		// const svgElement = d3.select(svgRef.current);
-		// let tooltip = d3.select(".tooltip");
+    // Hook to create / update pos-circles
+    useEffect(() => {
+		const svgElement = d3.select(svgRef.current);
+		let tooltip = d3.select(".tooltip");
 
-		// svgElement.select(".pos-circles").selectAll("circle")
-		// 	.data(data)
-		// 	.join(
-		// 		enter => (enter.append("circle")
-    //             	// Bind each circle to [x,y] coordinate
-		// 			.classed("circle", true)
-		// 			.attr("cx", (d) => xScale(d[0]))
-		// 			.attr("cy", (d) => pos_yScale(d[1]))
-		// 			.attr("fill", posColor)
-		// 			.attr("r", 0)
-    //                 // Transition from invisible to visible circle
-		// 			.call(el => el.transition().duration(transitionMillisec).attr("r", circleRadius))
-    //                 // Add d3 mouseover to display and move tooltip around
-		// 			.on("mouseover", (d) => {
-		// 				let tooltipLeft = d3.event.pageX > svgWidth/2 ? d3.event.pageX - parseFloat(tooltip.style('width')) : d3.event.pageX;
-		// 				let tooltipTop = d3.event.pageY > svgHeight/2 ? d3.event.pageY - parseFloat(tooltip.style('height')) : d3.event.pageY;
-		// 				tooltip.style("left", `${tooltipLeft}px` ).style("top", `${tooltipTop}px`);
-		// 				tooltip.html(tooltipHtml(d));
-		// 				tooltip.classed("hide", false);
-		// 				tooltip.classed("show", true);
-		// 			})
-		// 			.on("mouseout", (d) => {
-		// 				tooltip.classed("show", false);
-		// 				tooltip.classed("hide", true);
-		// 			})
-		// 		),
-		// 		update => update.call(el =>
-		// 			// If circle has not changed coordinates, maybe data scale changed
-		// 			// so transition from original position to new position
-		// 			el.transition().duration(transitionMillisec)
-		// 				.attr("cx", (d) => xScale(d[0]))
-    //                 	.attr("cy", (d) => pos_yScale(d[1]))
-    //                   	// NB : keep radius value, it seems in Streamlit lifecycle there are 2 renders when mounting ?
-    //                   	// so circles enter and during transition to full radius rerender
-    //                   	// so if r < circleRadius while update then animation breaks and circle stay small for first render
-    //                 	.attr("r", circleRadius)
-    //                 	.attr("fill", posColor)
-		// 		),
-		// 		exit => (exit.dispatch("mouseout")
-		// 			.on("mouseover", null)
-		// 			.on("mouseout", null)
-    //                 // Transition from visible to invisible circle then remove entirely
-		// 			.call(el => el.transition().duration(transitionMillisec / 2)
-		// 					.attr("r", 0)
-    //                         .attr("fill", posColor)
-    //                         .style("opacity", 0)
-    //                         .remove())
-		// 		),
-		// 	);
-    // })
+		svgElement.select(".student-circles").selectAll("circle")
+			.data(stackedData)
+			.join(
+				enter => (enter.append("circle")
+          // Bind each circle to [x,y] coordinate
+					.classed("circle", true)
+					.attr("cx", (d,i) => cx_coord(d[i]))
+					.attr("cy", (d,i) => cy_coord(d[i]))
+					.attr("fill", studentColor)
+					.attr("r", 0)
+					// Transition from invisible to visible circle
+					.call(el => el.transition().duration(transitionMillisec).attr("r", circleRadius))
+					// Add d3 mouseover to display and move tooltip around
+					.on("mouseover", (d,i) => {
+						let tooltipLeft = d3.event.pageX > svgWidth/2 ? d3.event.pageX - parseFloat(tooltip.style('width')) : d3.event.pageX;
+						let tooltipTop = d3.event.pageY > svgHeight/2 ? d3.event.pageY - parseFloat(tooltip.style('height')) : d3.event.pageY;
+						tooltip.style("left", `${tooltipLeft}px` ).style("top", `${tooltipTop}px`);
+						tooltip.html(tooltipHtml(d[i]));
+						tooltip.classed("hide", false);
+						tooltip.classed("show", true);
+					})
+					.on("mouseout", (d) => {
+						tooltip.classed("show", false);
+						tooltip.classed("hide", true);
+					})
+				),
+				update => update.call(el => el.transition().duration(transitionMillisec)
+					.attr("cx", (d,i) => cx_coord(d[i]))
+					.attr("cy", (d,i) => cy_coord(d[i]))
+					.attr("r", circleRadius)
+					.attr("fill", studentColor)
+				),
+				exit => (exit.dispatch("mouseout")
+					.on("mouseover", null)
+					.on("mouseout", null)
+          // Transition from visible to invisible circle then remove entirely
+					.call(el => el.transition().duration(transitionMillisec / 2)
+							.attr("r", 0)
+							.attr("fill", studentColor)
+							.style("opacity", 0)
+							.remove())
+				),
+			);
+    })
 
     return (
 		<div className="areachart-container">
