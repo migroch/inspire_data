@@ -66,8 +66,6 @@ const AreaChart = (props) => {
 		svgElement.append("g").classed('student-focus', true);
 		svgElement.append("g").classed('staff-focus', true);
 		svgElement.append("rect").classed('box', true);
-		svgElement.append("g").classed('staff-circles', true);
-		svgElement.append("g").classed('student-circles', true);
 	}, [])
 
 	// Build scales, group & stack data, and set colors
@@ -254,11 +252,13 @@ const AreaChart = (props) => {
 						let x = d3.event.pageX,
 							y = d3.event.pageY,
 							x0 = xScale.invert(x),
-							i = bisectDate(stackedData[0], x0),
+							index = bisectDate(stackedData[0], x0),
+							i = index >= stackedData[0].length ? index - 1 : index,
 							student_d0 =stackedData[0][i-1],
 							student_d1 = stackedData[0][i],
 							staff_d0 = stackedData[1][i-1],
 							staff_d1 = stackedData[1][i-1];
+
 						// find data points closest to mouse position
 						let student_d = formatDate(x0) - formatDate(student_d0.data.date) > formatDate(student_d1.data.date) - formatDate(x0) ? student_d1 : student_d0;
 						let staff_d = formatDate(x0) - formatDate(staff_d0.data.date) > formatDate(staff_d1.data.date) - formatDate(x0) ? staff_d1 : staff_d0;
