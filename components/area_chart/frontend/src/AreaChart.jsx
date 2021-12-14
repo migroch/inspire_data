@@ -24,9 +24,11 @@ const AreaChart = (props) => {
 
 	let staffColor = "#ff006e"
 	let studentColor = "#f77f00"
+	let totalColor = "blue"
 
 	props.args.data =  props.args.data.map(d => [new Date( typeof d[0] == "string" ? d[0].split('T')[0]+'T12:00:00' : d[0]), d[1], d[2]]);
 	const data = props.args.data.map(d => {return({ date: d[0], Students: d[1], Staff: d[2] })});
+	const total = data.at(-1).Staff + data.at(-1).Students;
 	const margin = {"top": 10, "bottom": 4*parseFloat(axis_font_size)-10, "left": 2*parseFloat(axis_font_size)+30, "right": 3*parseFloat(axis_font_size)};
 
 	const svgRef = useRef(null);
@@ -35,8 +37,9 @@ const AreaChart = (props) => {
 	const tooltipHtml = (student_d, staff_d) => {
 		const html = `
 				<p>Date: <strong>${formatDate(student_d.data.date)}</strong></p>
-				<p>Student Vaccination Count: <strong style='color:${color}'>${student_d[1]}</strong></p>
-				<p>Staff Vaccination Count: <strong style='color:${color}'>${staff_d[1]}</strong></p>
+				<p>Staff Vaccination Running Count: <strong style='color:${staffColor}'>${formatTooltip(staff_d[1] - student_d[1])}</strong></p>
+				<p>Student Vaccination Running Count: <strong style='color:${studentColor}'>${formatTooltip(student_d[1])}</strong></p>
+				<p>Total Vaccinations to Date: <strong style='color:${totalColor}'>${formatTooltip(total)}</strong></p>
 				`
 		return html;
 	}
@@ -143,7 +146,7 @@ const AreaChart = (props) => {
 			const svgElement = d3.select(svgRef.current);
 
 			svgElement.select(".legend").selectAll("circle")
-			.data(keys)	
+			.data(["Staff", "Students"])	
 			.join(
 				enter => enter.append("circle")
 					.attr("cx", margin.left + 20)
@@ -162,7 +165,7 @@ const AreaChart = (props) => {
 			);
 		
 		svgElement.select(".legend").selectAll("text")
-			.data(keys)
+			.data(["Staff", "Students"])
 			.join(
 				enter => enter.append("text")
 					.attr("x", margin.left + parseFloat(legend_font_size)/2 + 25)
@@ -252,16 +255,28 @@ const AreaChart = (props) => {
 						let x = d3.event.pageX,
 							y = d3.event.pageY,
 							x0 = xScale.invert(x),
-							index = bisectDate(stackedData[0], x0),
-							i = index >= stackedData[0].length ? index - 1 : index,
-							student_d0 =stackedData[0][i-1],
-							student_d1 = stackedData[0][i],
-							staff_d0 = stackedData[1][i-1],
-							staff_d1 = stackedData[1][i-1];
-
-						// find data points closest to mouse position
-						let student_d = formatDate(x0) - formatDate(student_d0.data.date) > formatDate(student_d1.data.date) - formatDate(x0) ? student_d1 : student_d0;
-						let staff_d = formatDate(x0) - formatDate(staff_d0.data.date) > formatDate(staff_d1.data.date) - formatDate(x0) ? staff_d1 : staff_d0;
+							i = bisectDate(stackedData[0], x0);
+						
+						let student_d = null;
+						let staff_d = null;
+						// bounds check
+						if (i <= 0) {
+							student_d = stackedData[0][0];
+							staff_d = stackedData[1][0];
+						}
+						else if (i >= stackedData[0].length) {
+							student_d = stackedData[0][stackedData[0].length - 1];
+							staff_d = stackedData[1][stackedData[1].length - 1];
+						}
+						else{ 
+							// find data points closest to mouse position
+							let	student_d0 =stackedData[0][i-1],
+								student_d1 = stackedData[0][i],
+								staff_d0 = stackedData[1][i-1],
+								staff_d1 = stackedData[1][i-1];
+							student_d = formatDate(x0) - formatDate(student_d0.data.date) > formatDate(student_d1.data.date) - formatDate(x0) ? student_d1 : student_d0;
+							staff_d = formatDate(x0) - formatDate(staff_d0.data.date) > formatDate(staff_d1.data.date) - formatDate(x0) ? staff_d1 : staff_d0;
+						}
 
 						studentFocus.select(".focusCircle")
 							.attr("cx", xScale(student_d.data.date))
@@ -307,6 +322,7 @@ const buildScales = (data, svgWidth, svgHeight, margin) => {
 }
 
 // Format helpers
+const formatTooltip = d3.format(',');
 const formatDate = d3.timeFormat("%m/%d/%y");
 const bisectDate = d3.bisector(function(d) { return d.data.date; }).left;
 
