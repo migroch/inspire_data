@@ -25,7 +25,7 @@ p{
   opacity: 1;
 }
 
-.overlay {
+.box {
   fill: none;
   pointer-events: all;
 }

@@ -32,10 +32,11 @@ const AreaChart = (props) => {
 	const svgRef = useRef(null);
 	const transitionMillisec = 1200;
 
-	const tooltipHtml = (d, group, color) => {
+	const tooltipHtml = (student_d, staff_d) => {
 		const html = `
-				<p>Date: <strong>${formatDate(d.data.date)}</strong></p>
-				<p>${group} Vaccination Count: <strong style='color:${color}'>${d[1]}</strong></p>
+				<p>Date: <strong>${formatDate(student_d.data.date)}</strong></p>
+				<p>Student Vaccination Count: <strong style='color:${color}'>${student_d[1]}</strong></p>
+				<p>Staff Vaccination Count: <strong style='color:${color}'>${staff_d[1]}</strong></p>
 				`
 		return html;
 	}
@@ -215,11 +216,11 @@ const AreaChart = (props) => {
 		// Hook to create / update tooltip
 		useEffect(() => {
 				const svgElement = d3.select(svgRef.current);
-
+				let tooltip = d3.select(".tooltip");
 				let studentFocus = svgElement.select(".student-focus")
+				let staffFocus = svgElement.select(".staff-focus")
 
 				svgElement.select(".box")
-						.classed("overlay", true)
 						.attr("width", svgWidth - margin.right)
 						.attr("height", svgHeight - margin.bottom)
 						.on("mouseover", () => {
@@ -228,20 +229,42 @@ const AreaChart = (props) => {
 								.attr("fill", studentColor);
 							studentFocus.classed("hide", false);
 							studentFocus.classed("show", true);
+
+							staffFocus.append("circle")
+								.attr("r", circleRadius)
+								.attr("fill", staffColor);
+								staffFocus.classed("hide", false);
+								staffFocus.classed("show", true);
 						})
 						.on("mouseout", () => {
 							studentFocus.classed("show", false);
 							studentFocus.classed("hide", true);
+							staffFocus.classed("show", false);
+							staffFocus.classed("hide", true);
+							tooltip.classed("show", false);
+							tooltip.classed("hide", true);
 						})
 						.on("mousemove", () => {
 							let x = d3.event.pageX,
+								y = d3.event.pageY,
 								x0 = xScale.invert(x),
 								i = bisectDate(stackedData[0], x0),
-								d0 = stackedData[0][i - 1],
-								d1 = stackedData[0][i],
-								d = formatDate(x0) - formatDate(d0.data.date) > formatDate(d1.data.date) - formatDate(x0) ? d1 : d0;
+								student_d0 = stackedData[0][i - 1],
+								student_d1 = stackedData[0][i],
+								student_d = formatDate(x0) - formatDate(student_d0.data.date) > formatDate(student_d1.data.date) - formatDate(x0) ? student_d1 : student_d0,
+								staff_d0 = stackedData[1][i - 1],
+								staff_d1 = stackedData[1][i],
+								staff_d = formatDate(x0) - formatDate(staff_d0.data.date) > formatDate(staff_d1.data.date) - formatDate(x0) ? staff_d1 : staff_d0;
 
-							studentFocus.attr("transform", `translate(${xScale(d.data.date)}, ${yScale(d[1])})`);
+							studentFocus.attr("transform", `translate(${xScale(student_d.data.date)}, ${yScale(student_d[1])})`);
+							staffFocus.attr("transform", `translate(${xScale(staff_d.data.date)}, ${yScale(staff_d[1])})`);
+
+							tooltip.html(tooltipHtml(student_d, staff_d));
+							let tooltipLeft = x > svgWidth/2 ? x - parseFloat(tooltip.style('width')) : x;
+							let tooltipTop = y > svgHeight/2 ? y - parseFloat(tooltip.style('height')) : y;
+							tooltip.style("left", `${tooltipLeft}px` ).style("top", `${tooltipTop}px`);
+							tooltip.classed("hide", false);
+							tooltip.classed("show", true);
 						})
 		});
 
