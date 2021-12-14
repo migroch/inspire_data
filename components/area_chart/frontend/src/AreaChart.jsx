@@ -221,51 +221,60 @@ const AreaChart = (props) => {
 				let staffFocus = svgElement.select(".staff-focus")
 
 				svgElement.select(".box")
-						.attr("width", svgWidth - margin.right)
-						.attr("height", svgHeight - margin.bottom)
-						.on("mouseover", () => {
-							studentFocus.append("circle")
-								.attr("r", circleRadius)
-								.attr("fill", studentColor);
-							studentFocus.classed("hide", false);
-							studentFocus.classed("show", true);
+					.attr("transform", `translate(${margin.left+1}, 0)`)
+					.attr("width", svgWidth - margin.right - margin.left)
+					.attr("height", svgHeight - margin.bottom)
+					.on("mouseover", () => {
+						studentFocus.append("line")
+							.classed("focusLine", true);
+						studentFocus.append("circle")
+							.classed("focusCircle", true)
+							.attr("r", circleRadius)
+							.attr("fill", studentColor);
+						studentFocus.classed("hide", false);
+						studentFocus.classed("show", true);
 
-							staffFocus.append("circle")
-								.attr("r", circleRadius)
-								.attr("fill", staffColor);
-								staffFocus.classed("hide", false);
-								staffFocus.classed("show", true);
-						})
-						.on("mouseout", () => {
-							studentFocus.classed("show", false);
-							studentFocus.classed("hide", true);
-							staffFocus.classed("show", false);
-							staffFocus.classed("hide", true);
-							tooltip.classed("show", false);
-							tooltip.classed("hide", true);
-						})
-						.on("mousemove", () => {
-							let x = d3.event.pageX,
-								y = d3.event.pageY,
-								x0 = xScale.invert(x),
-								i = bisectDate(stackedData[0], x0),
-								student_d0 = stackedData[0][i - 1],
-								student_d1 = stackedData[0][i],
-								student_d = formatDate(x0) - formatDate(student_d0.data.date) > formatDate(student_d1.data.date) - formatDate(x0) ? student_d1 : student_d0,
-								staff_d0 = stackedData[1][i - 1],
-								staff_d1 = stackedData[1][i],
-								staff_d = formatDate(x0) - formatDate(staff_d0.data.date) > formatDate(staff_d1.data.date) - formatDate(x0) ? staff_d1 : staff_d0;
+						staffFocus.append("line")
+							.classed("focusLine", true);
+						staffFocus.append("circle")
+							.classed("focusCircle", true)
+							.attr("r", circleRadius)
+							.attr("fill", staffColor);
+							staffFocus.classed("hide", false);
+							staffFocus.classed("show", true);
+					})
+					.on("mouseout", () => {
+						studentFocus.classed("show", false);
+						studentFocus.classed("hide", true);
+						staffFocus.classed("show", false);
+						staffFocus.classed("hide", true);
+						tooltip.classed("show", false);
+						tooltip.classed("hide", true);
+					})
+					.on("mousemove", () => {
+						let x = d3.event.pageX,
+							y = d3.event.pageY,
+							x0 = xScale.invert(x),
+							i = bisectDate(stackedData[0], x0),
+							student_d = stackedData[0][i],
+							staff_d = stackedData[1][i];
 
-							studentFocus.attr("transform", `translate(${xScale(student_d.data.date)}, ${yScale(student_d[1])})`);
-							staffFocus.attr("transform", `translate(${xScale(staff_d.data.date)}, ${yScale(staff_d[1])})`);
+						studentFocus.select(".focusCircle")
+							.attr("cx", xScale(student_d.data.date))
+							.attr("cy", yScale(student_d[1]));
+						// studentFocus.select(".focusLine")
+						// 	.attr("x1", x).attr("y1", yScale()
+						staffFocus.select(".focusCircle")
+							.attr("cx", xScale(staff_d.data.date))
+							.attr("cy", yScale(staff_d[1]));
 
-							tooltip.html(tooltipHtml(student_d, staff_d));
-							let tooltipLeft = x > svgWidth/2 ? x - parseFloat(tooltip.style('width')) : x;
-							let tooltipTop = y > svgHeight/2 ? y - parseFloat(tooltip.style('height')) : y;
-							tooltip.style("left", `${tooltipLeft}px` ).style("top", `${tooltipTop}px`);
-							tooltip.classed("hide", false);
-							tooltip.classed("show", true);
-						})
+						tooltip.html(tooltipHtml(student_d, staff_d));
+						let tooltipLeft = x > svgWidth/2 ? x - parseFloat(tooltip.style('width')) : x;
+						let tooltipTop = y > svgHeight/2 ? y - parseFloat(tooltip.style('height')) : y;
+						tooltip.style("left", `${tooltipLeft}px` ).style("top", `${tooltipTop}px`);
+						tooltip.classed("hide", false);
+						tooltip.classed("show", true);
+					})
 		});
 
     // Hook to create / update student-circles

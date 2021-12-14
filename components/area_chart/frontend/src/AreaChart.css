@@ -14,11 +14,17 @@ p{
   width:100%;
 }
 
-.circle {
+.focusCircle {
     transition: fill 0.1s ease;
 }
 
-.circle:hover {
+.focusLine {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 0.5px;
+}
+
+.focusCircle:hover {
   cursor:pointer;
   stroke:black;
   stroke-width:1;
