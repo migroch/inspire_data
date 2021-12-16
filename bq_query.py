@@ -62,7 +62,7 @@ def get_vaccinated_from_bq():
     Get inspire results data from bigquery
     '''
     query = f"""
-    SELECT `InspireTesting.vaccinated`.UID, `InspireTesting.vaccinated`.District, `InspireTesting.vaccinated`.Organization, `InspireTesting.vaccinated`.Group, `InspireTesting.vaccinated`.Vaccination_Date, `InspireTesting.vaccinated`.DOB, `InspireTesting.vaccinated`.Dose, `InspireTesting.vacreg`.Gender, `InspireTesting.vacreg`.Race, `InspireTesting.vacreg`.Ethnicity
+    SELECT `InspireTesting.vaccinated`.UID, `InspireTesting.vaccinated`.District, `InspireTesting.vaccinated`.Organization, `InspireTesting.vaccinated`.Group, `InspireTesting.vaccinated`.Vaccination_Date, `InspireTesting.vaccinated`.DOB, `InspireTesting.vaccinated`.Vaccination_Type, `InspireTesting.vacreg`.Gender, `InspireTesting.vacreg`.Race, `InspireTesting.vacreg`.Ethnicity
     FROM `InspireTesting.vaccinated`
     JOIN `InspireTesting.vacreg` ON `InspireTesting.vaccinated`.UID = `InspireTesting.vacreg`.UID
     """
@@ -76,6 +76,7 @@ def get_vaccinated_from_bq():
     df['Week'] = df.Vaccination_Date.dt.week - df.Vaccination_Date.dt.week.min()  + 1
     df['Vaccination_Date'] = df.Vaccination_Date.dt.date
     df['Group'] = df['Group'].replace({'STAFF':'Staff', 'STUDENT':'Students', 'OTHERS':'Others', 'CONTRACTVENDOR':'Contract/Vendor'})
+    df['Vaccination_Type'] = df['Vaccination_Type'].replace({'.*1st.*|.*Initial.*':'1st Dose', '.*2nd.*':'2nd Dose', '.*Booster.*':'Booster'}, regex=True)
     df['District'] = df['District'].replace({'SANTA-CRUZ-OTHERS':'Other'})
 
     return df
