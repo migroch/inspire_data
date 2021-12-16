@@ -293,7 +293,7 @@ const AreaChart = (props) => {
 							.attr("x2", xScale(staff_d.data.date)).attr("y2", yScale(staff_d[1]));
 
 						tooltip.html(tooltipHtml(student_d, staff_d));
-						let tooltipLeft = xScale(staff_d.data.date) > svgWidth/2 ? xScale(staff_d.data.date) - parseFloat(tooltip.style('width')) - 10 : xScale(staff_d.data.date) - 10;
+						let tooltipLeft = xScale(staff_d.data.date) > svgWidth/2 ? xScale(staff_d.data.date) - parseFloat(tooltip.style('width')) - 10 : xScale(staff_d.data.date) + 10;
 						let tooltipTop = yScale(staff_d[1]) > svgHeight/2 ? yScale(staff_d[1]) - parseFloat(tooltip.style('height')) : yScale(staff_d[1]);
 						tooltip.style("left", `${tooltipLeft}px` ).style("top", `${tooltipTop}px`);
 						tooltip.classed("hide", false);
