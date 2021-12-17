@@ -78,5 +78,6 @@ def get_vaccinated_from_bq():
     df['Group'] = df['Group'].replace({'STAFF':'Staff', 'STUDENT':'Students', 'OTHERS':'Others', 'CONTRACTVENDOR':'Contract/Vendor'})
     df['Vaccination_Type'] = df['Vaccination_Type'].replace({'.*1st.*|.*Initial.*':'1st Dose', '.*2nd.*':'2nd Dose', '.*Booster.*':'Booster'}, regex=True)
     df['District'] = df['District'].replace({'SANTA-CRUZ-OTHERS':'Other'})
+    df.rename({'Vaccination_Type':'Vaccine Dose'}, axis=1, inplace=True)
 
     return df

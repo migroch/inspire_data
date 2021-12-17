@@ -17,7 +17,9 @@ else:
 
 
 def area_chart(
-    data: List[Tuple[str, int, int]],
+    data: str,
+    groups: List[str],
+    colors: List[str],
     width: int = None,
     key=None,
 ):
@@ -29,6 +31,8 @@ def area_chart(
     """       
     component_value = _component_func(
         data=data,
+        groups=groups,
+        colors=colors,
         svgWidth=width,
         key=key,
         default=None,

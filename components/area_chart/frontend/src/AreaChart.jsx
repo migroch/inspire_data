@@ -26,9 +26,12 @@ const AreaChart = (props) => {
 	let studentColor = "#f77f00"
 	let totalColor = "blue"
 
-	props.args.data =  props.args.data.map(d => [new Date( typeof d[0] == "string" ? d[0].split('T')[0]+'T12:00:00' : d[0]), d[1], d[2]]);
-	const data = props.args.data.map(d => {return({ date: d[0], Students: d[1], Staff: d[2] })});
-	const total = data.at(-1).Staff + data.at(-1).Students;
+	const groups = props.args.groups;
+	const data = JSON.parse(props.args.data).map(d => { 
+		let temp_d = {date:new Date( typeof d.date == "string" ? d.date.split('T')[0]+'T12:00:00' : d.date )};
+		groups.map(g => temp_d[g] = d[g]);
+		return temp_d;
+	});
 	const margin = {"top": 10, "bottom": 4*parseFloat(axis_font_size)-10, "left": 2*parseFloat(axis_font_size)+30, "right": 3*parseFloat(axis_font_size)};
 
 	const svgRef = useRef(null);
@@ -66,21 +69,23 @@ const AreaChart = (props) => {
 		svgElement.append("g").classed('y-axis', true);
 		svgElement.append("g").classed('stacked-area', true);
 		svgElement.append("g").classed('legend', true);
-		svgElement.append("g").classed('student-focus', true);
-		svgElement.append("g").classed('staff-focus', true);
+		// svgElement.append("g").classed('student-focus', true);
+		// svgElement.append("g").classed('staff-focus', true);
 		svgElement.append("rect").classed('box', true);
+		groups.map(g => svgElement.append("g").classed(`${g.toLowerCase()}-focus`, true));
 	}, [])
 
 	// Build scales, group & stack data, and set colors
-	let [xScale, yScale] = buildScales(data, svgWidth, svgHeight, margin);
-	let keys = ["Students", "Staff"]
 	let stackedData = d3.stack()
-		.keys(keys)
+		.keys(groups)
 		(data)
-	console.log("Stacked data: ", stackedData)
-		let color = d3.scaleOrdinal()
-			.domain(keys)
-			.range([studentColor,staffColor])
+	const total = stackedData.at(-1).at(-1)[1];
+
+	let [xScale, yScale] = buildScales(data, total, svgWidth, svgHeight, margin);
+
+	let colorScale = d3.scaleOrdinal()
+		.domain(groups)
+		.range(props.args.colors)
 
     // Hook to create / update axis and grid
     useEffect(() => {
@@ -144,15 +149,15 @@ const AreaChart = (props) => {
     // Hook to create / update legend
     useEffect(() => {
 			const svgElement = d3.select(svgRef.current);
-
+			groups.reverse()
 			svgElement.select(".legend").selectAll("circle")
-			.data(["Staff", "Students"])	
+			.data(groups)	
 			.join(
 				enter => enter.append("circle")
 					.attr("cx", margin.left + 20)
 					.attr("cy", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i))
 					.attr("r", parseInt(legend_font_size)/2)
-					.style("fill", d => color(d))
+					.style("fill", d => colorScale(d))
 					.attr("opacity", 0)
 					.call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
 				update => update
@@ -165,7 +170,7 @@ const AreaChart = (props) => {
 			);
 		
 		svgElement.select(".legend").selectAll("text")
-			.data(["Staff", "Students"])
+			.data(groups)
 			.join(
 				enter => enter.append("text")
 					.attr("x", margin.left + parseFloat(legend_font_size)/2 + 25)
@@ -174,7 +179,7 @@ const AreaChart = (props) => {
 					.attr("font-weight", "bold")
 					.attr("text-anchor", "left")
 					.style("alignment-baseline", "middle")
-					.style("fill", d => color(d) )
+					.style("fill", d => colorScale(d) )
 					.call(el => el.attr("y", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i) + 1)), 
 				update => update.call(el => el.transition().duration(transitionMillisec)
 					.attr("x", margin.left + parseFloat(legend_font_size)/2 + 25)
@@ -182,6 +187,8 @@ const AreaChart = (props) => {
 					.attr("y", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i) + 1)
 				)
 			);
+
+			groups.reverse();
     })
 
     // create / update stacked-area
@@ -199,7 +206,7 @@ const AreaChart = (props) => {
 				enter => enter.append("path")
 					.classed(styles.area, true)
 					.attr("d", (d) => stacked_area(d))
-					.attr("fill", function(d) { return color(d.key); })
+					.attr("fill", function(d) { return colorScale(d.key); })
 					.attr("fill-opacity", 0.3)
 					.attr("opacity", 0)
 					.call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
@@ -216,7 +223,7 @@ const AreaChart = (props) => {
 		useEffect(() => {
 				const svgElement = d3.select(svgRef.current);
 				let tooltip = d3.select(".tooltip");
-				let studentFocus = svgElement.select(".student-focus")
+				let studentFocus = svgElement.select(".students-focus")
 				let staffFocus = svgElement.select(".staff-focus")
 
 				svgElement.select(".box")
@@ -310,12 +317,12 @@ const AreaChart = (props) => {
 }
 
 // Build D3 scales from data
-const buildScales = (data, svgWidth, svgHeight, margin) => {
+const buildScales = (data, total, svgWidth, svgHeight, margin) => {
 	const xScale = d3.scaleTime()
 		.domain(d3.extent(data, (d) => d.date))
 		.range([margin.left, svgWidth - margin.right]);
 	const yScale = d3.scaleLinear()
-		.domain([0,d3.max(data, (d) => d.Students) + d3.max(data, (d) => d.Staff)])
+		.domain([0,total])
 		.range([svgHeight - margin.bottom, margin.top]);
 
 	return [xScale, yScale]

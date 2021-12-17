@@ -43,7 +43,7 @@ if __name__ == '__main__':
 
         # Set expander for filter dropdowns and date slider
         with st.expander('Show filters', expanded=False):
-            dropdown_fields = ['Gender', 'Race', 'Ethnicity']
+            dropdown_fields = ['Vaccine Dose', 'Gender', 'Race', 'Ethnicity']
             filter_columns = st.columns([10,10,10,10,1])
             for i, field in enumerate(dropdown_fields):
                 with filter_columns[i]:
@@ -74,7 +74,10 @@ if __name__ == '__main__':
         # Stacked area chart section
         stacked_area_container = st.container()
         with stacked_area_container:
+            # groups = ['Students', 'Staff']
+            fig_data.rename({'Vaccination_Date':'date'}, axis=1, inplace=True)
+            fig_data = fig_data[['date','Students','Staff']]
             area_data = fig_data.to_json(orient='records')
             # area_data = list(zip(fig_data.Vaccination_Date, fig_data.Students, fig_data.Staff))
             st.subheader('Time Trend')
-            area_chart(area_data, key="area_chart")
+            area_chart(data=area_data, groups=['Students', 'Staff'], colors=['#f77f00', '#ff006e'], key="area_chart")
