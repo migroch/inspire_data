@@ -91,9 +91,13 @@ def get_vaccinated_from_bq():
     query = f"""
     SELECT key2 as UID, Org_Description as District, School_Site as Organization, Ed_Group as `Group`, date as Vaccination_Date, Vaccinated_Date_1st, Vaccinated_Date_2nd, Date_of_Birth as DOB, Dose, Gender, Race, Ethnicity
     FROM `CovidVaccinesDB.vax_viz2`
-    WHERE Derived_Status IN ('Vaccinated','Vaccinated (Unconfirmed)') AND (duplicated <> 'toss' or duplicated is NULL) AND date is not null
+    WHERE Derived_Status IN ('Vaccinated','Vaccinated (Unconfirmed)')
+    AND (duplicated <> 'toss' or duplicated is NULL)
+    AND date is not null
+    AND Dose <> '2nd'
     """
     df = bq_query(query)
+    #df = df[~df.duplicated(subset=['UID','Dose'])]
     df['Week_First_Day'] = df.Vaccination_Date.apply(
         lambda x: x if pd.isnull(x) else datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1]-1)+'-0', "%Y-%W-%w")
     )
@@ -103,7 +107,6 @@ def get_vaccinated_from_bq():
     df['Week'] = df.Vaccination_Date.dt.week - df.Vaccination_Date.dt.week.min()  + 1
     df['Vaccination_Date'] = df.Vaccination_Date.dt.date
     df['Group'] = df['Group'].replace({'SC County Educators':'Educators & Staff'})
-    #df['Vaccination_Type'] = df['Vaccination_Type'].replace({'.*1st.*|.*Initial.*':'1st Dose', '.*2nd.*':'2nd Dose', '.*Booster.*':'Booster'}, regex=True)
     df['District'] = df['District'].replace({'SANTA-CRUZ-OTHERS':'Other'})
     df['Gender'] = df['Gender'].replace({'F / Femenino':'Female', 'M / Masculino':'Male', 'Non Binary / No Binario':'Other', 'F':'Female', 'M':'Male'})
     df['Gender'] = df['Gender'].fillna('Unknown')
@@ -117,6 +120,7 @@ def get_vaccinated_from_bq():
         'Guatemalan':'Hispanic',
         'Salvadoran':'Hispanic',
         })
+    df['Dose'] = df['Dose'].replace({'1st':'Inital vaccination (1-2 Dose)'})
 
     return df
 

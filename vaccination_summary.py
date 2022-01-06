@@ -38,7 +38,7 @@ color_dict = {
 def gen_sunburst_df(totals_df):
     sunburst_df = totals_df.copy()
     sunburst_df = sunburst_df.replace({'Students':'C:Students', 'Community':'B:Community','SC County Educators':'A:Educators & Staff'})
-    sunburst_df = sunburst_df.replace({'1st':'Vaccinated', 'Booster':'Boosted'})
+    sunburst_df = sunburst_df.replace({'1st':'Vaccinations', 'Booster':'Boosters'})
     sunburst_df = sunburst_df.rename(columns={'Group':'parent', 'Dose':'label'}) 
     group_totals = sunburst_df.groupby('parent').sum().reset_index() 
     group_totals['label'] = group_totals['parent']

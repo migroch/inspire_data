@@ -33,7 +33,7 @@ if __name__ == '__main__':
         icon_css()
 
     ## Header    
-    st.markdown(f'<h1 id="title"  style="color: #699900;">COVID-19 Vaccinations Dashboard</h1>' , unsafe_allow_html=True)
+    st.markdown(f'<h1 id="title"  style="color: #699900;">COVID-19 Vaccinations</h1>' , unsafe_allow_html=True)
     #summary_container = st.container()
     #with summary_container:
     show_vaccination_summary()    
