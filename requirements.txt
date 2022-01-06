@@ -6,3 +6,4 @@ pandas
 pandas_gbq
 seaborn
 pyarrow
+plotly
