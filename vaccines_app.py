@@ -24,12 +24,6 @@ def refresh_data(query):
     global app_data
     app_data = app_data.query(query)
 
-def show_area_chart(fig_data):
-    '''
-     Stacked area chart
-    '''
-
-
 if __name__ == '__main__':
     ## Initialize page configurations and containers
     styles_container = st.container()
