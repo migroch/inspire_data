@@ -5,6 +5,7 @@ from google.cloud import bigquery
 import pandas as pd
 import pandas_gbq
 import streamlit as st
+import pdb
 
 
 # Create API client.
@@ -31,14 +32,38 @@ def bq_query(query):
     else:
         df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026")
     return df   
+
+@st.cache(show_spinner=False, ttl=600)
+def get_testing_totals_from_bq():
+    '''
+    Get total test counts from BigQuery
+    '''
+    query = f"""
+    SELECT * FROM  `CovidTestingDB.Totals`
+    """
+    df = bq_query(query)
+
+    return df
+
+@st.cache(show_spinner=False, ttl=600)
+def get_vaccine_totals_from_bq():
+    '''
+    Get total test counts from BigQuery
+    '''
+    query = f"""
+    SELECT * FROM  `CovidVaccinesDB.Totals`
+    """
+    df = bq_query(query)
     
+    return df    
+
 @st.cache(show_spinner=False, ttl=600)
 def get_results_from_bq():
     '''
-    Get inspire results data from bigquery
+    Get inspire testing results from bigquery
     '''
     query = f"""
-    SELECT *
+    SELECT UID, District, Organization, `Group`, Gender, Race, Ethnicity, Test_Date, Test_Result
     FROM `InspireTesting.results`
     """
     df = bq_query(query)
@@ -50,34 +75,49 @@ def get_results_from_bq():
     )
     df['Week'] = df.Test_Date.dt.week - df.Test_Date.dt.week.min()  + 1
     df['Test_Date'] = df.Test_Date.dt.date
-    df['Group'] = df['Group'].replace({'STAFF':'Staff', 'STUDENT':'Students'})
-    df['Gender'] = df['Gender'].fillna('Undisclosed')
-    df['Race'] = df['Race'].fillna('Undisclosed')
-    df['Ethnicity'] = df['Ethnicity'].fillna('Undisclosed')
+    df['Group'] = df['Group'].replace({'STAFF':'Educators & Staff', 'STUDENT':'Students'})
+    df['Group'] = df['Group'].apply(lambda x: x if x in ['Students', 'Educators & Staff'] else 'Community' )
+    df['Gender'] = df['Gender'].fillna('Unknown')
+    df['Race'] = df['Race'].fillna('Unknown')
+    df['Ethnicity'] = df['Ethnicity'].fillna('Unknown')
+
     return df
 
 @st.cache(show_spinner=False, ttl=600)
 def get_vaccinated_from_bq():
     '''
-    Get inspire results data from bigquery
+    Get inspire vaccination data from bigquery
     '''
     query = f"""
-    SELECT `InspireTesting.vaccinated`.UID, `InspireTesting.vaccinated`.District, `InspireTesting.vaccinated`.Organization, `InspireTesting.vaccinated`.Group, `InspireTesting.vaccinated`.Vaccination_Date, `InspireTesting.vaccinated`.DOB, `InspireTesting.vaccinated`.Vaccination_Type, `InspireTesting.vacreg`.Gender, `InspireTesting.vacreg`.Race, `InspireTesting.vacreg`.Ethnicity
-    FROM `InspireTesting.vaccinated`
-    JOIN `InspireTesting.vacreg` ON `InspireTesting.vaccinated`.UID = `InspireTesting.vacreg`.UID
+    SELECT key2 as UID, Org_Description as District, School_Site as Organization, Ed_Group as `Group`, date as Vaccination_Date, Vaccinated_Date_1st, Vaccinated_Date_2nd, Date_of_Birth as DOB, Dose, Gender, Race, Ethnicity
+    FROM `CovidVaccinesDB.vax_viz2`
+    WHERE Derived_Status IN ('Vaccinated','Vaccinated (Unconfirmed)') AND (duplicated <> 'toss' or duplicated is NULL) AND date is not null
     """
     df = bq_query(query)
     df['Week_First_Day'] = df.Vaccination_Date.apply(
-        lambda x: datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1]-1)+'-0', "%Y-%W-%w")
+        lambda x: x if pd.isnull(x) else datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1]-1)+'-0', "%Y-%W-%w")
     )
     df['Week_Last_Day'] = df.Vaccination_Date.apply(
-        lambda x: datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1])+'-6', "%Y-%W-%w")
+        lambda x: x if pd.isnull(x) else datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1])+'-6', "%Y-%W-%w")
     )
     df['Week'] = df.Vaccination_Date.dt.week - df.Vaccination_Date.dt.week.min()  + 1
     df['Vaccination_Date'] = df.Vaccination_Date.dt.date
-    df['Group'] = df['Group'].replace({'STAFF':'Staff', 'STUDENT':'Students', 'OTHERS':'Others', 'CONTRACTVENDOR':'Contract/Vendor'})
-    df['Vaccination_Type'] = df['Vaccination_Type'].replace({'.*1st.*|.*Initial.*':'1st Dose', '.*2nd.*':'2nd Dose', '.*Booster.*':'Booster'}, regex=True)
+    df['Group'] = df['Group'].replace({'SC County Educators':'Educators & Staff'})
+    #df['Vaccination_Type'] = df['Vaccination_Type'].replace({'.*1st.*|.*Initial.*':'1st Dose', '.*2nd.*':'2nd Dose', '.*Booster.*':'Booster'}, regex=True)
     df['District'] = df['District'].replace({'SANTA-CRUZ-OTHERS':'Other'})
-    df.rename({'Vaccination_Type':'Vaccine Dose'}, axis=1, inplace=True)
+    df['Gender'] = df['Gender'].replace({'F / Femenino':'Female', 'M / Masculino':'Male', 'Non Binary / No Binario':'Other', 'F':'Female', 'M':'Male'})
+    df['Gender'] = df['Gender'].fillna('Unknown')
+    df['Race'] = df['Race'].fillna('Unknown')
+    df['Ethnicity'] = df['Ethnicity'].fillna('Unknown')
+    df['Ethnicity'] = df['Ethnicity'].replace({
+        'Hispanic; Latino or Spanish orgin':'Hispanic', 
+        'Not of Hispanic; Latino; or Spanish origin':'Non-Hispanic',
+        'Prefer Not to Say / Prefiero no decirlo':'Unknown',
+        'Mexican; Mexican American; Chicano':'Hispanic',
+        'Guatemalan':'Hispanic',
+        'Salvadoran':'Hispanic',
+        })
 
     return df
+
+

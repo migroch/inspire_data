@@ -1,28 +1,31 @@
+import sys
+import time
 import streamlit as st
 import pandas as pd
-import time
-import sys
-sys.path.append("./components")
 import prep_results as pr
 from import_styles import *
+
+sys.path.append("./components")
 from filter_dropdown import filter_dropdown
 from gauge_chart import gauge_chart
 from time_chart import time_chart
 
+st.set_page_config(
+    layout="wide",
+    page_title="Santa Cruz County COVID-19 Testing Dashboard",
+    initial_sidebar_state="collapsed",
+)
+
 # Initial data load
-app_data = pr.APP_DATA
+with st.spinner('Loading data...'):
+    app_data = pr.APP_DATA
 
 def refresh_data(query):
     global app_data
-    app_data = app_data.query(query)
+    with st.spinner('Refreshing data...'):
+        app_data = app_data.query(query)
 
 if __name__ == '__main__':
-    ## Initialize page configurations and containers
-    st.set_page_config(
-        layout="wide",
-        page_title="Santa Cruz County COVID-19 Testing Dashboard",
-        initial_sidebar_state="collapsed",
-    )
 
     styles_container = st.container()
     app_container = st.container()

@@ -23,7 +23,7 @@ def area_chart(
     width: int = None,
     key=None,
 ):
-    """Display a line chart with overlapping circles on a list of (x, y) points, using the D3 library.
+    """Display an area chart with overlapping circles on a list of (x, y) points, using the D3 library.
 
     :param data: A list of (x, y) points
     :param width:  Width of canvas, in pixels

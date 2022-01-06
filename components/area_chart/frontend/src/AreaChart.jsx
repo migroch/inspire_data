@@ -1,4 +1,5 @@
 import React, {useEffect, useState, useRef} from "react";
+import {renderToString} from "react-dom/server";
 import { Streamlit, withStreamlitConnection,} from "streamlit-component-lib";
 import * as d3 from "d3";
 
@@ -21,32 +22,45 @@ const AreaChart = (props) => {
 	let axis_font_size = `${11+5*svgWidth/1000}px`;
 	let legend_font_size = `${11+5*svgWidth/1000}px`;
 	let  circleRadius = 0.003*svgWidth;
-
-	let staffColor = "#ff006e"
-	let studentColor = "#f77f00"
-	let totalColor = "blue"
+	let margin = {"top": 10, "bottom": 4*parseFloat(axis_font_size)-10, "left": 2*parseFloat(axis_font_size)+30, "right": 3*parseFloat(axis_font_size)};
 
 	const groups = props.args.groups;
+	const colors = props.args.colors;
 	const data = JSON.parse(props.args.data).map(d => { 
 		let temp_d = {date:new Date( typeof d.date == "string" ? d.date.split('T')[0]+'T12:00:00' : d.date )};
 		groups.map(g => temp_d[g] = d[g]);
 		return temp_d;
 	});
-	const margin = {"top": 10, "bottom": 4*parseFloat(axis_font_size)-10, "left": 2*parseFloat(axis_font_size)+30, "right": 3*parseFloat(axis_font_size)};
+
+	// Build scales, group & stack data, and set colors
+	let stackedData = d3.stack()
+		.keys(groups)
+		(data)
+	const total = stackedData.at(-1).at(-1)[1];
+	let [xScale, yScale] = buildScales(data, total, svgWidth, svgHeight, margin);
+	let colorScale = d3.scaleOrdinal()
+		.domain(groups)
+		.range(props.args.colors)
+	const totalColor = '#F77F00'
 
 	const svgRef = useRef(null);
 	const transitionMillisec = 1200;
 
-	const tooltipHtml = (student_d, staff_d) => {
-		const html = `
-				<p>Date: <strong>${formatDate(student_d.data.date)}</strong></p>
-				<p>Staff Vaccination Running Count: <strong style='color:${staffColor}'>${formatTooltip(staff_d[1] - student_d[1])}</strong></p>
-				<p>Student Vaccination Running Count: <strong style='color:${studentColor}'>${formatTooltip(student_d[1])}</strong></p>
-				<p>Total Vaccinations to Date: <strong style='color:${totalColor}'>${formatTooltip(total)}</strong></p>
-				`
+	// Create tooltip html
+	const tooltip_html = (tooltip_data) => {
+		let total_thisdate = groups.reduce((acc, g) => acc + tooltip_data[g], 0);
+		let html = renderToString(
+			<div className=".tooltip">	
+				<p>Date: <strong>{formatDate(tooltip_data.date)}</strong></p>
+				{
+					groups.map(g => <p key={g} style={{color:colorScale(g)}}>{g}: <strong>{formatTooltip(tooltip_data[g])}</strong></p>)
+				}
+				<p style={{color:totalColor}}>Total: <strong>{formatTooltip(total_thisdate)}</strong></p>
+			</div>
+		)
 		return html;
 	}
-
+	
 	// Set svgHeight and update it on window resize
 	useEffect(() => {
 		const handleResize = () => {
@@ -69,23 +83,9 @@ const AreaChart = (props) => {
 		svgElement.append("g").classed('y-axis', true);
 		svgElement.append("g").classed('stacked-area', true);
 		svgElement.append("g").classed('legend', true);
-		// svgElement.append("g").classed('student-focus', true);
-		// svgElement.append("g").classed('staff-focus', true);
 		svgElement.append("rect").classed('box', true);
-		groups.map(g => svgElement.append("g").classed(`${g.toLowerCase()}-focus`, true));
+		groups.forEach(g => svgElement.append("g").classed(`${g.toLowerCase().split(' ')[0]}-focus`, true));
 	}, [])
-
-	// Build scales, group & stack data, and set colors
-	let stackedData = d3.stack()
-		.keys(groups)
-		(data)
-	const total = stackedData.at(-1).at(-1)[1];
-
-	let [xScale, yScale] = buildScales(data, total, svgWidth, svgHeight, margin);
-
-	let colorScale = d3.scaleOrdinal()
-		.domain(groups)
-		.range(props.args.colors)
 
     // Hook to create / update axis and grid
     useEffect(() => {
@@ -96,8 +96,8 @@ const AreaChart = (props) => {
 			.attr("font", "sans-serif")
 			.attr("font-size", axis_font_size)
 			.call(d3.axisBottom(xScale)
-				.ticks(d3.timeWeek)
-				.tickFormat(d3.timeFormat("%b %d"))
+				.ticks(d3.timeMonth)
+				.tickFormat(d3.timeFormat("%b %y"))
 				.tickSize(5)
 				.tickSizeOuter(0)
 			)
@@ -162,6 +162,7 @@ const AreaChart = (props) => {
 					.call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
 				update => update
 					.call(el => el.transition().duration(transitionMillisec)
+						.style("fill", d => colorScale(d))
 						.attr("cx", margin.left + 20)
 						.attr("cy", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i))
 						.attr("r", parseFloat(legend_font_size)/2)
@@ -182,6 +183,8 @@ const AreaChart = (props) => {
 					.style("fill", d => colorScale(d) )
 					.call(el => el.attr("y", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i) + 1)), 
 				update => update.call(el => el.transition().duration(transitionMillisec)
+					.text(d => d )
+					.style("fill", d => colorScale(d) )
 					.attr("x", margin.left + parseFloat(legend_font_size)/2 + 25)
 					.attr("font-size", legend_font_size)
 					.attr("y", (d,i) => ((1-i)*(margin.top/2) + 17) + (30*i) + 1)
@@ -209,104 +212,93 @@ const AreaChart = (props) => {
 					.attr("fill", function(d) { return colorScale(d.key); })
 					.attr("fill-opacity", 0.3)
 					.attr("opacity", 0)
-					.call(el => el.transition().duration(transitionMillisec).attr("opacity", 1)),
+					.call(el => el.transition().duration(transitionMillisec)
+						.attr("fill-opacity", 0.7)
+						.attr("opacity", 1)
+					),
 				update => update
-                    .attr("opacity", 0)
+					.attr("fill", function(d) { return colorScale(d.key); })
+                    .attr("fill-opacity", 0.3)
+					.attr("opacity", 0)
                     .call(el => el.transition().duration(transitionMillisec)
 							.attr("d", (d) => stacked_area(d))
-							.attr("opacity",1)
+							.attr("fill-opacity",0.75)
+							.attr("opacity", 1)
                     ),
 			);
     })
 
-		// Hook to create / update tooltip and foci
-		useEffect(() => {
-				const svgElement = d3.select(svgRef.current);
-				let tooltip = d3.select(".tooltip");
-				let studentFocus = svgElement.select(".students-focus")
-				let staffFocus = svgElement.select(".staff-focus")
+	// Hook to create / update tooltip and foci
+	useEffect(() => {
+		const svgElement = d3.select(svgRef.current);
+		let tooltip = d3.select(".tooltip");
 
-				svgElement.select(".box")
-					.attr("transform", `translate(${margin.left+1}, 0)`)
-					.attr("width", svgWidth - margin.right - margin.left)
-					.attr("height", svgHeight - margin.bottom)
-					.on("mouseover", () => {
-						studentFocus.append("line")
-							.classed("focusLine", true);
-						studentFocus.append("circle")
-							.classed("focusCircle", true)
-							.attr("r", circleRadius)
-							.attr("fill", studentColor);
-						studentFocus.classed("hide", false);
-						studentFocus.classed("show", true);
+		svgElement.select(".box")
+			.attr("transform", `translate(${margin.left+1}, 0)`)
+			.attr("width", svgWidth - margin.right - margin.left)
+			.attr("height", svgHeight - margin.bottom)
+			.on("mouseover", () => {
+				groups.forEach(g => {
+					let focus_el = svgElement.select(`.${g.toLowerCase().split(' ')[0]}-focus`)
+					focus_el.append("line").classed("focusLine", true);
+					focus_el.append("circle")
+						.classed("focusCircle", true)
+						.attr("r", circleRadius)
+						.attr("fill", colorScale(g));
+					focus_el.classed("hide", false);
+					focus_el.classed("show", true);
+				})
+			})
+			.on("mouseout", () => {
+				groups.forEach(g => {
+					let focus_el = svgElement.select(`.${g.toLowerCase().split(' ')[0]}-focus`)							
+					focus_el.classed("show", false);
+					focus_el.classed("hide", true);
+				})
+				tooltip.classed("show", false);
+				tooltip.classed("hide", true);
+			})
+			.on("mousemove", () => {
+				// Get date and group values data from the first group in stackedData 
+				let g0_data = stackedData[0].map(d => d.data); 
+				let tooltip_data = {};
 
-						staffFocus.append("line")
-							.classed("focusLine", true);
-						staffFocus.append("circle")
-							.classed("focusCircle", true)
-							.attr("r", circleRadius)
-							.attr("fill", staffColor);
-							staffFocus.classed("hide", false);
-							staffFocus.classed("show", true);
-					})
-					.on("mouseout", () => {
-						studentFocus.classed("show", false);
-						studentFocus.classed("hide", true);
-						staffFocus.classed("show", false);
-						staffFocus.classed("hide", true);
-						tooltip.classed("show", false);
-						tooltip.classed("hide", true);
-					})
-					.on("mousemove", () => {
-						// get mouse x and y position
-						let x = d3.event.pageX,
-							y = d3.event.pageY,
-							x0 = xScale.invert(x),
-							i = bisectDate(stackedData[0], x0);
-						
-						let student_d = null;
-						let staff_d = null;
-						// bounds check
-						if (i <= 0) {
-							student_d = stackedData[0][0];
-							staff_d = stackedData[1][0];
-						}
-						else if (i >= stackedData[0].length) {
-							student_d = stackedData[0][stackedData[0].length - 1];
-							staff_d = stackedData[1][stackedData[1].length - 1];
-						}
-						else{ 
-							// find data points closest to mouse position
-							let	student_d0 =stackedData[0][i-1],
-								student_d1 = stackedData[0][i],
-								staff_d0 = stackedData[1][i-1],
-								staff_d1 = stackedData[1][i-1];
-							student_d = formatDate(x0) - formatDate(student_d0.data.date) > formatDate(student_d1.data.date) - formatDate(x0) ? student_d1 : student_d0;
-							staff_d = formatDate(x0) - formatDate(staff_d0.data.date) > formatDate(staff_d1.data.date) - formatDate(x0) ? staff_d1 : staff_d0;
-						}
+				// get mouse x and y position
+				let x = d3.event.pageX,
+					y = d3.event.pageY,
+					x0 = xScale.invert(x),
+					i = bisectDate(g0_data, x0);
 
-						studentFocus.select(".focusCircle")
-							.attr("cx", xScale(student_d.data.date))
-							.attr("cy", yScale(student_d[1]));
-						studentFocus.select(".focusLine")
-							.attr("x1", xScale(student_d.data.date)).attr("y1", yScale(student_d[0]))
-							.attr("x2", xScale(student_d.data.date)).attr("y2", yScale(student_d[1]));
-						
-						staffFocus.select(".focusCircle")
-							.attr("cx", xScale(staff_d.data.date))
-							.attr("cy", yScale(staff_d[1]));
-						staffFocus.select(".focusLine")
-							.attr("x1", xScale(staff_d.data.date)).attr("y1", yScale(staff_d[0]) - circleRadius)
-							.attr("x2", xScale(staff_d.data.date)).attr("y2", yScale(staff_d[1]));
+				i = i < 0 ? 0 : i;
+				i = i > g0_data.length - 1 ? g0_data.length - 1 : i;
 
-						tooltip.html(tooltipHtml(student_d, staff_d));
-						let tooltipLeft = xScale(staff_d.data.date) > svgWidth/2 ? xScale(staff_d.data.date) - parseFloat(tooltip.style('width')) - 10 : xScale(staff_d.data.date) + 10;
-						let tooltipTop = yScale(staff_d[1]) > svgHeight/2 ? yScale(staff_d[1]) - parseFloat(tooltip.style('height')) : yScale(staff_d[1]);
-						tooltip.style("left", `${tooltipLeft}px` ).style("top", `${tooltipTop}px`);
-						tooltip.classed("hide", false);
-						tooltip.classed("show", true);
-					})
-		});
+				let d0 = g0_data[i - 1], d1 = g0_data[i]
+				tooltip_data = formatDate(x0) - formatDate(d0.date) > formatDate(d1.date) - formatDate(x0) ? d1 : d0;	
+				if (i == 0) tooltip_data = d0;
+				if (i == g0_data.length - 1) tooltip_data = d1;
+							
+				groups.forEach((g,j) => {
+					let focus_el = svgElement.select(`.${g.toLowerCase().split(' ')[0]}-focus`);
+					let date = tooltip_data.date;
+					let values = stackedData[j][i];
+					focus_el.select(".focusCircle")
+						.attr("cx", xScale(date))
+						.attr("cy", yScale(values[1]));
+					focus_el.select(".focusLine")
+						.attr("x1", xScale(date)).attr("y1", yScale(values[0]))
+						.attr("x2", xScale(date)).attr("y2", yScale(values[1]))
+						.attr("fill", 'black')
+						.attr("stroke", 'black');					
+				});
+
+				tooltip.html(tooltip_html(tooltip_data))
+				let tooltipLeft = x > svgWidth/2 ? x - parseFloat(tooltip.style('width')) - 10 : x + 10;
+				let tooltipTop = y > svgHeight/2 ? y - parseFloat(tooltip.style('height')) : y;
+				tooltip.style("left", `${tooltipLeft}px` ).style("top", `${tooltipTop}px`);
+				tooltip.classed("hide", false);
+				tooltip.classed("show", true);
+			})
+	});
 
     return (
 		<div className="areachart-container">
@@ -315,6 +307,12 @@ const AreaChart = (props) => {
 		</div>
     )   
 }
+
+
+// Format helpers
+const formatTooltip = d3.format(',');
+const formatDate = d3.timeFormat("%m/%d/%y");
+const bisectDate = d3.bisector( d => d.date).left;
 
 // Build D3 scales from data
 const buildScales = (data, total, svgWidth, svgHeight, margin) => {
@@ -328,12 +326,7 @@ const buildScales = (data, total, svgWidth, svgHeight, margin) => {
 	return [xScale, yScale]
 }
 
-// Format helpers
-const formatTooltip = d3.format(',');
-const formatDate = d3.timeFormat("%m/%d/%y");
-const bisectDate = d3.bisector(function(d) { return d.data.date; }).left;
-
- // Get client's window dimensions
+// Get client's window dimensions
 function get_client_dimensions() {
 	let clientsWidth = 0, clientsHeight = 0;
 	if( typeof( window.innerWidth ) == 'number' ) {
