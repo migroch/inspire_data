@@ -1,5 +1,5 @@
 import pandas as pd
-from bq_query import get_vaccinated_from_bq
+import streamlit as st
 
 color_dict = {
     #'A:Educators & Staff':'#FF890A',
@@ -17,6 +17,7 @@ color_dict = {
     'Total':'#ffffff',
 }
 
+@st.cache(suppress_st_warning=True, show_spinner=False)
 def prep_areachart_data(app_data):
     groups = app_data.Group.unique()
     fig_data = app_data.groupby(['Vaccination_Date', 'Group']).size().unstack('Group', fill_value=0).reset_index()
@@ -28,6 +29,7 @@ def prep_areachart_data(app_data):
     fig_data['Vaccination_Date'] = pd.to_datetime(fig_data.Vaccination_Date).dt.strftime('%Y-%m-%d')
     return fig_data[groups.tolist() + ['Week', 'Vaccination_Date']]
 
+@st.cache(suppress_st_warning=True, show_spinner=False)
 def gen_sunburst_df(totals_df):
     sunburst_df = totals_df.copy()
     sunburst_df = sunburst_df.replace({'Students':'C:Students', 'Community':'B:Community','SC County Educators':'A:Educators & Staff'})

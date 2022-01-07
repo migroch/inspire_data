@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
 import datetime
-from bq_query import get_results_from_bq
+import streamlit as st
 
-
+@st.cache(suppress_st_warning=True, show_spinner=False)
 def prep_fig_data(app_data):
     '''
     Generate figure dataframe
@@ -36,6 +36,7 @@ def prep_fig_data(app_data):
 
     return fig_data
 
+@st.cache(suppress_st_warning=True, show_spinner=False)
 def get_latest_metrics(app_data):
     '''
     Pull latest metrics for active, positive, unique, and total counts
@@ -49,6 +50,7 @@ def get_latest_metrics(app_data):
 
     return active_count, positive_count, unique_count, total_count
 
+@st.cache(suppress_st_warning=True, show_spinner=False)
 def get_weekly_metrics(app_data):
     '''
     Generate weekly metrics dataframe

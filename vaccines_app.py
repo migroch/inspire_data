@@ -4,6 +4,7 @@ import time
 import streamlit as st
 import bq_query as bq
 from import_styles import *
+from bq_query import get_vaccinated_from_bq
 from prep_vaccines_data import prep_areachart_data
 
 sys.path.append("./components")
@@ -20,7 +21,7 @@ from vaccination_summary import *
 
 # Initial data load
 with st.spinner('Loading data...'):
-    app_data = bq.get_vaccinated_from_bq()
+    app_data = get_vaccinated_from_bq()
 
 def refresh_data(query):
     global app_data
@@ -46,7 +47,7 @@ if __name__ == '__main__':
         icon_css()
 
     ## Header    
-    st.markdown(f'<h1 id="title"  style="color: #699900;">COVID-19 Vaccinations <small class="text-muted">Updated daily at 10am<small/></h1>' , unsafe_allow_html=True)
+    st.markdown(f'<h1 id="title"  style="color: #699900;">COVID-19 Vaccinations <small class="text-muted">Updated daily<small/></h1>' , unsafe_allow_html=True)
 
     summary_container = st.container()
     with summary_container:
