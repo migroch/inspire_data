@@ -3,6 +3,7 @@ import time
 import streamlit as st
 import pandas as pd
 import prep_results as pr
+from bq_query import get_results_from_bq
 from import_styles import *
 
 sys.path.append("./components")
@@ -18,7 +19,7 @@ st.set_page_config(
 
 # Initial data load
 with st.spinner('Loading data...'):
-    app_data = pr.get_results_from_bq()
+    app_data = get_results_from_bq()
 
 def refresh_data(query):
     global app_data
@@ -110,7 +111,7 @@ if __name__ == '__main__':
 
             time.sleep(0.005)
 
-        st.caption(f"Updated daily at 10am (latest test results are from tests completed on: {app_data.Test_Date.max().strftime('%m/%d/%y')})")
+        st.caption(f"Updated daily (latest test results are from tests completed on: {app_data.Test_Date.max().strftime('%m/%d/%y')})")
 
         # Set last week's data metrics bar and weekly table
         weekly_metrics = pr.get_weekly_metrics(app_data)
