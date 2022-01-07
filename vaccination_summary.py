@@ -1,10 +1,10 @@
 import time
-from pandas.core.arrays.boolean import coerce_to_array
 import streamlit as st
+import plotly.graph_objects as go
 import pandas as pd
 from import_styles import *
 import bq_query as bq
-import plotly.graph_objects as go
+from prep_vaccines_data import gen_sunburst_df
 
 #st.set_page_config(
 #    layout="wide",
@@ -18,45 +18,22 @@ with st.spinner('Loading data...'):
     vaccinated = vaccine_totals.query('Dose == "1st"')
     boosted = vaccine_totals.query('Dose == "Booster"')
     totals_no2nd = pd.concat([vaccinated, boosted])
+    # Numbers for summary 
+    n_vaccinated = vaccinated['count_unique'].sum()
+    n_boosted = boosted['count_unique'].sum()
+    n_totals = totals_no2nd['count_unique'].sum()
+    n_students_vaccinated = vaccinated.query('Group == "Students"')['count_unique'].sum()
+    n_students_boosted = boosted.query('Group == "Students"')['count_unique'].sum()
+    n_staff_vaccinated = vaccinated.query('Group == "SC County Educators"')['count_unique'].sum()
+    n_staff_boosted = boosted.query('Group == "SC County Educators"')['count_unique'].sum()
+    n_community_vaccinated = vaccinated.query('Group == "Community"')['count_unique'].sum()
+    n_community_boosted = boosted.query('Group == "Community"')['count_unique'].sum()
 
-color_dict = {
-    #'A:Educators & Staff':'#FF890A',
-    #'Vaccinated - A:Educators & Staff':'#FF931F',
-    #'Boosted - A:Educators & Staff':'#F77F00',
-    'A:Educators & Staff':'#FF006E',
-    'Vaccinated - A:Educators & Staff':'#FF1F80',
-    'Boosted - A:Educators & Staff':'#FF5006A',
-    'B:Community':'#0D6EFD',
-    'Vaccinated - B:Community':'#2179FD',
-    'Boosted - B:Community':'#0262F2',
-    'C:Students':'#09AB3B',
-    'Vaccinated - C:Students':'#0AC244',
-    'Boosted - C:Students':'#089B37',    
-    'Total':'#ffffff',
-}
-
-def gen_sunburst_df(totals_df):
-    sunburst_df = totals_df.copy()
-    sunburst_df = sunburst_df.replace({'Students':'C:Students', 'Community':'B:Community','SC County Educators':'A:Educators & Staff'})
-    sunburst_df = sunburst_df.replace({'1st':'Vaccinations', 'Booster':'Boosters'})
-    sunburst_df = sunburst_df.rename(columns={'Group':'parent', 'Dose':'label'}) 
-    group_totals = sunburst_df.groupby('parent').sum().reset_index() 
-    group_totals['label'] = group_totals['parent']
-    group_totals['parent'] = 'Total'
-    all_total = group_totals.groupby('parent').sum().reset_index()
-    all_total['label'] = 'Total'  
-    all_total['parent'] = ''  
-    sunburst_df = pd.concat([sunburst_df, group_totals, all_total]) 
-    sunburst_df = sunburst_df.sort_values(by='parent', ascending=True)
-    sunburst_df = sunburst_df.reset_index().drop(columns='index')
-    sunburst_df['id'] = sunburst_df['label']+' - '+sunburst_df['parent'] 
-    sunburst_df['id'] = sunburst_df['id'].replace({'Total - ':'Total'}).str.replace(' - Total','')
-    sunburst_df['percent'] = 100*sunburst_df['count_unique']/sunburst_df.query('label=="Total"').count_unique.iloc[0] 
-    sunburst_df['label'] = sunburst_df['label'].str.replace('A:', '').str.replace('B:', '').str.replace('C:', '')
-    sunburst_df['color'] = sunburst_df.id.replace(color_dict)
-    return sunburst_df
 
 def create_sunburst_chart(sunburst_df):
+    '''
+    Creates a sunburst chart of vaccination numbers using plotly
+    '''
     fig = go.Figure(go.Sunburst( 
          ids=sunburst_df['id'],  
          labels=sunburst_df['label'], 
@@ -79,8 +56,9 @@ def create_sunburst_chart(sunburst_df):
     return fig
 
 def show_vaccination_summary():
-
-    ## Vaccination Summary Section
+    '''
+     Vaccination Summary Section
+    ''' 
     #st.markdown('<h1 id="vaxsummary" class="text-center text-secondary">Vaccination Summary</h1>', unsafe_allow_html=True)
     st.subheader('Vaccinations Summary')
 
@@ -108,18 +86,26 @@ def show_vaccination_summary():
         fig = create_sunburst_chart(sunburst_df)
         st.plotly_chart(fig, use_container_width=True)
 
-    # Set numbers for summary 
-    n_vaccinated = vaccinated['count_unique'].sum()
-    n_boosted = boosted['count_unique'].sum()
-    n_totals = totals_no2nd['count_unique'].sum()
-    n_students_vaccinated = vaccinated.query('Group == "Students"')['count_unique'].sum()
-    n_students_boosted = boosted.query('Group == "Students"')['count_unique'].sum()
-    n_staff_vaccinated = vaccinated.query('Group == "SC County Educators"')['count_unique'].sum()
-    n_staff_boosted = boosted.query('Group == "SC County Educators"')['count_unique'].sum()
-    n_community_vaccinated = vaccinated.query('Group == "Community"')['count_unique'].sum()
-    n_community_boosted = boosted.query('Group == "Community"')['count_unique'].sum()
+    vax_total_text.markdown("<h1 class='display-5 py-0' style='color:#FF931F; border-bottom: 2px solid lightgray;'>{:.1f}K <span class='h3 p-0' style='color:#FF931F;'>Fully Vaccinated</h3></span></h1>".format(n_vaccinated/1000), unsafe_allow_html=True) 
+    vax_students_text.markdown("<h1 class='display-6 py-0' style='color:#0AC244;'>{:.1f}K <span class='h4 p-0' style='color:#0AC244;'>Students</h4></span></h1>".format(n_students_vaccinated/1000), unsafe_allow_html=True)
+    vax_staff_text.markdown("<h1 class='display-6 py-0' style='color:#FF1F80;'>{:.1f}K <span class='h4 p-0' style='color:#FF1F80;'>Educators & Staff</h4></span></h1>".format(n_staff_vaccinated/1000), unsafe_allow_html=True)
+    vax_community_text.markdown("<h1 class='display-6 py-0' style='color:#2179FD;'>{:.1f}K <span class='h4 p-0' style='color:#2179FD;'>Community</h4></span></h1>".format(n_community_vaccinated/1000), unsafe_allow_html=True)
 
-    # Loop to annimate summary table numbers
+    boost_total_text.markdown("<h1 class='display-5 py-0' style='color:#F77F00; border-bottom: 2px solid lightgray;'>{:.1f}K <span class='h3 p-0' style='color:#F77F00;'>Total Boosters</h3></span></h1>".format(n_boosted/1000), unsafe_allow_html=True)               
+    boost_students_text.markdown("<h1 class='display-6 py-0' style='color:#089B37;'>{:.1f}K <span class='h4 p-0' style='color:#089B37;'>Students</h4></span></h1>".format(n_students_boosted/1000), unsafe_allow_html=True)
+    boost_staff_text.markdown("<h1 class='display-6 py-0' style='color:#F5006A;'>{:.1f}K <span class='h4 p-0' style='color:#F5006A;'>Educators & Staff</h4></span></h1>".format(n_staff_boosted/1000), unsafe_allow_html=True)
+    boost_community_text.markdown("<h1 class='display-6 py-0' style='color:#0262F2;'>{:.1f}K <span class='h4 p-0' style='color:#0262F2;'>Community</h4></span></h1>".format(n_community_boosted/1000), unsafe_allow_html=True)
+
+    counters_placeholders = [vax_total_text, vax_students_text, vax_staff_text, vax_community_text, 
+                        boost_total_text, boost_students_text, boost_staff_text, boost_community_text]
+    return counters_placeholders
+
+def animate_vaccination_summary(counters_placeholders): 
+    '''
+     Loop to annimate summary table numbers
+    '''
+    vax_total_text, vax_students_text, vax_staff_text, vax_community_text, \
+    boost_total_text, boost_students_text, boost_staff_text, boost_community_text = counters_placeholders
     c_vaccinated = 0
     c_boosted = 0
     c_students_vaccinated = 0
@@ -138,7 +124,7 @@ def show_vaccination_summary():
         c_community_vaccinated = int((i+1)*(n_community_vaccinated/100))
         c_community_boosted = int((i+1)*(n_community_boosted/100))    
 
-        vax_total_text.markdown("<h1 class='display-5 py-0' style='color:#FF931F; border-bottom: 2px solid lightgray;'>{:.1f}K <span class='h3 p-0' style='color:#FF931F;'>Total 2-Dose Vaccinations</h3></span></h1>".format(c_vaccinated/1000), unsafe_allow_html=True) 
+        vax_total_text.markdown("<h1 class='display-5 py-0' style='color:#FF931F; border-bottom: 2px solid lightgray;'>{:.1f}K <span class='h3 p-0' style='color:#FF931F;'>Fully Vaccinated</h3></span></h1>".format(c_vaccinated/1000), unsafe_allow_html=True) 
         vax_students_text.markdown("<h1 class='display-6 py-0' style='color:#0AC244;'>{:.1f}K <span class='h4 p-0' style='color:#0AC244;'>Students</h4></span></h1>".format(c_students_vaccinated/1000), unsafe_allow_html=True)
         vax_staff_text.markdown("<h1 class='display-6 py-0' style='color:#FF1F80;'>{:.1f}K <span class='h4 p-0' style='color:#FF1F80;'>Educators & Staff</h4></span></h1>".format(c_staff_vaccinated/1000), unsafe_allow_html=True)
         vax_community_text.markdown("<h1 class='display-6 py-0' style='color:#2179FD;'>{:.1f}K <span class='h4 p-0' style='color:#2179FD;'>Community</h4></span></h1>".format(c_community_vaccinated/1000), unsafe_allow_html=True)
@@ -159,4 +145,5 @@ if __name__ == '__main__':
         import_bootstrap()
         local_css('styles/main.css')
 
-    show_vaccination_summary()
+    counters_placeholders = show_vaccination_summary()
+    animate_vaccination_summary(counters_placeholders)

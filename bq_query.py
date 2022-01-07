@@ -5,8 +5,6 @@ from google.cloud import bigquery
 import pandas as pd
 import pandas_gbq
 import streamlit as st
-import pdb
-
 
 # Create API client.
 if exists('.streamlit/secrets.toml'):
@@ -73,7 +71,8 @@ def get_results_from_bq():
     df['Week_Last_Day'] = df.Test_Date.apply(
         lambda x: datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1])+'-6', "%Y-%W-%w")
     )
-    df['Week'] = df.Test_Date.dt.week - df.Test_Date.dt.week.min()  + 1
+    df['Week'] = df.Test_Date.apply(lambda x: x.week if x <= datetime.date(2022, 1, 2) else x.week + 52)
+    df['Week'] = df['Week'] - df['Week'].min()  + 1 
     df['Test_Date'] = df.Test_Date.dt.date
     df['Group'] = df['Group'].replace({'STAFF':'Educators & Staff', 'STUDENT':'Students'})
     df['Group'] = df['Group'].apply(lambda x: x if x in ['Students', 'Educators & Staff'] else 'Community' )
@@ -120,7 +119,7 @@ def get_vaccinated_from_bq():
         'Guatemalan':'Hispanic',
         'Salvadoran':'Hispanic',
         })
-    df['Dose'] = df['Dose'].replace({'1st':'Inital vaccination (1-2 Dose)'})
+    df['Dose'] = df['Dose'].replace({'1st':'Inital Vaccination (1-2 Dose)'})
 
     return df
 

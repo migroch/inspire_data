@@ -18,12 +18,11 @@ st.set_page_config(
 
 # Initial data load
 with st.spinner('Loading data...'):
-    app_data = pr.APP_DATA
+    app_data = pr.get_results_from_bq()
 
 def refresh_data(query):
     global app_data
-    with st.spinner('Refreshing data...'):
-        app_data = app_data.query(query)
+    app_data = app_data.query(query)
 
 if __name__ == '__main__':
 
@@ -119,7 +118,7 @@ if __name__ == '__main__':
         prev_week_dates = None
 
         if len(weekly_metrics.Week) > 1:
-            last_week_dates = weekly_metrics.sort_values('Week').iloc[-1].Dates
+            last_week_dates = weekly_metrics.sort_values('Week').iloc[-2].Dates
         if len(weekly_metrics.Week) > 2:
             prev_week_dates = weekly_metrics.sort_values('Week').iloc[-3].Dates
 

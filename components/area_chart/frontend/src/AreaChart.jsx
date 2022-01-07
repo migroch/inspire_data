@@ -120,7 +120,7 @@ const AreaChart = (props) => {
 			.attr("font", "sans-serif")
 			.attr("font-size", axis_font_size)
 			.call(d3.axisLeft(yScale)
-				.ticks(8,".1s")
+				.ticks(8,".0s")
 				.tickSize(-1 * (svgWidth - margin.right - margin.left))
 				.tickSizeOuter(0)
 			)

@@ -3,7 +3,6 @@ import numpy as np
 import datetime
 from bq_query import get_results_from_bq
 
-APP_DATA = get_results_from_bq()
 
 def prep_fig_data(app_data):
     '''
