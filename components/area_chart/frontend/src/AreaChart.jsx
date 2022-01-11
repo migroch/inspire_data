@@ -36,7 +36,8 @@ const AreaChart = (props) => {
 	let stackedData = d3.stack()
 		.keys(groups)
 		(data)
-	const total = stackedData.at(-1).at(-1)[1];
+	//const total = stackedData.at(-1).at(-1)[1];
+	const total = stackedData.slice(-1)[0].slice(-1)[0][1];
 	let [xScale, yScale] = buildScales(data, total, svgWidth, svgHeight, margin);
 	let colorScale = d3.scaleOrdinal()
 		.domain(groups)
@@ -102,7 +103,8 @@ const AreaChart = (props) => {
 				.tickSizeOuter(0)
 			)
 			.call(g => g.selectAll('text')
-				.style("text-anchor", "middle")
+				.style("text-anchor", "end")
+				.attr("transform", "rotate(-65)")
 			)
 			.call(g => g.selectAll("path")
 				.attr("stroke", "black")

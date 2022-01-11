@@ -42,9 +42,9 @@ def create_sunburst_chart(sunburst_df):
          marker = {'colors':sunburst_df['color']},
          branchvalues='total', 
          sort = False, 
-         texttemplate = '%{label}<br>%{value} | %{percentRoot:.0%}', 
+         texttemplate = '%{label}<br>%{value:,} | %{percentRoot:.0%}', 
          textfont_size = 20, 
-         hovertemplate = ' %{parent} - %{label}: %{value} <br> % of %{parent}: %{percentParent:.0%}  <br> % of Total: %{percentRoot:.0%} <extra></extra>', 
+         hovertemplate = ' %{parent} - %{label}: %{value:,} <br> % of %{parent}: %{percentParent:.0%}  <br> % of Total: %{percentRoot:.0%} <extra></extra>', 
          hoverlabel = {'font_size':20},          
     ))
     fig.update_layout(
