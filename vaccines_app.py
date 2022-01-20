@@ -48,6 +48,8 @@ if __name__ == '__main__':
 
     ## Header    
     #st.markdown(f'<h1 id="title"  style="color: #699900;">COVID-19 Vaccinations <small class="text-muted">Updated daily<small/></h1>' , unsafe_allow_html=True)
+    #st.markdown(f'<h1 id="title" style="color: #699900;">Vaccines provided by the Santa Cruz COE</h1>' , unsafe_allow_html=True)
+    #st.header("Vaccines provided by the Santa Cruz COE")
 
     summary_container = st.container()
     with summary_container:
@@ -60,11 +62,11 @@ if __name__ == '__main__':
         st.subheader('Vaccinations Over Time')    
 
         with st.expander('Show filters', expanded=False):
-            dropdown_fields = ['Group', 'Dose', 'Gender', 'Race', 'Ethnicity']
-            filter_columns = st.columns([10,10,10,10,10])
+            dropdown_fields = ['District', 'Group', 'Dose', 'Gender', 'Race', 'Ethnicity']
+            filter_columns = st.columns([10,10,10,10,10,10])
             for i, field in enumerate(dropdown_fields):
                 with filter_columns[i]:
-                    selection = filter_dropdown(list(app_data[field].unique()), field=field, key=field.lower()+'_filter_dropdown')
+                    selection = filter_dropdown(list(app_data[field].sort_values().unique()), field=field, key=field.lower()+'_filter_dropdown')
                     if selection:
                         refresh_data(query=f'{field} in @selection')
             

@@ -26,7 +26,7 @@ const TimeChart = (props) => {
 	props.args.data =  props.args.data.map(d => [new Date( typeof d[0] == "string" ? d[0].split('T')[0]+'T12:00:00' : d[0]), d[1], d[2]]);
 	const data = props.args.data
 
-	const margin = {"top": 50, "bottom": 4*parseFloat(axis_font_size), "left": 3*parseFloat(axis_font_size)-5, "right": 3*parseFloat(axis_font_size)};
+	const margin = {"top": 50, "bottom": 4*parseFloat(axis_font_size), "left": 3.5*parseFloat(axis_font_size), "right": 3.5*parseFloat(axis_font_size)};
 
 	const svgRef = useRef(null);
 	const transitionMillisec = 1200;

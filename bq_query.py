@@ -31,7 +31,7 @@ def bq_query(query):
         df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026")
     return df   
 
-@st.cache(show_spinner=False, ttl=43200)
+@st.cache(show_spinner=False, ttl=21600)
 def get_testing_totals_from_bq():
     '''
     Get total test counts from BigQuery
@@ -43,7 +43,7 @@ def get_testing_totals_from_bq():
 
     return df
 
-@st.cache(show_spinner=False, ttl=43200)
+@st.cache(show_spinner=False, ttl=21600)
 def get_vaccine_totals_from_bq():
     '''
     Get total test counts from BigQuery
@@ -55,13 +55,13 @@ def get_vaccine_totals_from_bq():
     
     return df    
 
-@st.cache(show_spinner=False, ttl=43200)
+@st.cache(show_spinner=False, ttl=21600)
 def get_results_from_bq():
     '''
     Get inspire testing results from bigquery
     '''
     query = f"""
-    SELECT UID, District, Organization, `Group`, Gender, Race, Ethnicity, Test_Date, Test_Result
+    SELECT UID, District, Organization, `Group`, Gender, Race, Ethnicity, Test_Date, Test_Type, Test_Result
     FROM `InspireTesting.results`
     """
     df = bq_query(query)
@@ -82,7 +82,7 @@ def get_results_from_bq():
 
     return df
 
-@st.cache(show_spinner=False, ttl=43200)
+@st.cache(show_spinner=False, ttl=21600)
 def get_vaccinated_from_bq():
     '''
     Get inspire vaccination data from bigquery

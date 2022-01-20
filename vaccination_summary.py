@@ -59,11 +59,11 @@ def show_vaccination_summary():
     '''
      Vaccination Summary Section
     ''' 
-    #st.markdown('<h1 id="vaxsummary" class="text-center text-secondary">Vaccination Summary</h1>', unsafe_allow_html=True)
-    st.subheader('Vaccinations Summary')
+    st.markdown('<h2 id="vaxsummary" class="">Summary of vaccines provided by the <span style="color: rgb(0, 166, 163);">Santa Cruz COE</span></h2>', unsafe_allow_html=True)
+    #st.subheader('Summary of vaccines provided by the Santa Cruz COE')
 
     # Initialize summary table
-    summary_cols = st.columns(2)
+    summary_cols = st.columns([7,10])
 
     # 2-Dose Vaccinations column
     vax_total_text = summary_cols[0].empty()

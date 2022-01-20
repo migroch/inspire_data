@@ -47,11 +47,11 @@ if __name__ == '__main__':
 
         # Set expander for filter dropdowns and date slider
         with st.expander('Show filters', expanded=False):
-            dropdown_fields = ['Group', 'Gender', 'Race', 'Ethnicity']
-            filter_columns = st.columns([10,10,10,10,1])
+            dropdown_fields = ['Test_Type','Group', 'Gender', 'Race', 'Ethnicity']
+            filter_columns = st.columns([10,10,10,10,10])
             for i, field in enumerate(dropdown_fields):
                 with filter_columns[i]:
-                    selection = filter_dropdown(list(app_data[field].unique()), field=field, key=field.lower()+'_filter_dropdown')
+                    selection = filter_dropdown(list(app_data[field].sort_values().unique()), field=field.replace('_',' '), key=field.lower()+'_filter_dropdown')
                     if selection:
                         refresh_data(query=f'{field} in @selection')
             
