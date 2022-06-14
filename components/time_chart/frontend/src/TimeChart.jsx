@@ -82,8 +82,8 @@ const TimeChart = (props) => {
 			    .attr("font", "sans-serif")
 			    .attr("font-size", axis_font_size)
 			    .call(d3.axisBottom(xScale)
-				    .ticks(d3.timeWeek)
-				    .tickFormat(d3.timeFormat("%b %d"))
+				    .ticks(d3.timeMonth)
+				    .tickFormat(d3.timeFormat("%b %y"))
 				    .tickSize(-1 * (svgHeight - margin.top - margin.bottom))
 				    .tickSizeOuter(0))
 			    .call(g => g.selectAll('text')
@@ -160,7 +160,7 @@ const TimeChart = (props) => {
     useEffect(() => {
     	const svgElement = d3.select(svgRef.current);
 
-    	const keys = ["Active Cases", "14-Day Positivity Rate"];
+    	const keys = ["Active Cases", "14-Day Case Positivity Rate"];
     	const color = d3.scaleOrdinal()
 			.domain(keys)
 			.range([activeColor, posColor]);

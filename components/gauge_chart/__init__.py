@@ -5,7 +5,7 @@ from typing import Tuple
 
 import streamlit.components.v1 as components
 
-_RELEASE = True  # on packaging, pass this to True
+_RELEASE = True   # on packaging, pass this to True
 
 if not _RELEASE:
     _component_func = components.declare_component("gauge_chart", url="http://localhost:3001",)

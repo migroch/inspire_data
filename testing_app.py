@@ -3,7 +3,7 @@ import time
 import streamlit as st
 import pandas as pd
 import prep_results as pr
-from bq_query import get_results_from_bq
+from bq_query import get_results_from_bq, get_results_from_bqstorage
 from import_styles import *
 
 sys.path.append("./components")
@@ -19,7 +19,7 @@ st.set_page_config(
 
 # Initial data load
 with st.spinner('Loading data...'):
-    app_data = get_results_from_bq()
+    app_data = get_results_from_bqstorage()
 
 def refresh_data(query):
     global app_data
@@ -75,7 +75,7 @@ if __name__ == '__main__':
         with title_col:
             st.markdown(f'<h1 class="p-0 " style="color: #699900;">{district}</h1><small class="text-muted">{n_sites} School Sites Participating</small>' , unsafe_allow_html=True)
         with gauge_col:
-            gauge_data = tuple([0, 0.02, fig_data.avg_pos_rate.iat[-1]])
+            gauge_data = tuple([0, 0.02, fig_data.unbias_avg_pos_rate.iat[-1]])
             gauge_chart(gauge_data, key="gauge_chart")
         
         # Set latest metrics animation bar with bootstrap
@@ -100,12 +100,12 @@ if __name__ == '__main__':
         t_count = 0
         for i in range(100):
             a_count = int((i+1)*(active_count/100))
-            p_count = int((i+1)*(positive_count/100))
+            p_count = int((i+1)*(positive_count/100))/1000
             u_count = int((i+1)*(unique_count/100))/1000
             t_count = int((i+1)*(total_count/100))/1000
 
             col_text0.markdown(f"<p  class='fs-1' style='color:#ff006e'>{a_count}</p>", unsafe_allow_html=True)
-            col_text1.markdown(f"<p  class='fs-1' style='color:#f77f00'>{p_count}</p>", unsafe_allow_html=True)
+            col_text1.markdown("<p  class='fs-1' style='color:#f77f00'>{:.1f}K</p>".format(p_count), unsafe_allow_html=True)
             col_text2.markdown("<p   class='text-primary fs-1' >{:.1f}K</p>".format(u_count), unsafe_allow_html=True)
             col_text3.markdown("<p   class='fs-1' style='color:#09ab3b'>{:.1f}K</p>".format(t_count), unsafe_allow_html=True)
 
@@ -156,7 +156,7 @@ if __name__ == '__main__':
         # Time chart section
         time_trend_container = st.container()
         with time_trend_container:
-            time_data = list(zip(fig_data.Test_Date, fig_data.avg_pos_rate, fig_data.active_count))
+            time_data = list(zip(fig_data.Test_Date, fig_data.unbias_avg_pos_rate, fig_data.active_count))
             st.subheader('Time Trend')
             time_chart(time_data, key="time_chart")
             

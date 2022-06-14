@@ -3,6 +3,10 @@ import numpy as np
 import datetime
 import streamlit as st
 
+timedelta_14days = datetime.timedelta(days=14)
+timedelta_10days = datetime.timedelta(days=10)
+timedelta_7days = datetime.timedelta(days=7)
+
 @st.cache(suppress_st_warning=True, show_spinner=False)
 def prep_fig_data(app_data):
     '''
@@ -10,21 +14,44 @@ def prep_fig_data(app_data):
     '''
     fig_data = pd.DataFrame({ 
         'test_count': app_data.groupby(['Test_Date']).size(), 
-        'pos_count': app_data[app_data['Test_Result']=='POSITIVE'].groupby(['Test_Date']).size() 
+        'pos_count': app_data[app_data['Test_Result']=='POSITIVE'].groupby(['Test_Date']).size(), 
+        'pos_list': app_data[app_data['Test_Result']=='POSITIVE'].groupby(['Test_Date']).UID.apply(list)    
     }).reset_index()
     fig_data['pos_count'] = fig_data.pos_count.fillna(0)
+    fig_data['pos_list'] = fig_data.pos_list.apply(lambda x: x if isinstance(x, list) else [])
     fig_data['pos_rate'] = 100.0*fig_data['pos_count']/fig_data['test_count']
-    fig_data = fig_data.rename(columns={'index':'Test_Date'})
+    def get_unbias_pos_list(d):
+        unbias_pos_list = []
+        if len(d.pos_list):
+            pos_list_10day = fig_data[(fig_data['Test_Date'] >= d.Test_Date-timedelta_10days) & (fig_data['Test_Date'] < d.Test_Date)].pos_list
+            if len(pos_list_10day): pos_list_10day = np.concatenate(pos_list_10day.dropna().values)  
+            unbias_pos_list = np.unique([uid for uid in d.pos_list if uid not in pos_list_10day]) 
+        return unbias_pos_list
+    fig_data['unbias_pos_list'] = fig_data.apply(get_unbias_pos_list, axis=1)
+    fig_data['unbias_pos_count'] = fig_data['unbias_pos_list'].apply(len)
+    fig_data['bias'] = fig_data['pos_count'] - fig_data['unbias_pos_count']  
+    fig_data['unbias_pos_rate'] = 100.0*fig_data['unbias_pos_count']/(fig_data['test_count']-fig_data['bias'])  # Case positivity rate
+    fig_data['pos_rate_bias'] = fig_data['pos_rate'] - fig_data['unbias_pos_rate']                                       
+
+    #fig_data = fig_data.rename(columns={'index':'Test_Date'})
     
-    # Compute 10-day active cases & 14-day positive rate averages
-    timedelta_14days = datetime.timedelta(days=14)
-    timedelta_10days = datetime.timedelta(days=10)
+    # Compute 10-day active cases & 14-day positivity rate averages
     fig_data['avg_pos_rate'] = fig_data['Test_Date'].apply(
-        lambda x:  fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
+        lambda x:  100*fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
                             (fig_data['Test_Date'] <= x)]['pos_count'].sum() /
         fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
                 (fig_data['Test_Date'] <= x)]['test_count'].sum()
     ) 
+    
+    # Case positivity rate
+    fig_data['unbias_avg_pos_rate'] = fig_data['Test_Date'].apply(   
+        lambda x:  fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) &
+                            (fig_data['Test_Date'] <= x)]['unbias_pos_count'].sum() /
+                            (fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) & (fig_data['Test_Date'] <= x)]['test_count'].sum() 
+                            - fig_data[(fig_data['Test_Date'] >= (x - timedelta_14days)) & (fig_data['Test_Date'] <= x)]['bias'].sum())
+    ) 
+   
+
     fig_data['active_count'] = fig_data['Test_Date'].apply(
         lambda x: app_data[(app_data['Test_Date'] >= (x - timedelta_10days)) &
                             (app_data['Test_Date'] <= x) &

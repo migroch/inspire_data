@@ -2,11 +2,13 @@ from os.path import exists
 import datetime
 from google.oauth2 import service_account
 from google.cloud import bigquery
+from google.cloud import bigquery_storage 
+from google.cloud.bigquery_storage import types
 import pandas as pd
 import pandas_gbq
 import streamlit as st
 
-# Create API client.
+# Create API clients.
 if exists('.streamlit/secrets.toml'):
     credentials = service_account.Credentials.from_service_account_info(
         st.secrets["gcp_service_account"]
@@ -18,6 +20,7 @@ else:
 
 try:
     bq_client = bigquery.Client(project='covidtesting-1602910185026', credentials=credentials)
+    bqstorageclient = bigquery_storage.BigQueryReadClient(credentials=credentials)
 except:
     print('WARNING: No credential file found, using pandas_gbq as BigQuery client')
     
@@ -65,6 +68,50 @@ def get_results_from_bq():
     FROM `InspireTesting.results`
     """
     df = bq_query(query)
+    df['Week_First_Day'] = df.Test_Date.apply(
+        lambda x: datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1]-1)+'-0', "%Y-%W-%w")
+    )
+    df['Week_Last_Day'] = df.Test_Date.apply(
+        lambda x: datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1])+'-6', "%Y-%W-%w")
+    )
+    df['Week'] = df.Test_Date.apply(lambda x: x.week if x <= datetime.date(2022, 1, 2) else x.week + 52)
+    df['Week'] = df['Week'] - df['Week'].min()  + 1 
+    df['Test_Date'] = df.Test_Date.dt.date
+    df['Group'] = df['Group'].replace({'STAFF':'Educators & Staff', 'STUDENT':'Students'})
+    df['Group'] = df['Group'].apply(lambda x: x if x in ['Students', 'Educators & Staff'] else 'Community' )
+    df['Gender'] = df['Gender'].fillna('Unknown')
+    df['Race'] = df['Race'].fillna('Unknown')
+    df['Ethnicity'] = df['Ethnicity'].fillna('Unknown')
+
+    return df
+
+def get_resultsdf_from_bqstorage():
+    table = 'projects/covidtesting-1602910185026/datasets/InspireTesting/tables/results'
+    read_options = types.ReadSession.TableReadOptions( 
+        selected_fields=['UID', 'District', 'Organization', 'Group', 'Gender', 'Race', 'Ethnicity', 'Test_Date', 'Test_Type', 'Test_Result'] 
+    )      
+    requested_session = types.ReadSession(
+        table=table,
+        data_format=types.DataFormat.ARROW,
+        read_options=read_options,
+    )   
+    read_session = bqstorageclient.create_read_session(
+        parent='projects/covidtesting-1602910185026',
+        read_session=requested_session,
+        max_stream_count=1,
+    )
+    stream = read_session.streams[0]
+    reader = bqstorageclient.read_rows(stream.name)
+    frames = []
+    for message in reader.rows().pages:
+        frames.append(message.to_dataframe())
+    df = pd.concat(frames)
+    
+    return df
+
+@st.cache(show_spinner=False, ttl=21600)  # A lot faster than get_results_from_bq()
+def get_results_from_bqstorage():
+    df = get_resultsdf_from_bqstorage()
     df['Week_First_Day'] = df.Test_Date.apply(
         lambda x: datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1]-1)+'-0', "%Y-%W-%w")
     )

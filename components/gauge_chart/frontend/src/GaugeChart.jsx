@@ -190,7 +190,7 @@ const GaugeChart = (props) => {
         </div>
         <div className="legend-container" >
           <p style={{fontSize:label_font_size}}>
-            14-day positivity rate: <span style={{color:"#F77F00", fontWeight:"bold"}}>{formatPercentLegend(data[2])}</span>
+            14-day case positivity rate: <span style={{color:"#F77F00", fontWeight:"bold"}}>{formatPercentLegend(data[2])}</span>
           </p>
         </div>
       </>
