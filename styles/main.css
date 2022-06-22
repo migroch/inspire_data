@@ -86,3 +86,6 @@ viewerBadge_container__1QSob{visibility: hidden !important;}
   padding-right: 30px;
 }
 
+[data-baseweb="input"]{
+  height: 25px !important;
+}

@@ -62,26 +62,32 @@ if __name__ == '__main__':
         st.subheader('Vaccinations Over Time')    
 
         with st.expander('Show filters', expanded=False):
+            date_min = app_data.Vaccination_Date.min()
+            date_max = app_data.Vaccination_Date.max()
+            date_range = [date_min, date_max]
+            #date_slider_container = st.container()
+            #with date_slider_container:
+            date_cols = st.columns(2)
+            with date_cols[0]:
+                date_range[0] = st.date_input('Start Date', date_min, date_min, date_max)
+            with date_cols[1]:
+                date_range[1] = st.date_input('End Date', date_max, date_min, date_max)    
+            if app_data.size:
+                    #date_range = st.slider('Select Dates:',
+                    #                        min_value=date_min,
+                    #                        max_value=date_max,
+                    #                        value=(date_min, date_max),
+                    #                        format="M/D/YY")
+                refresh_data(query='Vaccination_Date >= @date_range[0] and Vaccination_Date <= @date_range[1]')
+
             dropdown_fields = ['District', 'Group', 'Dose', 'Gender', 'Race', 'Ethnicity']
             filter_columns = st.columns([10,10,10,10,10,10])
             for i, field in enumerate(dropdown_fields):
                 with filter_columns[i]:
                     selection = filter_dropdown(list(app_data[field].sort_values().unique()), field=field, key=field.lower()+'_filter_dropdown')
                     if selection:
-                        refresh_data(query=f'{field} in @selection')
-            
-            date_slider_container = st.container()
-            with date_slider_container:
-                date_min = app_data.Vaccination_Date.min()
-                date_max = app_data.Vaccination_Date.max()
+                        refresh_data(query=f'{field} in @selection')            
 
-                if app_data.size:
-                    date_range = st.slider('Select Dates:',
-                                            min_value=date_min,
-                                            max_value=date_max,
-                                            value=(date_min, date_max),
-                                            format="M/D/YY")
-                    refresh_data(query='Vaccination_Date >= @date_range[0] and Vaccination_Date <= @date_range[1]')
         # Set figure data
         fig_data = prep_areachart_data(app_data)
         draw_area_chart(fig_data)

@@ -47,6 +47,24 @@ if __name__ == '__main__':
 
         # Set expander for filter dropdowns and date slider
         with st.expander('Show filters', expanded=False):
+            date_min = app_data.Test_Date.min()
+            date_max = app_data.Test_Date.max()
+            date_range = [date_min, date_max]
+            #date_slider_container = st.container()
+            #with date_slider_container:
+            date_cols = st.columns(2)
+            with date_cols[0]:
+                date_range[0] = st.date_input('Start Date', date_min, date_min, date_max)
+            with date_cols[1]:
+                date_range[1] = st.date_input('End Date', date_max, date_min, date_max)    
+            if app_data.size:
+                    #date_range = st.slider('Select Dates:',
+                    #                        min_value=date_min,
+                    #                        max_value=date_max,
+                    #                        value=(date_min, date_max),
+                    #                        format="M/D/YY")
+                refresh_data(query='Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
+
             dropdown_fields = ['Test_Type','Group', 'Gender', 'Race', 'Ethnicity']
             filter_columns = st.columns([10,10,10,10,10])
             for i, field in enumerate(dropdown_fields):
@@ -54,19 +72,6 @@ if __name__ == '__main__':
                     selection = filter_dropdown(list(app_data[field].sort_values().unique()), field=field.replace('_',' '), key=field.lower()+'_filter_dropdown')
                     if selection:
                         refresh_data(query=f'{field} in @selection')
-            
-            date_slider_container = st.container()
-            with date_slider_container:
-                date_min = app_data.Test_Date.min()
-                date_max = app_data.Test_Date.max()
-
-                if app_data.size:
-                    date_range = st.slider('Select Dates:',
-                                            min_value=date_min,
-                                            max_value=date_max,
-                                            value=(date_min, date_max),
-                                            format="M/D/YY")
-                    refresh_data(query='Test_Date >= @date_range[0] and Test_Date <= @date_range[1]')
 
         # Set figure data after filtering
         fig_data = pr.prep_fig_data(app_data)
@@ -144,7 +149,7 @@ if __name__ == '__main__':
             with st.expander("Show Weekly Table", expanded=False):
                 st.subheader("Weekly Table")
                 weekly_display = weekly_metrics.sort_values('Week', ascending=False)
-                weekly_display = weekly_display.set_index('Week').reset_index().drop(columns='Week')
+                weekly_display = weekly_display.drop(columns='Week')
                 weekly_display = weekly_display.style.apply(
                     lambda x: [f"background-color:{'#F77F00' if x.name==weekly_display.index[0] else 'white'};" for row in x]
                     , axis=1
