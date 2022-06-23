@@ -52,11 +52,19 @@ def prep_fig_data(app_data):
     ) 
    
 
-    fig_data['active_count'] = fig_data['Test_Date'].apply(
+    """ fig_data['active_count'] = fig_data['Test_Date'].apply(
         lambda x: app_data[(app_data['Test_Date'] >= (x - timedelta_10days)) &
                             (app_data['Test_Date'] <= x) &
                             (app_data['Test_Result']=='POSITIVE')].UID.nunique()
-    )  
+    ) """  # TOO SLOW  
+
+    def get_active_count(d):
+        pos_list_10day = fig_data[(fig_data['Test_Date'] >= d.Test_Date-timedelta_10days) & (fig_data['Test_Date'] <= d.Test_Date)].pos_list
+        if len(pos_list_10day): pos_list_10day = np.concatenate(pos_list_10day.dropna().values)  
+        return len(np.unique(pos_list_10day))
+    fig_data['active_count'] = fig_data.apply(get_active_count, axis=1) # Much faster than above
+
+    
     fig_data['Week'] = pd.to_datetime(fig_data.Test_Date).dt.week
     fig_data['Week'] = fig_data['Week']-fig_data['Week'].min()+1
     fig_data['Test_Date'] = pd.to_datetime(fig_data.Test_Date).dt.strftime('%Y-%m-%d')
@@ -125,3 +133,4 @@ def get_weekly_metrics(app_data):
         weekly_metrics = pd.concat([weekly_metrics, pd.DataFrame([row], columns=weekly_metrics_columns, index=[week])])
     
     return weekly_metrics
+
