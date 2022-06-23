@@ -19,15 +19,15 @@ with st.spinner('Loading data...'):
     boosted = vaccine_totals.query('Dose == "Booster"')
     totals_no2nd = pd.concat([vaccinated, boosted])
     # Numbers for summary 
-    n_vaccinated = vaccinated['count_unique'].sum()
-    n_boosted = boosted['count_unique'].sum()
-    n_totals = totals_no2nd['count_unique'].sum()
-    n_students_vaccinated = vaccinated.query('Group == "Students"')['count_unique'].sum()
-    n_students_boosted = boosted.query('Group == "Students"')['count_unique'].sum()
-    n_staff_vaccinated = vaccinated.query('Group == "SC County Educators"')['count_unique'].sum()
-    n_staff_boosted = boosted.query('Group == "SC County Educators"')['count_unique'].sum()
-    n_community_vaccinated = vaccinated.query('Group == "Community"')['count_unique'].sum()
-    n_community_boosted = boosted.query('Group == "Community"')['count_unique'].sum()
+    n_vaccinated = vaccinated['count'].sum()
+    n_boosted = boosted['count'].sum()
+    n_totals = totals_no2nd['count'].sum()
+    n_students_vaccinated = vaccinated.query('Group == "Students"')['count'].sum()
+    n_students_boosted = boosted.query('Group == "Students"')['count'].sum()
+    n_staff_vaccinated = vaccinated.query('Group == "SC County Educators"')['count'].sum()
+    n_staff_boosted = boosted.query('Group == "SC County Educators"')['count'].sum()
+    n_community_vaccinated = vaccinated.query('Group == "Community"')['count'].sum()
+    n_community_boosted = boosted.query('Group == "Community"')['count'].sum()
 
 
 def create_sunburst_chart(sunburst_df):
@@ -38,7 +38,7 @@ def create_sunburst_chart(sunburst_df):
          ids=sunburst_df['id'],  
          labels=sunburst_df['label'], 
          parents=sunburst_df['parent'], 
-         values=sunburst_df['count_unique'], 
+         values=sunburst_df['count'], 
          marker = {'colors':sunburst_df['color']},
          branchvalues='total', 
          sort = False, 

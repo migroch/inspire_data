@@ -171,3 +171,16 @@ def get_vaccinated_from_bq():
     return df
 
 
+@st.cache(show_spinner=False, ttl=21600)
+def get_vaccinated_raw_from_bq():
+    '''
+    Get inspire vaccination data raw from bigquery
+    '''
+    query = f"""
+        SELECT Vaccination_Date, `Group`, Vaccination_Type, Dose, Manufacturer FROM `covidtesting-1602910185026.InspireTesting.vaccinated`
+        ORDER BY Vaccination_Date DESC
+    """
+    df = bq_query(query)
+    df['Vaccination_Date'] = df.Vaccination_Date.dt.date
+    
+    return df

@@ -31,13 +31,6 @@ viewerBadge_container__1QSob{visibility: hidden !important;}
   font-size: 16px;
 }
 
-.row_heading{
-  display: none !important;
-}
-
-.css-vkiler{
-  display: none !important;
-}
 
 .css-1byorgg{
   padding: 0px !important;
@@ -77,10 +70,6 @@ viewerBadge_container__1QSob{visibility: hidden !important;}
   padding-left: 40px;
 }
 
-.effi0qh0{
-  display: none;
-}
-
 .e1tzin5v2{
   padding-left: 30px;
   padding-right: 30px;
@@ -89,3 +78,15 @@ viewerBadge_container__1QSob{visibility: hidden !important;}
 [data-baseweb="input"]{
   height: 25px !important;
 }
+
+/* .effi0qh0{
+  display: none;
+} */
+
+/* .row_heading{
+  display: none !important;
+}
+
+.css-vkiler{
+  display: none !important;
+} */

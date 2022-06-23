@@ -4,7 +4,7 @@ import time
 import streamlit as st
 import bq_query as bq
 from import_styles import *
-from bq_query import get_vaccinated_from_bq
+from bq_query import get_vaccinated_from_bq, get_vaccinated_raw_from_bq
 from prep_vaccines_data import prep_areachart_data
 
 sys.path.append("./components")
@@ -37,6 +37,33 @@ def draw_area_chart(fig_data):
     area_data = fig_data.to_json(orient='records')
     colors = {'Students':'#09AB3B', 'Educators & Staff':'#FF006E', 'Community':'#0D6EFD'}
     area_chart(data=area_data, groups=groups.tolist(), colors=[colors[group] for group in groups], key="area_chart")
+
+def show_raw_table(date_range):
+    '''
+    Show table with raw data from inspire
+    '''
+    with st.expander("Show Daily Count Tables (Raw Inspire Data)", expanded=False):
+        st.subheader("Daily Summary Tables")
+        st.caption("Raw data from Inspire, counting all vaccinations.")
+        tb_cols = st.columns(2)
+        table_df = get_vaccinated_raw_from_bq()
+        table_df = table_df.query("Vaccination_Date >= @date_range[0] and Vaccination_Date <= @date_range[1]")
+        table_df = table_df[['Vaccination_Date', 'Vaccination_Type', 'Group']]
+
+        table_dfg = table_df.groupby(['Vaccination_Date', 'Vaccination_Type']).count()
+        table_dfg = table_dfg.rename(columns={'Group':'Count'})
+        table_dfg = table_dfg.sort_values(['Vaccination_Date','Count'], ascending=False)
+        #st.dataframe(table_dfg.style)
+        with tb_cols[0]:
+            st.markdown(table_dfg.style.to_html(), unsafe_allow_html=True)
+        
+        table_dfp = table_df.pivot_table(index='Vaccination_Date', columns='Group', values='Vaccination_Type', aggfunc='count')
+        table_dfp['Total'] = table_dfp.sum(axis=1) # Add total column
+        table_dfp = table_dfp.sort_values(['Vaccination_Date'], ascending=False)
+        table_dfp = table_dfp[['Total', 'STUDENT', 'STAFF', 'OTHERS']]
+        table_dfp = table_dfp.fillna(0).astype(int)
+        with tb_cols[1]:
+            st.markdown(table_dfp.style.to_html(), unsafe_allow_html=True)
 
 if __name__ == '__main__':
     ## Initialize page configurations and containers
@@ -91,6 +118,9 @@ if __name__ == '__main__':
         # Set figure data
         fig_data = prep_areachart_data(app_data)
         draw_area_chart(fig_data)
+
+    # Show raw table
+    show_raw_table(date_range)
 
     # Animate summary counters after area chart is shown
     with summary_container:
