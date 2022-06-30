@@ -50,20 +50,23 @@ def show_raw_table(date_range):
         table_df = table_df.query("Vaccination_Date >= @date_range[0] and Vaccination_Date <= @date_range[1]")
         table_df = table_df[['Vaccination_Date', 'Vaccination_Type', 'Group']]
 
-        table_dfg = table_df.groupby(['Vaccination_Date', 'Vaccination_Type']).count()
-        table_dfg = table_dfg.rename(columns={'Group':'Count'})
-        table_dfg = table_dfg.sort_values(['Vaccination_Date','Count'], ascending=False)
-        #st.dataframe(table_dfg.style)
-        with tb_cols[0]:
-            st.markdown(table_dfg.style.to_html(), unsafe_allow_html=True)
-        
         table_dfp = table_df.pivot_table(index='Vaccination_Date', columns='Group', values='Vaccination_Type', aggfunc='count')
         table_dfp['Total'] = table_dfp.sum(axis=1) # Add total column
         table_dfp = table_dfp.sort_values(['Vaccination_Date'], ascending=False)
         table_dfp = table_dfp[['Total', 'STUDENT', 'STAFF', 'OTHERS']]
         table_dfp = table_dfp.fillna(0).astype(int)
+        with tb_cols[0]:
+            #st.markdown(table_dfp.style.to_html(), unsafe_allow_html=True)
+            st.dataframe(table_dfp.style)        
+
+        table_dfg = table_df.groupby(['Vaccination_Date', 'Vaccination_Type']).count()
+        table_dfg = table_dfg.rename(columns={'Group':'Count'})
+        table_dfg = table_dfg.sort_values(['Vaccination_Date','Count'], ascending=False)
         with tb_cols[1]:
-            st.markdown(table_dfp.style.to_html(), unsafe_allow_html=True)
+            st.markdown(table_dfg.style.to_html(), unsafe_allow_html=True)
+            #st.dataframe(table_dfg.style)
+
+        
 
 if __name__ == '__main__':
     ## Initialize page configurations and containers
