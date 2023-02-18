@@ -34,7 +34,7 @@ def bq_query(query):
         df = pandas_gbq.read_gbq(query, project_id="covidtesting-1602910185026")
     return df   
 
-@st.cache(show_spinner=False, ttl=21600)
+@st.cache_data(show_spinner=False, ttl=21600)
 def get_testing_totals_from_bq():
     '''
     Get total test counts from BigQuery
@@ -46,7 +46,7 @@ def get_testing_totals_from_bq():
 
     return df
 
-@st.cache(show_spinner=False, ttl=21600)
+@st.cache_data(show_spinner=False, ttl=21600)
 def get_vaccine_totals_from_bq():
     '''
     Get total test counts from BigQuery
@@ -58,7 +58,7 @@ def get_vaccine_totals_from_bq():
     
     return df    
 
-@st.cache(show_spinner=False, ttl=21600)
+@st.cache_data(show_spinner=False, ttl=21600)
 def get_results_from_bq():
     '''
     Get inspire testing results from bigquery
@@ -74,7 +74,7 @@ def get_results_from_bq():
     df['Week_Last_Day'] = df.Test_Date.apply(
         lambda x: datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1])+'-6', "%Y-%W-%w")
     )
-    df['Week'] = df.Test_Date.apply(lambda x: x.week if x <= datetime.date(2022, 1, 2) else x.week + 52)
+    df['Week'] = df.Test_Date.apply(lambda x: x.week if x <= datetime.date(2022, 1, 2) else x.week + 52*(x.year-2021))
     df['Week'] = df['Week'] - df['Week'].min()  + 1 
     df['Test_Date'] = df.Test_Date.dt.date
     df['Group'] = df['Group'].replace({'STAFF':'Educators & Staff', 'STUDENT':'Students'})
@@ -85,7 +85,8 @@ def get_results_from_bq():
 
     return df
 
-def get_resultsdf_from_bqstorage():
+@st.cache_data(show_spinner=False, ttl=21600)
+def get_resultsdf_from_bqstorage():  # A lot faster than get_results_from_bq()
     table = 'projects/covidtesting-1602910185026/datasets/InspireTesting/tables/results'
     read_options = types.ReadSession.TableReadOptions( 
         selected_fields=['UID', 'District', 'Organization', 'Group', 'Gender', 'Race', 'Ethnicity', 'Test_Date', 'Test_Type', 'Test_Result'] 
@@ -109,7 +110,7 @@ def get_resultsdf_from_bqstorage():
     
     return df
 
-@st.cache(show_spinner=False, ttl=21600)  # A lot faster than get_results_from_bq()
+@st.cache_data(show_spinner=False, ttl=21600)  
 def get_results_from_bqstorage():
     df = get_resultsdf_from_bqstorage()
     df['Week_First_Day'] = df.Test_Date.apply(
@@ -118,7 +119,7 @@ def get_results_from_bqstorage():
     df['Week_Last_Day'] = df.Test_Date.apply(
         lambda x: datetime.datetime.strptime(str(x.isocalendar()[0])+'-'+str(x.isocalendar()[1])+'-6', "%Y-%W-%w")
     )
-    df['Week'] = df.Test_Date.apply(lambda x: x.week if x <= datetime.date(2022, 1, 2) else x.week + 52)
+    df['Week'] = df.Test_Date.apply(lambda x: x.week if x.date() <= datetime.date(2022, 1, 2) else x.week + 52*(x.year-2021))
     df['Week'] = df['Week'] - df['Week'].min()  + 1 
     df['Test_Date'] = df.Test_Date.dt.date
     df['Group'] = df['Group'].replace({'STAFF':'Educators & Staff', 'STUDENT':'Students'})
@@ -129,7 +130,7 @@ def get_results_from_bqstorage():
 
     return df
 
-@st.cache(show_spinner=False, ttl=21600)
+@st.cache_data(show_spinner=False, ttl=21600)
 def get_vaccinated_from_bq():
     '''
     Get inspire vaccination data from bigquery
@@ -171,7 +172,7 @@ def get_vaccinated_from_bq():
     return df
 
 
-@st.cache(show_spinner=False, ttl=21600)
+@st.cache_data(show_spinner=False, ttl=21600)
 def get_vaccinated_raw_from_bq():
     '''
     Get inspire vaccination data raw from bigquery

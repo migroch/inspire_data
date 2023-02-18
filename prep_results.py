@@ -7,7 +7,7 @@ timedelta_14days = datetime.timedelta(days=14)
 timedelta_10days = datetime.timedelta(days=10)
 timedelta_7days = datetime.timedelta(days=7)
 
-@st.cache(suppress_st_warning=True, show_spinner=False)
+@st.cache_data(ttl=21600, show_spinner=False)
 def prep_fig_data(app_data):
     '''
     Generate figure dataframe
@@ -65,13 +65,13 @@ def prep_fig_data(app_data):
     fig_data['active_count'] = fig_data.apply(get_active_count, axis=1) # Much faster than above
 
     
-    fig_data['Week'] = pd.to_datetime(fig_data.Test_Date).dt.week
+    fig_data['Week'] = pd.to_datetime(fig_data.Test_Date).dt.isocalendar().week
     fig_data['Week'] = fig_data['Week']-fig_data['Week'].min()+1
     fig_data['Test_Date'] = pd.to_datetime(fig_data.Test_Date).dt.strftime('%Y-%m-%d')
 
     return fig_data
 
-@st.cache(suppress_st_warning=True, show_spinner=False)
+@st.cache_data(ttl=21600, show_spinner=False)
 def get_latest_metrics(app_data):
     '''
     Pull latest metrics for active, positive, unique, and total counts
@@ -85,7 +85,7 @@ def get_latest_metrics(app_data):
 
     return active_count, positive_count, unique_count, total_count
 
-@st.cache(suppress_st_warning=True, show_spinner=False)
+@st.cache_data(ttl=21600, show_spinner=False)
 def get_weekly_metrics(app_data):
     '''
     Generate weekly metrics dataframe
@@ -94,7 +94,8 @@ def get_weekly_metrics(app_data):
     weekly_metrics = pd.DataFrame(columns=weekly_metrics_columns)   
     
     weeks = app_data.Week.sort_values().unique()
-    if app_data.Week_Last_Day.max() < datetime.date.today(): 
+
+    if app_data.Week_Last_Day.max().date() < datetime.date.today(): 
         weeks = np.append(weeks, weeks.max()+1)   
     
     for week in weeks:

@@ -153,9 +153,10 @@ if __name__ == '__main__':
                 weekly_display = weekly_display.style.apply(
                     lambda x: [f"background-color:{'#F77F00' if x.name==weekly_display.index[0] else 'white'};" for row in x]
                     , axis=1
-                ).hide_index()
+                )
+                weekly_display.hide(axis='index')
 
-                st.dataframe(weekly_display)
+                st.dataframe(weekly_display, use_container_width=True)
                 st.caption("Highlighted row shows current week's data (week in progress).")
 
         # Time chart section
